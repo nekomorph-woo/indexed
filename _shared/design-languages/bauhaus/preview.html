@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Bauhaus — 设计语言预览</title>
+  <!-- design-language-id: bauhaus -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;700;900&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --dl-bg: #F0F0F0;
+      --dl-surface: #FFFFFF;
+      --dl-on-surface: #121212;
+      --dl-primary: #D02020;
+      --dl-on-primary: #FFFFFF;
+      --dl-secondary: #1040C0;
+      --dl-accent: #F0C020;
+      --dl-muted: #E0E0E0;
+      --dl-border: #121212;
+      --dl-shadow: 4px 4px 0 0 #121212;
+      --dl-shadow-lg: 8px 8px 0 0 #121212;
+      --dl-font: 'Outfit', system-ui, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: var(--dl-font);
+      background: var(--dl-bg);
+      color: var(--dl-on-surface);
+      line-height: 1.5;
+    }
+    .wrap { max-width: 960px; margin: 0 auto; padding: 24px 20px 48px; }
+    .banner {
+      background: var(--dl-secondary);
+      color: #fff;
+      border: 4px solid var(--dl-border);
+      padding: 24px 28px;
+      margin-bottom: 24px;
+      box-shadow: var(--dl-shadow-lg);
+      position: relative;
+      overflow: hidden;
+    }
+    .banner .geo {
+      position: absolute;
+      right: 20px; top: 20px;
+      display: flex; gap: 8px; align-items: flex-end;
+    }
+    .banner .geo span { border: 2px solid #fff; }
+    .banner .geo .c { width: 28px; height: 28px; border-radius: 50%; background: var(--dl-primary); }
+    .banner .geo .s { width: 24px; height: 24px; background: var(--dl-accent); transform: rotate(12deg); }
+    .banner .geo .t {
+      width: 0; height: 0; border: none;
+      border-left: 14px solid transparent;
+      border-right: 14px solid transparent;
+      border-bottom: 24px solid var(--dl-accent);
+    }
+    .banner h1 {
+      margin: 0 0 8px;
+      font-size: clamp(1.75rem, 5vw, 2.5rem);
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: -0.04em;
+      line-height: 0.95;
+      position: relative;
+      max-width: 85%;
+    }
+    .banner p { margin: 0; font-size: .9rem; font-weight: 500; position: relative; opacity: .95; }
+    .banner code { background: rgba(0,0,0,.2); padding: 2px 6px; }
+    section {
+      background: var(--dl-surface);
+      border: 4px solid var(--dl-border);
+      padding: 20px 24px;
+      margin-bottom: 20px;
+      box-shadow: var(--dl-shadow);
+      transition: transform .2s ease-out, box-shadow .2s ease-out;
+    }
+    section:hover { transform: translateY(-2px); }
+    section h2 {
+      margin: 0 0 16px;
+      font-size: 1rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+    }
+    .swatches { display: flex; flex-wrap: wrap; gap: 12px; }
+    .swatch { width: 72px; text-align: center; font-size: .65rem; font-weight: 700; text-transform: uppercase; }
+    .swatch div {
+      height: 48px;
+      margin-bottom: 6px;
+      border: 3px solid var(--dl-border);
+      box-shadow: 3px 3px 0 0 var(--dl-border);
+    }
+    .type-samples h3 {
+      margin: 0 0 4px;
+      font-size: clamp(2rem, 6vw, 3rem);
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: -0.03em;
+      line-height: 0.9;
+    }
+    .type-samples p { margin: 0 0 8px; font-weight: 500; }
+    .btn-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      padding: 10px 22px;
+      border: 3px solid var(--dl-border);
+      cursor: pointer;
+      font-family: inherit;
+      font-size: .8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      box-shadow: var(--dl-shadow);
+      transition: transform .15s ease-out, box-shadow .15s ease-out;
+    }
+    .btn:active {
+      transform: translate(2px, 2px);
+      box-shadow: none;
+    }
+    .btn-primary { background: var(--dl-primary); color: var(--dl-on-primary); }
+    .btn-tonal { background: var(--dl-secondary); color: #fff; }
+    .btn-yellow { background: var(--dl-accent); color: var(--dl-on-surface); border-radius: 9999px; }
+    .btn-outline { background: #fff; color: var(--dl-on-surface); }
+    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; }
+    .card {
+      padding: 16px;
+      background: #fff;
+      border: 4px solid var(--dl-border);
+      box-shadow: var(--dl-shadow-lg);
+      position: relative;
+      transition: transform .2s ease-out;
+    }
+    .card:hover { transform: translateY(-4px); }
+    .card::after {
+      content: '';
+      position: absolute;
+      top: 10px; right: 10px;
+      width: 10px; height: 10px;
+      background: var(--dl-primary);
+      border: 2px solid var(--dl-border);
+    }
+    .card:nth-child(2)::after { border-radius: 50%; background: var(--dl-secondary); }
+    .card:nth-child(3)::after {
+      width: 0; height: 0; border: none;
+      border-left: 6px solid transparent;
+      border-right: 6px solid transparent;
+      border-bottom: 10px solid var(--dl-accent);
+      background: transparent;
+    }
+    .card h3 { margin: 0 0 8px; font-size: 1rem; font-weight: 700; text-transform: uppercase; }
+    .card p { margin: 0; font-size: .875rem; }
+    .field {
+      width: 100%; max-width: 360px; height: 52px; padding: 0 14px;
+      border: 4px solid var(--dl-border);
+      background: var(--dl-muted);
+      font-family: inherit;
+      font-size: 1rem;
+      font-weight: 500;
+      color: var(--dl-on-surface);
+      box-shadow: inset 0 0 0 0 transparent;
+    }
+    .field:focus {
+      outline: 3px solid var(--dl-accent);
+      outline-offset: 2px;
+    }
+    footer {
+      text-align: center;
+      font-size: .75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-top: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="banner">
+      <div class="geo" aria-hidden="true">
+        <span class="c"></span>
+        <span class="s"></span>
+        <span class="t"></span>
+      </div>
+      <h1>Bauhaus</h1>
+      <p>id: <code>bauhaus</code> · 原色 · 硬阴影 · 几何构成</p>
+    </header>
+
+    <section aria-labelledby="sec-colors">
+      <h2 id="sec-colors">色彩</h2>
+      <div class="swatches">
+        <div class="swatch"><div style="background:var(--dl-bg)"></div>Canvas</div>
+        <div class="swatch"><div style="background:var(--dl-primary)"></div>Red</div>
+        <div class="swatch"><div style="background:var(--dl-secondary)"></div>Blue</div>
+        <div class="swatch"><div style="background:var(--dl-accent)"></div>Yellow</div>
+        <div class="swatch"><div style="background:var(--dl-on-surface)"></div>Black</div>
+      </div>
+    </section>
+
+    <section aria-labelledby="sec-type">
+      <h2 id="sec-type">字体层级</h2>
+      <div class="type-samples">
+        <h3>Display</h3>
+        <p style="font-size:1.125rem;font-weight:700;text-transform:uppercase">Subheading — Outfit</p>
+        <p style="font-size:1rem">Body Medium — 标准段落</p>
+        <p style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.15em">Label Wide</p>
+      </div>
+    </section>
+
+    <section aria-labelledby="sec-buttons">
+      <h2 id="sec-buttons">按钮</h2>
+      <div class="btn-row">
+        <button type="button" class="btn btn-primary">主要</button>
+        <button type="button" class="btn btn-tonal">次要</button>
+        <button type="button" class="btn btn-yellow">强调</button>
+        <button type="button" class="btn btn-outline">描边</button>
+      </div>
+    </section>
+
+    <section aria-labelledby="sec-cards">
+      <h2 id="sec-cards">卡片</h2>
+      <div class="cards">
+        <article class="card"><h3>功能 A</h3><p>硬阴影与角标几何。</p></article>
+        <article class="card"><h3>功能 B</h3><p>4px 黑框 poster 风。</p></article>
+        <article class="card"><h3>功能 C</h3><p>hover 上移、无模糊影。</p></article>
+      </div>
+    </section>
+
+    <section aria-labelledby="sec-input">
+      <h2 id="sec-input">输入框</h2>
+      <input class="field" type="text" placeholder="示例输入" aria-label="示例输入" />
+    </section>
+
+    <footer>indexed · bauhaus preview</footer>
+  </div>
+</body>
+</html>

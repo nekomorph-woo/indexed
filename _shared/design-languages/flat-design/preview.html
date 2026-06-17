@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Flat Design — 设计语言预览</title>
+  <!-- design-language-id: flat-design -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --dl-bg: #FFFFFF;
+      --dl-surface: #F3F4F6;
+      --dl-on-surface: #111827;
+      --dl-primary: #3B82F6;
+      --dl-on-primary: #FFFFFF;
+      --dl-secondary: #10B981;
+      --dl-accent: #F59E0B;
+      --dl-muted: #F3F4F6;
+      --dl-border: #E5E7EB;
+      --dl-radius: 8px;
+      --dl-font: 'Outfit', system-ui, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: var(--dl-font);
+      background: var(--dl-bg);
+      color: var(--dl-on-surface);
+      line-height: 1.5;
+    }
+    .wrap { max-width: 960px; margin: 0 auto; padding: 24px 20px 48px; }
+    .banner {
+      background: var(--dl-primary);
+      color: var(--dl-on-primary);
+      border-radius: var(--dl-radius);
+      padding: 28px 32px;
+      margin-bottom: 24px;
+      position: relative;
+      overflow: hidden;
+    }
+    .banner .deco {
+      position: absolute;
+      right: -20px; top: -20px;
+      width: 120px; height: 120px;
+      border-radius: 50%;
+      background: rgba(255,255,255,.12);
+    }
+    .banner .deco.sq {
+      width: 80px; height: 80px;
+      border-radius: var(--dl-radius);
+      right: 60px; bottom: -10px; top: auto;
+      transform: rotate(12deg);
+    }
+    .banner h1 {
+      margin: 0 0 8px;
+      font-size: clamp(1.75rem, 5vw, 2.25rem);
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      position: relative;
+    }
+    .banner p { margin: 0; font-size: .9rem; font-weight: 500; opacity: .95; position: relative; }
+    .banner code { background: rgba(255,255,255,.2); padding: 2px 8px; border-radius: 4px; }
+    section {
+      background: var(--dl-surface);
+      border-radius: var(--dl-radius);
+      padding: 20px 24px;
+      margin-bottom: 20px;
+    }
+    section h2 {
+      margin: 0 0 16px;
+      font-size: .7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: #6B7280;
+    }
+    .swatches { display: flex; flex-wrap: wrap; gap: 10px; }
+    .swatch {
+      width: 72px;
+      text-align: center;
+      font-size: .65rem;
+      font-weight: 600;
+      color: #6B7280;
+    }
+    .swatch div {
+      height: 48px;
+      border-radius: var(--dl-radius);
+      margin-bottom: 6px;
+    }
+    .type-samples h3 {
+      margin: 0 0 4px;
+      font-size: clamp(1.5rem, 4vw, 2rem);
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+    .type-samples p { margin: 0 0 8px; font-weight: 400; }
+    .btn-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      min-height: 48px;
+      padding: 12px 24px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: .875rem;
+      font-weight: 600;
+      transition: transform .2s, background .2s, color .2s, border-color .2s;
+    }
+    .btn:hover { transform: scale(1.05); }
+    .btn-primary { background: var(--dl-primary); color: var(--dl-on-primary); }
+    .btn-primary:hover { background: #2563EB; }
+    .btn-secondary { background: var(--dl-muted); color: var(--dl-on-surface); }
+    .btn-secondary:hover { background: #E5E7EB; }
+    .btn-outline {
+      background: transparent;
+      color: var(--dl-primary);
+      border: 4px solid var(--dl-primary);
+    }
+    .btn-outline:hover {
+      background: var(--dl-primary);
+      color: var(--dl-on-primary);
+      transform: scale(1.05);
+    }
+    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+    .card {
+      padding: 16px;
+      border-radius: var(--dl-radius);
+      transition: transform .2s, background .2s;
+      cursor: default;
+    }
+    .card:hover { transform: scale(1.02); }
+    .card:nth-child(1) { background: #EFF6FF; }
+    .card:nth-child(1):hover { background: #DBEAFE; }
+    .card:nth-child(2) { background: #ECFDF5; }
+    .card:nth-child(2):hover { background: #D1FAE5; }
+    .card:nth-child(3) { background: #FFFBEB; }
+    .card:nth-child(3):hover { background: #FEF3C7; }
+    .card h3 { margin: 0 0 8px; font-size: 1rem; font-weight: 700; }
+    .card p { margin: 0; font-size: .875rem; color: #4B5563; }
+    .field {
+      width: 100%; max-width: 360px;
+      height: 48px;
+      padding: 0 14px;
+      border: 2px solid transparent;
+      border-radius: 6px;
+      background: var(--dl-muted);
+      font-family: inherit;
+      font-size: 1rem;
+      color: var(--dl-on-surface);
+      transition: background .2s, border-color .2s;
+    }
+    .field:focus {
+      outline: none;
+      background: #fff;
+      border-color: var(--dl-primary);
+    }
+    footer {
+      text-align: center;
+      font-size: .8rem;
+      color: #9CA3AF;
+      margin-top: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="banner">
+      <span class="deco" aria-hidden="true"></span>
+      <span class="deco sq" aria-hidden="true"></span>
+      <h1>Flat Design</h1>
+      <p>id: <code>flat-design</code> · 无色块阴影 · 色块分层 · Outfit</p>
+    </header>
+
+    <section aria-labelledby="sec-colors">
+      <h2 id="sec-colors">色彩</h2>
+      <div class="swatches">
+        <div class="swatch"><div style="background:var(--dl-bg);border:1px solid var(--dl-border)"></div>White</div>
+        <div class="swatch"><div style="background:var(--dl-primary)"></div>Blue</div>
+        <div class="swatch"><div style="background:var(--dl-secondary)"></div>Emerald</div>
+        <div class="swatch"><div style="background:var(--dl-accent)"></div>Amber</div>
+        <div class="swatch"><div style="background:var(--dl-surface)"></div>Muted</div>
+      </div>
+    </section>
+
+    <section aria-labelledby="sec-type">
+      <h2 id="sec-type">字体层级</h2>
+      <div class="type-samples">
+        <h3>Hierarchy by Type</h3>
+        <p>Body Regular — 清晰可读的正文层级。</p>
+        <p style="font-size:.7rem;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:#6B7280">Label Uppercase</p>
+      </div>
+    </section>
+
+    <section aria-labelledby="sec-buttons">
+      <h2 id="sec-buttons">按钮</h2>
+      <div class="btn-row">
+        <button type="button" class="btn btn-primary">主要操作</button>
+        <button type="button" class="btn btn-secondary">次要</button>
+        <button type="button" class="btn btn-outline">描边填色</button>
+      </div>
+    </section>
+
+    <section aria-labelledby="sec-cards">
+      <h2 id="sec-cards">卡片</h2>
+      <div class="cards">
+        <article class="card"><h3>功能 A</h3><p>色块底，无阴影。</p></article>
+        <article class="card"><h3>功能 B</h3><p>hover 微缩放。</p></article>
+        <article class="card"><h3>功能 C</h3><p>淡色 tint 区分。</p></article>
+      </div>
+    </section>
+
+    <section aria-labelledby="sec-input">
+      <h2 id="sec-input">输入框</h2>
+      <input class="field" type="text" placeholder="示例输入" aria-label="示例输入" />
+    </section>
+
+    <footer>indexed · flat-design preview · shadow-none</footer>
+  </div>
+</body>
+</html>

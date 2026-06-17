@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Hand-Drawn — 设计语言预览</title>
+  <!-- design-language-id: hand-drawn -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Kalam:wght@700&family=Patrick+Hand&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --dl-bg: #fdfbf7;
+      --dl-surface: #ffffff;
+      --dl-on-surface: #2d2d2d;
+      --dl-primary: #ff4d4d;
+      --dl-on-primary: #ffffff;
+      --dl-secondary: #2d5da1;
+      --dl-accent: #fff9c4;
+      --dl-muted: #e5e0d8;
+      --dl-border: #2d2d2d;
+      --dl-wobbly: 255px 15px 225px 15px / 15px 225px 15px 255px;
+      --dl-wobbly-md: 40px 12px 35px 10px / 12px 30px 14px 38px;
+      --dl-font-display: 'Kalam', cursive;
+      --dl-font-body: 'Patrick Hand', cursive;
+      --dl-shadow: 4px 4px 0 0 #2d2d2d;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: var(--dl-font-body);
+      font-size: 1.05rem;
+      background-color: var(--dl-bg);
+      background-image: radial-gradient(#e5e0d8 1px, transparent 1px);
+      background-size: 24px 24px;
+      color: var(--dl-on-surface);
+      line-height: 1.45;
+    }
+    .wrap { max-width: 960px; margin: 0 auto; padding: 24px 20px 48px; }
+    .banner {
+      background: var(--dl-surface);
+      border: 3px solid var(--dl-border);
+      border-radius: var(--dl-wobbly-md);
+      padding: 24px 28px;
+      margin-bottom: 24px;
+      box-shadow: var(--dl-shadow);
+      transform: rotate(-0.8deg);
+      position: relative;
+    }
+    .banner .tape {
+      position: absolute;
+      top: -10px; left: 50%;
+      transform: translateX(-50%) rotate(-2deg);
+      width: 72px; height: 22px;
+      background: rgba(229,224,216,.85);
+      border: 1px dashed var(--dl-border);
+    }
+    .banner h1 {
+      margin: 12px 0 8px;
+      font-family: var(--dl-font-display);
+      font-size: clamp(1.75rem, 5vw, 2.35rem);
+      font-weight: 700;
+      line-height: 1.1;
+    }
+    .banner p { margin: 0; }
+    .banner code {
+      background: var(--dl-muted);
+      padding: 2px 6px;
+      border-radius: 4px 12px 6px 10px;
+    }
+    section {
+      background: var(--dl-surface);
+      border: 2px solid var(--dl-border);
+      border-radius: var(--dl-wobbly-md);
+      padding: 20px 24px;
+      margin-bottom: 20px;
+      box-shadow: 3px 3px 0 0 rgba(45,45,45,.12);
+      transition: transform .1s;
+    }
+    section:hover { transform: rotate(0.5deg); }
+    section h2 {
+      margin: 0 0 16px;
+      font-family: var(--dl-font-display);
+      font-size: 1.1rem;
+      font-weight: 700;
+    }
+    .swatches { display: flex; flex-wrap: wrap; gap: 12px; }
+    .swatch {
+      width: 72px;
+      text-align: center;
+      font-size: .75rem;
+      transform: rotate(-1deg);
+    }
+    .swatch div {
+      height: 48px;
+      margin-bottom: 6px;
+      border: 2px solid var(--dl-border);
+      border-radius: 30% 70% 55% 45% / 40% 50% 50% 60%;
+      box-shadow: 2px 2px 0 0 var(--dl-border);
+    }
+    .type-samples h3 {
+      margin: 0 0 4px;
+      font-family: var(--dl-font-display);
+      font-size: clamp(1.5rem, 4vw, 2rem);
+      font-weight: 700;
+      transform: rotate(-1deg);
+    }
+    .type-samples p { margin: 0 0 8px; }
+    .btn-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      min-height: 48px;
+      padding: 10px 22px;
+      border: 3px solid var(--dl-border);
+      border-radius: var(--dl-wobbly);
+      background: #fff;
+      color: var(--dl-on-surface);
+      cursor: pointer;
+      font-family: var(--dl-font-body);
+      font-size: 1.05rem;
+      box-shadow: var(--dl-shadow);
+      transition: transform .1s, box-shadow .1s, background .15s, color .15s;
+    }
+    .btn:hover {
+      background: var(--dl-primary);
+      color: var(--dl-on-primary);
+      box-shadow: 2px 2px 0 0 var(--dl-border);
+      transform: translate(2px, 2px);
+    }
+    .btn:active {
+      box-shadow: none;
+      transform: translate(4px, 4px);
+    }
+    .btn-secondary {
+      background: var(--dl-muted);
+    }
+    .btn-secondary:hover {
+      background: var(--dl-secondary);
+      color: #fff;
+    }
+    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; }
+    .card {
+      padding: 16px;
+      border: 2px solid var(--dl-border);
+      border-radius: 35px 14px 28px 12px / 14px 26px 16px 32px;
+      background: #fff;
+      box-shadow: 3px 3px 0 0 rgba(45,45,45,.15);
+      transition: transform .1s, box-shadow .1s;
+    }
+    .card:nth-child(2) {
+      background: var(--dl-accent);
+      transform: rotate(1.2deg);
+    }
+    .card:hover { transform: rotate(-1deg) translateY(-2px); box-shadow: 5px 5px 0 0 var(--dl-border); }
+    .card h3 {
+      margin: 0 0 8px;
+      font-family: var(--dl-font-display);
+      font-size: 1.1rem;
+    }
+    .card p { margin: 0; font-size: .95rem; }
+    .field {
+      width: 100%; max-width: 360px;
+      min-height: 48px;
+      padding: 10px 14px;
+      border: 2px solid var(--dl-border);
+      border-radius: 18px 8px 22px 10px / 10px 20px 12px 24px;
+      background: #fff;
+      font-family: var(--dl-font-body);
+      font-size: 1.05rem;
+      color: var(--dl-on-surface);
+    }
+    .field::placeholder { color: rgba(45,45,45,.4); }
+    .field:focus {
+      outline: none;
+      border-color: var(--dl-secondary);
+      box-shadow: 0 0 0 3px rgba(45,93,161,.2);
+    }
+    footer {
+      text-align: center;
+      font-size: .9rem;
+      margin-top: 8px;
+      transform: rotate(0.5deg);
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="banner">
+      <span class="tape" aria-hidden="true"></span>
+      <h1>Hand-Drawn</h1>
+      <p>id: <code>hand-drawn</code> · 手绘歪边 · 硬阴影剪纸感</p>
+    </header>
+
+    <section aria-labelledby="sec-colors">
+      <h2 id="sec-colors">色彩</h2>
+      <div class="swatches">
+        <div class="swatch"><div style="background:var(--dl-bg)"></div>纸</div>
+        <div class="swatch"><div style="background:var(--dl-on-surface)"></div>铅笔</div>
+        <div class="swatch"><div style="background:var(--dl-primary)"></div>红笔</div>
+        <div class="swatch"><div style="background:var(--dl-secondary)"></div>蓝笔</div>
+        <div class="swatch"><div style="background:var(--dl-accent)"></div>便签</div>
+      </div>
+    </section>
+
+    <section aria-labelledby="sec-type">
+      <h2 id="sec-type">字体层级</h2>
+      <div class="type-samples">
+        <h3>像便签上的标题!</h3>
+        <p>Patrick Hand — 正文像手写字。</p>
+        <p style="font-size:.85rem;color:#666">Kalam 用于强调与区块标题</p>
+      </div>
+    </section>
+
+    <section aria-labelledby="sec-buttons">
+      <h2 id="sec-buttons">按钮</h2>
+      <div class="btn-row">
+        <button type="button" class="btn">主要操作</button>
+        <button type="button" class="btn btn-secondary">次要</button>
+      </div>
+    </section>
+
+    <section aria-labelledby="sec-cards">
+      <h2 id="sec-cards">卡片</h2>
+      <div class="cards">
+        <article class="card"><h3>草图 A</h3><p>歪边框 + 硬阴影。</p></article>
+        <article class="card"><h3>便签 B</h3><p>黄色 post-it 底。</p></article>
+        <article class="card"><h3>涂鸦 C</h3><p>hover 微旋转。</p></article>
+      </div>
+    </section>
+
+    <section aria-labelledby="sec-input">
+      <h2 id="sec-input">输入框</h2>
+      <input class="field" type="text" placeholder="随便写点什么…" aria-label="示例输入" />
+    </section>
+
+    <footer>indexed · hand-drawn preview ✎</footer>
+  </div>
+</body>
+</html>

@@ -1,0 +1,498 @@
+# indexed 工作区规范（Claude Code 底座）
+
+> **权威来源**：本文件 + `.claude/rules/`（各领域细化规则）+ `.claude/settings.json`（机器可执行的硬约束）。
+> 用户不自行搭目录；Agent 必须按本规范创建、移动、命名。若任务不符合现有拓扑，先提议修订本文件，再动手。
+
+> **分层记忆**：本文件是「宪法」——精炼的整体把控（目录索引 + 顶层方向 + 核心原则）。各领域细化规则独立存放于 `.claude/rules/`，并通过下方 import 一并纳入记忆，使助手成为伙伴/伴侣式协作者而非一次性工具。
+
+```text
+@.claude/rules/00-core.md
+@.claude/rules/naming.md
+@.claude/rules/shared-repos.md
+@.claude/rules/reports.md
+@.claude/rules/research.md
+@.claude/rules/artifacts.md
+@.claude/rules/ix-agents.md
+@.claude/rules/specs-templates.md
+@.claude/rules/design-languages.md
+@.claude/rules/git-workflow.md
+@.claude/rules/dialogue-style.md
+```
+
+> 上述 `@import` 为 Claude Code 记忆导入语法，使 `.claude/rules/*.md` 自动随本文件进入上下文。rules 文件内容是本规范各章节的细化展开，与本文件一致、不冲突。
+
+---
+
+## 1. 角色与原则
+
+你是 `indexed` 工作区的协作 Agent。职责包括：按规范落盘、执行 `reports/` 流水线、维护 `research/` 专题、管理 `artifacts/` 小工具、管理 `ix-agents/` 组合应用、管理 `_shared/repos/` 中的 Git clone。
+
+| 原则 | 说明 |
+|------|------|
+| **结构先于文件** | 先确认路径合法，再创建文件 |
+| **不发明顶层** | 根目录只允许 `_shared/`、`reports/`、`research/`、`artifacts/`、`ix-agents/` 五个工作桶 + 元文件 |
+| **英文 kebab-case** | 目录与文件名默认英文；中文仅出现在 Markdown 正文标题或交付物内容 |
+| **引用本规范** | 新建周期/专题前，对照第 3、4 节清单 |
+| **仓库最小占用** | clone/fetch 浅克隆；禁止构建；禁止产生编译/打包产物（见 §5.5；硬约束已写入 `.claude/settings.json`） |
+| **Skill 优先** | 同名 skill + command 只执行 skill 定义（见 `.claude/rules/specs-templates.md` §skill 去重） |
+| **Skill 两阶段** | slash 仅阶段 A（模板 + 已 clone 仓库列表）→ 用户填好再阶段 B；**禁止**单独建 command（见 `.claude/rules/specs-templates.md` §两阶段） |
+| **简体中文回复** | 始终用简体中文回复用户，不随用户输入语言切换（见 `.claude/rules/dialogue-style.md`「简体中文回复」） |
+
+> **平台底座**：本工作区以 **Claude Code** 为唯一底座（`CLAUDE.md` + `.claude/`）。`.claude/skills/` 待后续迁移；当前各工作流的两阶段流程以本文件 §4、§5 为准。
+
+---
+
+## 2. 目录拓扑（Canonical Tree）
+
+```
+indexed/
+├── CLAUDE.md             # 本文件（唯一权威）
+├── README.md             # 人类速览（从本文件摘要，非权威）
+├── .gitignore
+├── .claude/              # Claude Code 配置
+│   ├── rules/            # 各领域细化规则（import 进 CLAUDE.md 记忆）
+│   ├── settings.json     # 机器可执行硬约束（禁止构建）
+│   └── skills/           # skills（待迁移；当前流程见本文件 §4/§5）
+│
+├── _shared/
+│   ├── repos/            # 唯一允许的 Git clone 根
+│   │   └── <repo-kebab>/ # 例：ai-agent-service
+│   ├── specs/            # Agent 执行规范（*.spec.md，只读）
+│   ├── templates/        # 跨任务文档母版（只读，勿直接改）
+│   └── design-languages/  # HTML 设计语言 prompt 库（按需 Read）
+│       └── <id>/          # 例：material-you/{meta.md,prompt.md}
+│
+├── reports/
+│   └── <report-type>/     # 例：team-usage
+│       ├── README.md
+│       └── <start>_<end>/ # 例：2026-05-11_2026-05-22
+│           ├── variable.md
+│           ├── drafts/
+│           └── <final>.md
+│
+├── research/
+    ├── README.md
+    └── <topic>/           # 专题，例：passkey
+        ├── docs/
+        ├── design/
+        └── assets/
+│
+├── artifacts/
+│   ├── README.md
+│   ├── capabilities.md       # Agent 原子能力发现
+│   └── ix-<domain>-cli/
+│       ├── main.py
+│       ├── config.py
+│       ├── providers/
+│       ├── .env.example
+│       └── README.md
+│
+└── ix-agents/
+    ├── README.md
+    ├── registry.md
+    └── ix-<business>-agent/
+        ├── manifest.yaml       # 执行剧本（Claude Code 必读）
+        ├── paths.py            # 可选；runs 路径解析
+        ├── config/             # 跨 run 默认值（tracked）
+        └── runs/
+            └── <run-id>/       # 北京时间 YYYY-MM-DD_HH-mm-ss
+                ├── run.yaml
+                ├── inbox/
+                ├── supplements/
+                ├── work/raw/
+                ├── work/thinking/
+                └── output/
+```
+
+### 2.1 禁止项（硬约束）
+
+- 在 `indexed/` 根下新建 `projects/`、`docs/`、`temp/`、`00-*` 等桶（工具配置目录 `.claude/`、`.wok-plans/` 除外，见 `.claude/rules/git-workflow.md`）
+- 使用中文或空格作为**目录名**
+- 在 `reports/<type>/<period>/`、`research/<topic>/`、`artifacts/<artifact-name>/` 或 `ix-agents/<agent-name>/` 内 `git clone`
+- 使用 `tmp-` 作为报告中间产物前缀（统一 `draft-`）
+- 未经用户确认删除 `_shared/repos/` 下已有 clone
+- 在 `_shared/repos/` 内执行 **构建、编译、打包、安装依赖**（见 §5.5；已写入 `.claude/settings.json` deny）
+
+---
+
+## 3. 命名规范（Naming Spec）
+
+### 3.1 通用
+
+| 对象 | 规则 | 示例 |
+|------|------|------|
+| 目录 | 英文 kebab-case | `team-usage`, `passkey` |
+
+### 3.1.1 桶级 `README.md`（硬约束）
+
+**仅下列「桶」必须有 `README.md`**（人类/Agent 速览，非权威；细节以本文件为准）：
+
+| 桶路径 | 说明 |
+|--------|------|
+| 工作区根 | `README.md` |
+| `reports/<report-type>/` | 每种报告类型一份（新建 `<type>` 时必建） |
+| `research/` | 专题桶总说明 |
+| `artifacts/` | 可运行小工具/脚本桶总说明 |
+| `ix-agents/` | 组合应用桶总说明 |
+| `_shared/specs/` | spec 索引（新增 `*.spec.md` 类别时更新本 README 表格，**不**强制 `specs/<category>/README.md`） |
+| `_shared/templates/` | 模板索引（新增模板类别时更新本 README 表格，**不**强制 `templates/<category>/README.md`） |
+| `_shared/design-languages/` | 设计语言 prompt 索引（新增 `<id>` 时更新本 README 表格） |
+
+**不要求** README 的目录（示例）：
+
+- `reports/<type>/<周期>/`、`drafts/` 等**当期/实例**子目录
+- `research/<topic>/`（专题根 README **可选**，见 `.claude/rules/research.md`）
+- `artifacts/<artifact-name>/`（工具根 `SPEC.md` + `SPEC.yaml` **必须**，见 `.claude/rules/artifacts.md`）
+- `ix-agents/<agent-name>/`（应用根 `SPEC.md` + `SPEC.yaml` **必须**，见 `.claude/rules/ix-agents.md`）
+- `_shared/repos/<repo-kebab>/`（Git clone，属上游仓库文档）
+- `_shared/specs/<category>/`、`_shared/templates/<category>/` 子目录（可有索引 README，**非强制**）
+
+新建桶或 `reports/<type>` 时：Agent **必须**创建或更新对应桶级 `README.md`；**禁止**仅为满足规范而在每个子文件夹批量创建 README。
+| 排序/共用前缀 | 单下划线 `_` | `_shared`, `_internal` |
+| 日期 | `YYYY-MM-DD` | `2026-05-11` |
+| 日期区间目录 | `<start>_<end>` | `2026-05-11_2026-05-22` |
+| 草稿文件 | `draft-` + 语义 | `draft-passkey-survey-report.md` |
+| 文档 | `.md` / `.html` / `.txt`；说明性用 kebab-case | `passkey-peer-proposal.txt` |
+
+### 3.4 专题 `research/<topic>/`
+
+| 子目录 | 内容 |
+|--------|------|
+| `docs/` | FAQ、方案说明、对外 HTML/Markdown（**必填**） |
+| `design/` | 专题交互/视觉说明；可选 `design-language.md`（有设计/HTML 选型时） |
+| `assets/` | 图片等静态资源（有素材时） |
+
+**轻量专题**：仅文档调研时只需 `docs/`；`design/`、`assets/` 按需再建。已有仅 `docs/` 的专题合规，不要求 retro 补目录。
+
+专题根目录名 = 主题 kebab-case（如 `passkey`）。**不要**用 `research` 下再套 `research` 或按日期分专题。
+
+通用设计语言全文在 `_shared/design-languages/<id>/`，**不要**在专题 `design/` 重复存放可复用 token 库。
+
+### 3.5 小工具 `artifacts/ix-<domain>-cli/`
+
+> 细则：`.claude/rules/artifacts.md`（命名、骨架、provider、新建清单）。**新建 artifact 时 Agent 直接按该 rule 执行，无需用户重复说明。**
+
+| 说明 | 约定 |
+|------|------|
+| **用途** | 可运行 CLI/脚本；从 `_shared/repos` 或 `research/` 提炼的实现（非报告、非纯文档） |
+| **命名** | 默认 **`ix-<domain>-cli`**（kebab-case），例：`ix-metabase-cli`、`ix-mail-cli` |
+| **结构** | 标准骨架见 `.claude/rules/artifacts.md`：`main.py`、`config.py`、可选 `session.py` + `providers/`、`.env.example` |
+| **耦合** | artifact 间 **零 import**；同 artifact 内 provider 间 **零互引**；多工具用 **shell 串联** |
+| **配置** | `.env` + `.env.example`；禁止 tracked 明文密钥 |
+| **与 research** | 分析在 `research/`；可执行在 `artifacts/` |
+| **与 _shared/repos** | 只读参考；提炼代码复制到 artifact，禁止在 repos 内改代码或构建 |
+| **索引** | 新建或显著变更后更新 `artifacts/README.md` 与 **`artifacts/capabilities.md`**（Agent 能力发现） |
+
+**现有范例**：`ix-agent-run-cli`（组合 agent 执行）、`ix-workspace-index-cli`（索引审计）。
+
+### 3.6 组合应用 `ix-agents/ix-<business>-agent/`
+
+> 细则：`.claude/rules/ix-agents.md`（编排、run-cli、runs 隔离、发现、定时）。
+> **编排**：仅 **`manifest.yaml`**（`params` + 顺序 `steps`）。
+> **执行**：**`artifacts/ix-agent-run-cli`**（TUI 与定时 **同一条命令**）；`thinking` 由 run-cli 调 **`claude -p`** + manifest `prompt`。
+
+| 说明 | 约定 |
+|------|------|
+| **用途** | 多步组合；`tool` = Shell / `ix-*-cli`；`thinking` = `claude -p` 落盘 `work/thinking/` |
+| **命名** | 桶 **`ix-agents/`**；应用 **`ix-<business>-agent`** |
+| **路径** | 每次 **`runs/<run-id>/`**（北京时间隔离）；跨 run 默认 **`config/`** |
+| **执行命令** | `python artifacts/ix-agent-run-cli/main.py --agent ix-<business>-agent` |
+| **母版 / 新建** | `_shared/templates/ix-agents/` + ix-agent 流程（见 `.claude/rules/ix-agents.md`） |
+| **耦合** | tool：**Shell** 调 `ix-*-cli` 或 agent `scripts/`；禁止 import artifacts |
+| **发现** | `ix-agents/registry.md` → `.claude/rules/ix-agents.md` |
+
+**禁止**：`orchestrate.py`（流程写死在 Python）；agent 根下无 run 隔离的 `work/`/`output/`；agent 内自编排 import。
+
+**允许**：`ix-agent-run-cli` 为 thinking 调用 `claude -p`（Claude Code 自动化路径）。
+
+**定时（硬约束）**：`ix-*-agent` 的定时 **仅**指 [`ix-agents/schedule/`](ix-agents/schedule/)（`registry.yaml` + `invoke-job.ps1` / `main.py schedule run`）。**禁止** Agent 自行创建其它计划任务、`schtasks` 或 per-agent 定时脚本。见 [`.claude/rules/ix-agents.md`](.claude/rules/ix-agents.md) §定时。
+
+### 3.7 Agent 规范 `_shared/specs/`
+
+| 类型 | 文件 | 说明 |
+|------|------|------|
+| UI 设计语言路由 | `ui-design/design-language-routing.spec.md` | HTML 选型；prompt 在 `_shared/design-languages/` |
+| UI 设计语言导入 | `ui-design/design-language-import.spec.md` | 粘贴 prompt → 新建 `design-languages/<id>/` |
+
+- spec 目录 **只放规范**；禁止在 spec 上直接填写某次评审的业务结论
+- 新 spec 类别：`_shared/specs/<category>/`，文件名 `*.spec.md`；**更新** `_shared/specs/README.md` 索引行，**不强制**该子目录单独 `README.md`（见 §3.1.1）
+- 触发：用户提及相关领域时按本文件 §5 流程执行
+
+### 3.8 文档模板 `_shared/templates/`
+
+| 类型 | 模板文件 | 说明 |
+|------|----------|------|
+| 设计语言导入 | `design-languages/design-language-intake.template.md` | 粘贴外部 prompt；见 import spec |
+| 设计语言元数据 | `design-languages/meta.template.md` | 导入产出 `meta.md` 结构参考 |
+| ix-*-agent 母版 | `ix-agents/manifest.template.yaml` 等 | 新建 `ix-agents/ix-<business>-agent/` |
+- 新模板类别：`_shared/templates/<category>/`，文件名 `*.template.md`；**更新** `_shared/templates/README.md` 索引行，**不强制**该子目录单独 `README.md`（见 §3.1.1）
+- 图示：架构/流程/交互用 **`###`/`####` 分节 + fenced code block ASCII 线框图**；禁止「图」列表格（见 `.claude/rules/dialogue-style.md`）
+
+### 3.11 设计语言库 `_shared/design-languages/`
+
+| 文件 | 路径 | 说明 |
+|------|------|------|
+| 桶索引 | `README.md` | id → 目录 |
+| 总览页 | `index.html` | 浏览器打开，链到各 `preview.html` |
+| 元数据 | `<id>/meta.md` | 标签、场景、token 摘要（罗列排序） |
+| 预览页 | `<id>/preview.html` | 结构与其它 id 相同，仅 token 不同 |
+| Prompt 全文 | `<id>/prompt.md` | 用户**确认 id 后** Read |
+| 预览母版 | `templates/design-languages/preview-page.template.html` | 导入时生成 preview 的结构准绳 |
+| 路由规范 | `_shared/specs/ui-design/design-language-routing.spec.md` | **无全局默认**；先罗列预览、用户选型 |
+| 导入规范 | `_shared/specs/ui-design/design-language-import.spec.md` | 粘贴 prompt → meta + prompt + preview |
+| 填写母版 | `_shared/templates/design-languages/design-language-intake.template.md` | 用户粘贴区 |
+| 触发规则 | `.claude/rules/design-languages.md` | HTML / 导入 |
+
+- 库内 **只放**可复用语言参考，禁止写入单次专题业务结论
+- 写业务 HTML：**禁止**自动选用任一 id；须罗列库 + 邀请打开 `preview.html` → 用户确认 `id`
+- 专题偏好：`design-language.md` 内 `preferred:` 仅影响推荐排序（非自动选中）
+- HTML 产出：当前任务下的 `docs/*.html`（`research` 或 `reports`）
+
+---
+
+## 4. 决策树：新内容放哪
+
+```
+用户任务
+│
+├─ 周期性交付 / 流水线
+│   └─ reports/<type>/<start>_<end>/
+│
+├─ 其它周期性交付 / 流水线
+│   └─ reports/<type>/<start>_<end>/
+│
+├─ 其它专题调研、方案、设计素材
+│   └─ research/<topic>/{docs,design,assets}/
+│
+├─ HTML / 原型页（设计语言）
+│   ├─ 路由：_shared/specs/ui-design/design-language-routing.spec.md
+│   ├─ 选型：罗列 meta → 用户预览 preview.html → 确认 id
+│   ├─ prompt：_shared/design-languages/<id>/prompt.md
+│   ├─ 导入：templates/.../design-language-intake.template.md + import spec
+│   ├─ 规则：.claude/rules/design-languages.md
+│   └─ 产出：research/**/docs/*.html 或 reports/**/docs/*.html
+│
+├─ 需要 clone / 分析 Git 代码
+│   └─ _shared/repos/<repo-kebab>/  （禁止放在 reports/research/artifacts 下）
+│
+├─ 可运行 CLI / 小工具（ix-*-cli）
+│   ├─ 发现已有能力：artifacts/capabilities.md
+│   └─ 实现/扩展：artifacts/ix-<domain>-cli/  （见 §3.5、.claude/rules/artifacts.md；禁止跨 artifact import）
+│
+├─ 组合应用 / 业务 Agent（ix-*-agent）
+│   ├─ 发现：ix-agents/registry.md
+│   ├─ 执行：artifacts/ix-agent-run-cli（TUI 与定时同命令）；ix-agent 流程
+│   ├─ 规范：§3.6、.claude/rules/ix-agents.md
+│   └─ 母版：_shared/templates/ix-agents/
+│
+└─ 不符合以上
+    └─ 停止：向用户说明原因，提议 (a) 归入现有桶 或 (b) 修订本文件（CLAUDE.md）增加新 <type>
+```
+
+---
+
+## 5. Agent 工作流（必须按序执行）
+
+> 以下工作流的 skill 当前**尚未迁移为 `.claude/skills/`**；两阶段流程（阶段 A 模板 → 阶段 B 执行）以本节文字描述为准，待后续单独迁移 skill。
+
+### 5.2 新建 `research/<topic>` 专题
+
+**触发**：用户开始新调研/方案主题。
+
+1. 确认 `research/<topic>/` 不存在；`<topic>` 为 kebab-case
+2. 至少创建 `docs/`；有设计稿或图片时再建 `design/`、`assets/`（轻量专题不强制后两者）
+3. 文档按 3.4 落入对应子目录；**禁止**在 `research/<topic>/` 根堆文件
+
+### 5.3 新建 `artifacts/ix-<domain>-cli`
+
+**触发**：用户要从 `_shared/repos` / `research` 落地可运行 CLI，或明确要求新建 artifact。
+
+**Agent 默认按 [`.claude/rules/artifacts.md`](.claude/rules/artifacts.md) 执行，无需用户重复解释架构。**
+
+1. 命名：`ix-<domain>-cli`（kebab-case）；确认目录不存在
+2. 创建标准骨架（`main.py`、`config.py`、`requirements.txt`、`.env.example`、`.gitignore`、**`README.md`**；按需 `session.py` + `providers/`）
+3. 实现至少一个子命令；验证可观察成功
+4. 更新 `artifacts/README.md` 索引与 **`artifacts/capabilities.md`**（意图速查 + 能力卡片）
+5. 禁止：跨 artifact import、repos 内改代码、提交 `.env`/密钥/`output/` 数据
+
+**同域扩展**：优先在同 artifact 加 `providers/<name>.py` + `main.py` 子命令，不新建目录。
+
+### 5.4 新建 / 执行 `ix-agents/ix-<business>-agent`
+
+**触发**：新建组合 agent、执行/定时跑 agent、用户提及 ix-agent 流程。
+
+**流程**：见 [`.claude/rules/ix-agents.md`](.claude/rules/ix-agents.md)。
+
+> **执行前必读**：ix-*-agent 遵循**两阶段开发规范**（见 `.claude/rules/ix-agents.md` §两阶段）——执行前先 Read manifest 的 `params`，向用户展示所需输入与默认值，等用户确认后再跑 run-cli。用户不会记得每个 agent 的入参，两阶段让 agent 对用户友好。
+
+**新建**
+
+1. 命名 `ix-<business>-agent`；从 [`_shared/templates/ix-agents/`](_shared/templates/ix-agents/) 复制母版
+2. 业务只写入 `manifest.yaml`、`config/`、可选 `scripts/`
+3. 更新 `ix-agents/registry.md`、`ix-agents/README.md`
+4. **禁止** `orchestrate.py`
+
+**执行**（TUI 与定时相同）
+
+```bash
+python artifacts/ix-agent-run-cli/main.py --agent ix-<business>-agent [--set k=v] [--trigger scheduled] [--resume --run-id <id>]
+```
+
+由 run-cli 创建 `runs/<run-id>/`、顺序执行 steps、更新 `run.yaml`。Claude Code 中 **Shell 运行上述命令并监督**，不在对话内逐步手写 manifest。
+
+### 5.5 Clone / 更新仓库（最小存储 · 只读 Git）
+
+**目标**：`_shared/repos/` 仅用于 `git log` / `checkout` / `diff` 等读操作，**不是**开发构建环境。
+
+#### 5.5.1 路径与去重
+
+1. 目标路径仅：`_shared/repos/<repo-kebab>/`
+2. 已存在同远程仓库 → 只 `fetch` / `checkout`，**禁止**重复 clone
+3. 目录名必须符合 `.claude/rules/naming.md` 的 clone 命名约定
+
+#### 5.5.2 Clone（首次）
+
+默认使用浅克隆，减少 `.git` 与检出体积：
+
+```bash
+git clone --depth 1 --single-branch --branch <默认分支> <url> _shared/repos/<repo-kebab>
+```
+
+- 需分析多个分支：在同一 clone 上 `git fetch origin <分支名>:<分支名> --depth 1`，再 `checkout`；仍不要 `clone --mirror` 或全历史
+- 超大仓库且只需部分路径：可选用 `git sparse-checkout`，须先与用户确认范围
+
+#### 5.5.3 更新（已存在）
+
+```bash
+cd _shared/repos/<repo-kebab>
+git fetch origin <branch> --depth 1
+git checkout <branch>
+```
+
+- 优先 `fetch --depth 1`；避免 `git pull` 拉全量历史
+- 禁止：`git fetch --unshallow`、`git clone --mirror`、无 `--depth` 的完整历史同步（除非用户明确要求且说明磁盘影响）
+
+#### 5.5.4 禁止的构建与产物（硬约束）
+
+**不得执行**（含但不限于；已写入 `.claude/settings.json` 的 deny 权限）：
+
+| 生态 | 禁止命令示例 |
+|------|----------------|
+| Java/Maven | `mvn compile` / `package` / `install` / `verify` |
+| Java/Gradle | `gradle build` / `assemble` |
+| Node | `npm install` / `npm run build` / `pnpm build` / `yarn` |
+| Go | `go build` |
+| 其它 | `docker build`、`make`、`./mvnw`、`./gradlew` |
+
+**不得故意生成或保留**本地构建产物目录/文件，例如：
+
+`target/`、`build/`、`dist/`、`out/`、`node_modules/`、`.gradle/`、`*.jar`、`*.war`、`*.class`（工作区检出中的已跟踪源码除外）
+
+#### 5.5.5 误生成产物的清理
+
+若发现上述目录（且为未跟踪或本地生成）：
+
+1. **不要**先跑构建去「验证」
+2. 在仓库根执行：`git clean -fdX`（仅删除 ignore 规则内的文件）或手动删除明确为产物的目录
+3. 向用户简要说明删除了哪些路径
+
+#### 5.5.6 与报告流水线的关系
+
+报告统计仅需 **Git 历史与 numstat**，**不需要**也不应为了报告而编译项目。若缺少依赖导致无法「理解」某段代码，用阅读源码与 `git show`，不要 `mvn install`。
+
+### 5.6 修改跨周期规范（spec / 模板）
+
+- **Spec / 示例**：在 `_shared/specs/<category>/` 维护；**禁止**写入当期 draft/定稿。
+- **模板**：在 `_shared/templates/<category>/` 维护。
+- 周期报告**不再**使用 `reports/<type>/_pipeline/` 或每期 `system.md`。
+
+### 5.9 新增 Agent 规范（spec）
+
+1. 在 `_shared/specs/<category>/` 新建 `*.spec.md`
+2. 更新 `_shared/specs/README.md` 与本文件 §3.7
+3. 配套 skill 须符合 §5.11 两阶段；rule 见 `.claude/rules/specs-templates.md` §两阶段
+
+### 5.10 新增文档模板（通用）
+
+1. 在 `_shared/templates/<category>/` 新建 `*.template.md`
+2. 更新 `_shared/templates/README.md` 与本文件 §3.8
+3. 若需专用 rule，在 `.claude/rules/` 增加指向该目录的说明
+
+### 5.11 Skill（fallback，少数场景）
+
+> ix-*-agent 是 indexed 的**首选编排范式**，其两阶段规范见 §5.4 / `.claude/rules/ix-agents.md`。
+> Skill 仅在 **manifest 流水线不适用**（需要对话式交互而非 tool+thinking 编排）时作为 fallback。
+
+若确需新建 skill，须遵循两阶段（A 给模板→停止 / B 用户填→执行），见 `.claude/rules/specs-templates.md` §两阶段。
+
+---
+
+## 6. 与用户协作的边界
+
+| 场景 | Agent 行为 |
+|------|------------|
+| 路径明确符合本规范 | 直接创建目录与文件，无需反复确认 |
+| 用户说「执行 ix-*-agent」 | **Shell** `ix-agent-run-cli/main.py --agent ...`；收集缺失 params；监督 `runs/<run-id>/` |
+| 需要新 `ix-agents/ix-<business>-agent` | ix-agent 流程或模板复制；更新 `registry.md` |
+| 仅需原子拉数/发信 | **Read** `artifacts/capabilities.md`，subprocess 串联 `ix-*-cli` |
+| 需要新 `artifacts/ix-<domain>-cli` | 按 `.claude/rules/artifacts.md` 创建；更新 `artifacts/README.md` 与 `capabilities.md` |
+| 需要新 `reports/<type>` | 先给出拟议目录树，用户同意后再创建 `reports/<type>/README.md`，并更新本文件 §2、§4 |
+| 删除或重命名已有周期/专题 | 先列出影响（链接、system 路径），再执行 |
+| 在根目录新增文件 | 仅允许：`CLAUDE.md`、`VERSION`、`.gitignore`、`.claude/`、`.wok-plans/` |
+| commit / zap 收尾 | 按 git-workflow.md 当前模式处理（local 不提示 push；remote 可 push） |
+
+---
+
+## 7. 相关文件索引
+
+> 本表仅列出**实际存在**的文件。skill 待迁移，故不列入。
+
+### 根与配置
+
+| 文件 | 用途 |
+|------|------|
+| `README.md` | 给人看的速览 |
+| `.claude/rules/*.md` | 各领域细化规则（import 进本文件记忆），见 `.claude/rules/README.md` 索引 |
+| `.claude/settings.json` | 机器可执行硬约束（禁止构建） |
+| `.gitignore` | 忽略 `.DS_Store`、产物目录、`.env`、`__pycache__/` |
+
+### 规范与模板
+
+| 文件 | 用途 |
+|------|------|
+| `_shared/specs/README.md` | Agent 规范索引 |
+| `_shared/specs/ui-design/design-language-routing.spec.md` | HTML 设计语言选型 |
+| `_shared/specs/ui-design/design-language-import.spec.md` | 粘贴 prompt 导入新语言 |
+| `_shared/templates/README.md` | 模板索引 |
+| `_shared/templates/ix-agents/` | ix-*-agent 母版（manifest / defaults / paths 等） |
+| `_shared/templates/design-languages/` | 设计语言 intake / meta / preview 母版 |
+
+### 桶级说明
+
+| 文件 | 用途 |
+|------|------|
+| `research/README.md` | 专题类型操作说明 |
+| `artifacts/README.md` | 小工具桶操作说明 |
+| `artifacts/capabilities.md` | **Agent 原子能力索引**（意图/关键词 → ix-*-cli） |
+| `ix-agents/README.md` | 组合应用桶说明 |
+| `ix-agents/registry.md` | **Agent 组合应用索引**（意图 → ix-*-agent） |
+| `ix-agents/schedule/README.md` | 定时登记与 invoke-job / register-windows-task |
+| `_shared/design-languages/README.md` | 设计语言 prompt 索引 |
+
+### 可执行实现
+
+| 文件 | 用途 |
+|------|------|
+| `artifacts/ix-agent-run-cli/` | 统一执行 manifest（tool + `claude -p` thinking） |
+| `artifacts/ix-workspace-index-cli/` | 索引审计：capabilities/registry 与磁盘一致性 |
+
+---
+
+## 8. 修订记录
+
+
+| 日期 | 变更 |
+|------|------|
+| 2026-05 ~ 2026-06 上旬 | 早期演进（详见基线快照） |
+| 2026-06-16 | **建立 Claude Code 单平台底座**：`CLAUDE.md` 成为唯一权威；细化规则提取为 `.claude/rules/<domain>.md` 并经 `@import` 纳入记忆；硬约束写入 `.claude/settings.json` |
+| 2026-06-16（续） | **indexed 基线改造**：品牌前缀 `lc-` → `ix-`、`work-with` → `indexed`；能力发现改为分布式 `SPEC.yaml` + 薄索引；失效登记清除；`README.md` → `SPEC.md` 体系；引入 `VERSION` 版本号 |

@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Industrial Skeuomorphism — 设计语言预览</title>
+  <!-- design-language-id: industrial-skeuomorphism -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --dl-bg: #e0e5ec;
+      --dl-surface: #e0e5ec;
+      --dl-on-surface: #2d3436;
+      --dl-muted-text: #4a5568;
+      --dl-primary: #ff4757;
+      --dl-on-primary: #ffffff;
+      --dl-muted: #d1d9e6;
+      --dl-shadow-dark: #babecc;
+      --dl-shadow-light: #ffffff;
+      --dl-shadow-card: 8px 8px 16px #babecc, -8px -8px 16px #ffffff;
+      --dl-shadow-float: 12px 12px 24px #babecc, -12px -12px 24px #ffffff;
+      --dl-shadow-pressed: inset 6px 6px 12px #babecc, inset -6px -6px 12px #ffffff;
+      --dl-shadow-recessed: inset 4px 4px 8px #babecc, inset -4px -4px 8px #ffffff;
+      --dl-font: 'Inter', system-ui, sans-serif;
+      --dl-font-mono: 'JetBrains Mono', monospace;
+      --dl-radius: 16px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: var(--dl-font);
+      background: var(--dl-bg);
+      color: var(--dl-on-surface);
+      line-height: 1.55;
+    }
+    .wrap { max-width: 960px; margin: 0 auto; padding: 24px 20px 48px; }
+    .status {
+      display: flex; align-items: center; gap: 8px;
+      font-family: var(--dl-font-mono);
+      font-size: .65rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--dl-muted-text);
+      margin-bottom: 16px;
+    }
+    .led {
+      width: 10px; height: 10px; border-radius: 50%;
+      background: #22c55e;
+      box-shadow: 0 0 10px 2px rgba(34,197,94,.6);
+      animation: pulse 2s ease-in-out infinite;
+    }
+    @keyframes pulse { 50% { opacity: .7; } }
+    .banner {
+      background: var(--dl-surface);
+      border-radius: var(--dl-radius);
+      padding: 24px 28px;
+      margin-bottom: 24px;
+      box-shadow: var(--dl-shadow-card);
+      position: relative;
+      background-image:
+        radial-gradient(circle at 12px 12px, rgba(0,0,0,.12) 2px, transparent 3px),
+        radial-gradient(circle at calc(100% - 12px) 12px, rgba(0,0,0,.12) 2px, transparent 3px);
+    }
+    .vents {
+      position: absolute; top: 14px; right: 14px;
+      display: flex; gap: 4px;
+    }
+    .vents span {
+      width: 4px; height: 22px; border-radius: 999px;
+      background: var(--dl-muted);
+      box-shadow: inset 1px 1px 2px rgba(0,0,0,.15);
+    }
+    .banner h1 {
+      margin: 0 0 8px;
+      font-size: clamp(1.5rem, 4vw, 2rem);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      filter: drop-shadow(0 1px 0 #fff);
+    }
+    .banner p { margin: 0; font-size: .9rem; color: var(--dl-muted-text); }
+    .banner code {
+      font-family: var(--dl-font-mono);
+      font-size: .85em;
+      background: var(--dl-muted);
+      padding: 2px 8px;
+      border-radius: 6px;
+      box-shadow: var(--dl-shadow-recessed);
+    }
+    section {
+      background: var(--dl-surface);
+      border-radius: var(--dl-radius);
+      padding: 20px 24px;
+      margin-bottom: 20px;
+      box-shadow: var(--dl-shadow-card);
+      transition: transform .3s ease-out, box-shadow .3s ease-out;
+    }
+    section:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--dl-shadow-float);
+    }
+    section h2 {
+      margin: 0 0 16px;
+      font-family: var(--dl-font-mono);
+      font-size: .7rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: var(--dl-muted-text);
+    }
+    .swatches { display: flex; flex-wrap: wrap; gap: 12px; }
+    .swatch {
+      width: 72px; text-align: center;
+      font-family: var(--dl-font-mono);
+      font-size: .6rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--dl-muted-text);
+    }
+    .swatch div {
+      height: 48px; border-radius: 8px; margin-bottom: 6px;
+      box-shadow: var(--dl-shadow-card);
+    }
+    .type-samples h3 {
+      margin: 0 0 4px;
+      font-size: clamp(1.35rem, 3.5vw, 1.75rem);
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+    .type-samples p { margin: 0 0 8px; }
+    .type-samples .mono {
+      font-family: var(--dl-font-mono);
+      font-size: .7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--dl-muted-text);
+    }
+    .btn-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      min-height: 48px;
+      padding: 12px 24px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-family: var(--dl-font);
+      font-size: .75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      transition: transform .15s, box-shadow .15s, filter .15s;
+    }
+    .btn-primary {
+      background: var(--dl-primary);
+      color: var(--dl-on-primary);
+      box-shadow: 4px 4px 8px rgba(166,50,60,.35), -4px -4px 8px rgba(255,100,110,.35);
+    }
+    .btn-primary:hover { filter: brightness(1.08); }
+    .btn-primary:active {
+      transform: translateY(2px);
+      box-shadow: var(--dl-shadow-pressed);
+    }
+    .btn-secondary {
+      background: var(--dl-bg);
+      color: var(--dl-on-surface);
+      box-shadow: var(--dl-shadow-card);
+    }
+    .btn-secondary:active {
+      transform: translateY(2px);
+      box-shadow: var(--dl-shadow-pressed);
+    }
+    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; }
+    .card {
+      padding: 16px;
+      border-radius: 12px;
+      background: var(--dl-bg);
+      box-shadow: var(--dl-shadow-card);
+      transition: transform .3s, box-shadow .3s;
+    }
+    .card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--dl-shadow-float);
+    }
+    .card h3 { margin: 0 0 8px; font-size: 1rem; font-weight: 700; }
+    .card p { margin: 0; font-size: .875rem; color: var(--dl-muted-text); }
+    .field {
+      width: 100%; max-width: 360px;
+      min-height: 48px;
+      padding: 0 16px;
+      border: none;
+      border-radius: 8px;
+      background: var(--dl-bg);
+      font-family: var(--dl-font-mono);
+      font-size: .9rem;
+      color: var(--dl-on-surface);
+      box-shadow: var(--dl-shadow-recessed);
+    }
+    .field:focus {
+      outline: none;
+      box-shadow: var(--dl-shadow-recessed), 0 0 0 2px rgba(255,71,87,.5);
+    }
+    footer {
+      text-align: center;
+      font-family: var(--dl-font-mono);
+      font-size: .65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--dl-muted-text);
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <p class="status"><span class="led" aria-hidden="true"></span> System operational</p>
+    <header class="banner">
+      <div class="vents" aria-hidden="true"><span></span><span></span><span></span></div>
+      <h1>Industrial Skeuomorphism</h1>
+      <p>id: <code>industrial-skeuomorphism</code> · 新拟态 · 安全橙</p>
+    </header>
+
+    <section aria-labelledby="sec-colors">
+      <h2 id="sec-colors">色彩</h2>
+      <div class="swatches">
+        <div class="swatch"><div style="background:var(--dl-bg)"></div>Chassis</div>
+        <div class="swatch"><div style="background:var(--dl-muted)"></div>Recess</div>
+        <div class="swatch"><div style="background:var(--dl-primary)"></div>Accent</div>
+        <div class="swatch"><div style="background:#2d3436"></div>Panel</div>
+      </div>
+    </section>
+
+    <section aria-labelledby="sec-type">
+      <h2 id="sec-type">字体层级</h2>
+      <div class="type-samples">
+        <h3>Control Module</h3>
+        <p>Inter body — 清晰工业界面正文。</p>
+        <p class="mono">JetBrains Mono · LOG #001</p>
+      </div>
+    </section>
+
+    <section aria-labelledby="sec-buttons">
+      <h2 id="sec-buttons">按钮</h2>
+      <div class="btn-row">
+        <button type="button" class="btn btn-primary">Execute</button>
+        <button type="button" class="btn btn-secondary">Secondary</button>
+      </div>
+    </section>
+
+    <section aria-labelledby="sec-cards">
+      <h2 id="sec-cards">卡片</h2>
+      <div class="cards">
+        <article class="card"><h3>Module A</h3><p>双阴影面板。</p></article>
+        <article class="card"><h3>Module B</h3><p>hover 抬升。</p></article>
+        <article class="card"><h3>Module C</h3><p>内凹输入槽。</p></article>
+      </div>
+    </section>
+
+    <section aria-labelledby="sec-input">
+      <h2 id="sec-input">输入框</h2>
+      <input class="field" type="text" placeholder="DATA INPUT" aria-label="示例输入" />
+    </section>
+
+    <footer>indexed · industrial-skeuomorphism</footer>
+  </div>
+</body>
+</html>

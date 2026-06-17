@@ -1,0 +1,18 @@
+# run.yaml 结构 — 由 ix-agent-run-cli 创建/更新
+
+run_id: "2026-05-31_14-30-05"
+started_at: "2026-05-31T14:30:05+08:00"
+agent_id: ix-<business>-agent
+trigger: manual   # manual | scheduled
+
+status: completed   # running | completed | failed
+next_step: null     # 失败/中断时：待执行的 step id
+
+params:
+  primary_input: "..."
+  window_days: 7
+
+steps_completed:
+  - export_primary
+  - analyze_semantic
+  - write_report

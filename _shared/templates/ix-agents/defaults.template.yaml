@@ -1,0 +1,5 @@
+# primary_input 等业务默认值 — 复制到 ix-agents/ix-<business>-agent/config/defaults.yaml
+
+# 示例（按业务改写）：
+# primary_input: "https://example.com/question/123?param=value"
+# window_days: 7

@@ -1,0 +1,14 @@
+# 复制到 registry.yaml 的 jobs 列表中（勿单独保留为本文件名）
+
+- id: weekly-metrics-mon-09          # 全局唯一，kebab-case
+  agent: ix-weekly-metrics-agent     # 必须已存在 manifest
+  enabled: true
+  description: "每周一 09:00 周报"
+  params:                            # 传给 ix-agent-run-cli --params-json
+    window_days: 7
+  schedule:
+    # 文档说明；实际触发由 register-windows-task.ps1 写入 Windows 任务计划程序
+    kind: windows_weekly
+    day_of_week: MON
+    at: "09:00"
+    timezone: Asia/Shanghai

@@ -1,0 +1,413 @@
+"""扫描 indexed 内 ix-*-cli / ix-*-agent 运行时真相。
+
+真相源：各 cli/agent 目录下的 SPEC.yaml（机器可读能力声明）。
+薄索引页（capabilities.md / registry.md）是派生物，本模块校验其与 SPEC.yaml 的一致性。
+"""
+
+from __future__ import annotations
+
+import re
+from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Any
+
+try:
+    import yaml
+except ImportError:
+    yaml = None  # type: ignore
+
+
+WORKSPACE_ROOT = Path(__file__).resolve().parents[2]
+ARTIFACTS_DIR = WORKSPACE_ROOT / "artifacts"
+AGENTS_DIR = WORKSPACE_ROOT / "ix-agents"
+SHARED_SPECS_DIR = WORKSPACE_ROOT / "_shared" / "specs"
+SHARED_TEMPS_DIR = WORKSPACE_ROOT / "_shared" / "templates"
+RULES_DIR = WORKSPACE_ROOT / ".claude" / "rules"
+CLAUDE_MD = WORKSPACE_ROOT / "CLAUDE.md"
+CAPABILITIES_PATH = ARTIFACTS_DIR / "capabilities.md"
+REGISTRY_PATH = AGENTS_DIR / "registry.md"
+ARTIFACTS_README = ARTIFACTS_DIR / "README.md"
+AGENTS_README = AGENTS_DIR / "README.md"
+
+CLI_DIR_RE = re.compile(r"^ix-.+-cli$")
+AGENT_DIR_RE = re.compile(r"^ix-.+-agent$")
+SUBPARSER_RE = re.compile(r'\.add_parser\(\s*["\']([^"\']+)["\']')
+# 薄索引页中匹配 cli/agent 名出现（任何形式：代码、链接、表格）
+CLI_NAME_RE = re.compile(r"\b(ix-[a-z0-9]+(?:-[a-z0-9]+)*-cli)\b")
+AGENT_NAME_RE = re.compile(r"\b(ix-[a-z0-9]+(?:-[a-z0-9]+)*-agent)\b")
+
+
+@dataclass
+class CliInfo:
+    name: str
+    path: Path
+    subcommands: list[str] = field(default_factory=list)
+    has_spec_md: bool = False
+    has_spec_yaml: bool = False
+    spec: dict[str, Any] | None = None  # SPEC.yaml 解析结果
+
+
+@dataclass
+class AgentInfo:
+    name: str
+    path: Path
+    step_ids: list[str] = field(default_factory=list)
+    step_types: dict[str, str] = field(default_factory=dict)
+    has_thinking: bool = False
+    required_params: list[str] = field(default_factory=list)
+    research: str | None = None
+    artifact_refs: list[str] = field(default_factory=list)
+    has_spec_md: bool = False
+    has_spec_yaml: bool = False
+    spec: dict[str, Any] | None = None
+
+
+@dataclass
+class IndexIssue:
+    level: str  # error | warn
+    code: str
+    message: str
+    target: str | None = None
+
+
+def _load_yaml(path: Path) -> dict[str, Any] | None:
+    """读 SPEC.yaml；无 PyYAML 时用简易解析提取关键字段（name/status）。"""
+    if not path.is_file():
+        return None
+    raw = path.read_text(encoding="utf-8", errors="replace")
+    if yaml is not None:
+        return yaml.safe_load(raw) or {}
+    # 降级：简易解析（足够判断 name、status 存在性）
+    data: dict[str, Any] = {}
+    for line in raw.splitlines():
+        m = re.match(r"^(\w+):\s*(\S+)", line)
+        if m:
+            data[m.group(1)] = m.group(2)
+    return data if data else None
+
+
+def discover_clis() -> list[CliInfo]:
+    out: list[CliInfo] = []
+    if not ARTIFACTS_DIR.is_dir():
+        return out
+    for d in sorted(ARTIFACTS_DIR.iterdir()):
+        if not d.is_dir() or not CLI_DIR_RE.match(d.name):
+            continue
+        main_py = d / "main.py"
+        subs: list[str] = []
+        if main_py.is_file():
+            text = main_py.read_text(encoding="utf-8", errors="replace")
+            subs = sorted(set(SUBPARSER_RE.findall(text)))
+        spec = _load_yaml(d / "SPEC.yaml")
+        out.append(
+            CliInfo(
+                name=d.name,
+                path=d,
+                subcommands=subs,
+                has_spec_md=(d / "SPEC.md").is_file(),
+                has_spec_yaml=spec is not None,
+                spec=spec,
+            )
+        )
+    return out
+
+
+def discover_agents() -> list[AgentInfo]:
+    out: list[AgentInfo] = []
+    if not AGENTS_DIR.is_dir():
+        return out
+    for d in sorted(AGENTS_DIR.iterdir()):
+        if not d.is_dir() or not AGENT_DIR_RE.match(d.name):
+            continue
+        manifest = d / "manifest.yaml"
+        info = AgentInfo(name=d.name, path=d, has_spec_md=(d / "SPEC.md").is_file())
+        if manifest.is_file():
+            _load_manifest(manifest, info)
+        spec = _load_yaml(d / "SPEC.yaml")
+        info.has_spec_yaml = spec is not None
+        info.spec = spec
+        out.append(info)
+    return out
+
+
+def _load_manifest(path: Path, info: AgentInfo) -> None:
+    raw = path.read_text(encoding="utf-8")
+    if yaml is not None:
+        data = yaml.safe_load(raw) or {}
+    else:
+        data = _manifest_fallback(raw)
+    info.research = data.get("research")
+    for spec in data.get("params") or []:
+        if isinstance(spec, dict) and spec.get("required"):
+            info.required_params.append(str(spec.get("name", "")))
+    for ref in data.get("artifacts") or []:
+        info.artifact_refs.append(str(ref))
+    for step in data.get("steps") or []:
+        if not isinstance(step, dict):
+            continue
+        sid = str(step.get("id", ""))
+        if not sid:
+            continue
+        stype = str(step.get("type", "tool"))
+        info.step_ids.append(sid)
+        info.step_types[sid] = stype
+        if stype == "thinking":
+            info.has_thinking = True
+
+
+def _manifest_fallback(raw: str) -> dict:
+    """无 PyYAML 时仅解析 steps 的 id/type。"""
+    steps = []
+    for m in re.finditer(
+        r"- id:\s*(\S+)\s*\n\s*type:\s*(\w+)",
+        raw,
+    ):
+        steps.append({"id": m.group(1), "type": m.group(2)})
+    research = None
+    rm = re.search(r"^research:\s*(\S+)\s*$", raw, re.M)
+    if rm:
+        research = rm.group(1)
+    return {"steps": steps, "research": research, "params": [], "artifacts": []}
+
+
+def _read(path: Path) -> str:
+    return path.read_text(encoding="utf-8", errors="replace") if path.is_file() else ""
+
+
+def _names_in_text(text: str, pattern: re.Pattern[str]) -> set[str]:
+    """从文本中提取所有匹配的 cli/agent 名（排除占位符）。"""
+    names = set(pattern.findall(text))
+    return {n for n in names if "<" not in n}
+
+
+def audit_index() -> tuple[list[CliInfo], list[AgentInfo], list[IndexIssue]]:
+    """以 SPEC.yaml 为真相源，校验薄索引页与磁盘一致性。"""
+    clis = discover_clis()
+    agents = discover_agents()
+    issues: list[IndexIssue] = []
+
+    cap_text = _read(CAPABILITIES_PATH)
+    reg_text = _read(REGISTRY_PATH)
+
+    cap_cli_names = _names_in_text(cap_text, CLI_NAME_RE)
+    reg_agent_names = _names_in_text(reg_text, AGENT_NAME_RE)
+
+    cli_by_name = {c.name: c for c in clis}
+    agent_by_name = {a.name: a for a in agents}
+
+    # --- CLI 校验 ---
+    for c in clis:
+        # SPEC.yaml 是能力真相源，必须有
+        if not c.has_spec_yaml:
+            issues.append(
+                IndexIssue("error", "cli_missing_spec_yaml", f"{c.name} 缺少 SPEC.yaml（能力真相源）", c.name)
+            )
+        # SPEC.md 人类可读说明（warn，非必须但建议）
+        if not c.has_spec_md:
+            issues.append(
+                IndexIssue("warn", "cli_missing_spec_md", f"{c.name} 缺少 SPEC.md（人类可读说明）", c.name)
+            )
+        # 必须出现在 capabilities.md 薄索引
+        if c.name not in cap_cli_names:
+            issues.append(
+                IndexIssue(
+                    "error",
+                    "cli_missing_in_capabilities",
+                    f"{c.name} 未出现在 capabilities.md 薄索引",
+                    c.name,
+                )
+            )
+
+    # capabilities.md 孤儿登记（指向不存在的 cli）
+    for name in cap_cli_names:
+        if name not in cli_by_name:
+            issues.append(
+                IndexIssue(
+                    "error",
+                    "capabilities_stale_cli",
+                    f"capabilities.md 登记了不存在的目录 {name}",
+                    name,
+                )
+            )
+
+    # --- Agent 校验 ---
+    for a in agents:
+        if not a.has_spec_yaml:
+            issues.append(
+                IndexIssue("error", "agent_missing_spec_yaml", f"{a.name} 缺少 SPEC.yaml（能力真相源）", a.name)
+            )
+        if not a.has_spec_md:
+            issues.append(
+                IndexIssue("warn", "agent_missing_spec_md", f"{a.name} 缺少 SPEC.md（人类可读说明）", a.name)
+            )
+        if a.name not in reg_agent_names:
+            issues.append(
+                IndexIssue(
+                    "error",
+                    "agent_missing_in_registry",
+                    f"{a.name} 未出现在 registry.md 薄索引",
+                    a.name,
+                )
+            )
+
+    # registry.md 孤儿登记
+    for name in reg_agent_names:
+        if name not in agent_by_name:
+            issues.append(
+                IndexIssue(
+                    "error",
+                    "registry_stale_agent",
+                    f"registry.md 登记了不存在的目录 {name}",
+                    name,
+                )
+            )
+
+    return clis, agents, issues
+
+
+# ---------------------------------------------------------------------------
+# 规范治理审计（spec-governance）
+# ---------------------------------------------------------------------------
+
+_GOVERNANCE_KEYWORDS: dict[str, list[str]] = {
+    "禁止构建": ["禁止构建", "禁止编译", "禁止打包", "禁止安装依赖"],
+    "禁止 mermaid": ["禁止 mermaid"],
+    "禁止 orchestrate": ["禁止 orchestrate", "禁止 `orchestrate"],
+}
+
+
+def _collect_rule_files() -> list[Path]:
+    """收集所有 .claude/rules/*.md 和 CLAUDE.md。"""
+    files = list(RULES_DIR.glob("*.md"))
+    if CLAUDE_MD.is_file():
+        files.append(CLAUDE_MD)
+    return files
+
+
+def _keyword_count(files: list[Path], phrase: str) -> list[tuple[str, int]]:
+    counts: list[tuple[str, int]] = []
+    for f in files:
+        text = f.read_text(encoding="utf-8", errors="replace")
+        n = text.count(phrase)
+        if n > 0:
+            counts.append((f.name, n))
+    return counts
+
+
+def _check_duplicate_keywords(files: list[Path], issues: list[IndexIssue]) -> None:
+    for label, phrases in _GOVERNANCE_KEYWORDS.items():
+        for phrase in phrases:
+            hits = _keyword_count(files, phrase)
+            hits = [(name, cnt) for name, cnt in hits if Path(name).stem != "spec-governance"]
+            file_count = len(hits)
+            if file_count >= 4:
+                file_names = ", ".join(h[0] for h in hits)
+                issues.append(
+                    IndexIssue(
+                        "warn",
+                        "governance_duplicate_keyword",
+                        f"「{phrase}」出现在 {file_count} 个文件（{file_names}），考虑统一到权威文件",
+                        None,
+                    )
+                )
+
+
+def _check_claude_md_length(issues: list[IndexIssue]) -> None:
+    """CLAUDE.md 行数 >300 告警。"""
+    if not CLAUDE_MD.is_file():
+        return
+    lines = CLAUDE_MD.read_text(encoding="utf-8", errors="replace").splitlines()
+    line_count = len(lines)
+    if line_count > 300:
+        issues.append(
+            IndexIssue(
+                "warn",
+                "governance_claude_md_too_long",
+                f"CLAUDE.md 共 {line_count} 行，超过 300 行建议精简",
+                "CLAUDE.md",
+            )
+        )
+
+
+def _check_cross_refs(files: list[Path], issues: list[IndexIssue]) -> None:
+    """检查 rule 中「见 §X.Y」引用是否指向 CLAUDE.md 中的有效章节。"""
+    if not CLAUDE_MD.is_file():
+        return
+    claude_text = CLAUDE_MD.read_text(encoding="utf-8", errors="replace")
+    section_re = re.compile(r"^#{2,4}\s+(\d+(?:\.\d+)?)\b", re.M)
+    valid_sections = set(section_re.findall(claude_text))
+
+    ref_re = re.compile(r"§(\d+(?:\.\d+)?)")
+    for f in files:
+        if f == CLAUDE_MD:
+            continue
+        text = f.read_text(encoding="utf-8", errors="replace")
+        for m in ref_re.finditer(text):
+            section = m.group(1)
+            if section not in valid_sections:
+                issues.append(
+                    IndexIssue(
+                        "error",
+                        "governance_invalid_xref",
+                        f"{f.name} 引用「§{section}」但 CLAUDE.md 中无此章节",
+                        f.name,
+                    )
+                )
+
+
+def _check_shared_paths(issues: list[IndexIssue]) -> None:
+    """检查桶级 README 是否存在。"""
+    bucket_readmes = [
+        WORKSPACE_ROOT / "research" / "README.md",
+        WORKSPACE_ROOT / "artifacts" / "README.md",
+        WORKSPACE_ROOT / "ix-agents" / "README.md",
+        SHARED_SPECS_DIR / "README.md",
+        SHARED_TEMPS_DIR / "README.md",
+        WORKSPACE_ROOT / "_shared" / "design-languages" / "README.md",
+    ]
+    for p in bucket_readmes:
+        if not p.is_file():
+            rel = p.relative_to(WORKSPACE_ROOT)
+            issues.append(
+                IndexIssue(
+                    "warn",
+                    "governance_missing_bucket_readme",
+                    f"桶级 README 缺失: {rel}",
+                    str(rel),
+                )
+            )
+
+
+def audit_governance() -> list[IndexIssue]:
+    issues: list[IndexIssue] = []
+    rule_files = _collect_rule_files()
+    _check_duplicate_keywords(rule_files, issues)
+    _check_claude_md_length(issues)
+    _check_cross_refs(rule_files, issues)
+    _check_shared_paths(issues)
+    return issues
+
+
+def steps_summary(agent: AgentInfo) -> str:
+    parts = []
+    for sid in agent.step_ids:
+        st = agent.step_types.get(sid, "tool")
+        if st == "thinking":
+            parts.append(f"{sid}(thinking)")
+        elif sid.startswith("publish") or sid == "archive_report":
+            continue
+        else:
+            parts.append(sid.replace("_", "-"))
+    return " → ".join(parts)
+
+
+def manifest_snapshot(agent: AgentInfo) -> dict:
+    return {
+        "required_params": agent.required_params,
+        "has_thinking": agent.has_thinking,
+        "steps_summary": steps_summary(agent),
+        "step_ids": agent.step_ids,
+        "research": agent.research,
+        "artifacts": agent.artifact_refs,
+        "has_spec_yaml": agent.has_spec_yaml,
+    }

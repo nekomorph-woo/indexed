@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>设计语言库 — indexed</title>
+  <style>
+    :root {
+      --bg: #f8f9fa;
+      --card: #fff;
+      --text: #1a1a1a;
+      --muted: #5f6368;
+      --link: #6750a4;
+      --border: #e0e0e0;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+    }
+    .wrap { max-width: 720px; margin: 0 auto; padding: 32px 20px 48px; }
+    h1 { font-size: 1.5rem; margin: 0 0 8px; }
+    .lead { color: var(--muted); margin: 0 0 24px; font-size: .95rem; }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px 24px;
+      margin-bottom: 16px;
+    }
+    .card h2 { margin: 0 0 4px; font-size: 1.15rem; }
+    .card .id { font-size: .8rem; color: var(--muted); font-family: ui-monospace, monospace; }
+    .tags { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0; }
+    .tag {
+      font-size: .75rem; padding: 4px 10px; border-radius: 999px;
+      background: #f3edf7; color: #49454f;
+    }
+    .meta { font-size: .875rem; color: var(--muted); margin: 0 0 12px; }
+    .meta strong { color: var(--text); }
+    ul.tokens { margin: 0 0 16px; padding-left: 1.2rem; font-size: .875rem; }
+    a.preview {
+      display: inline-block;
+      padding: 10px 20px;
+      background: var(--link);
+      color: #fff;
+      text-decoration: none;
+      border-radius: 999px;
+      font-size: .875rem;
+      font-weight: 500;
+    }
+    a.preview:hover { filter: brightness(1.05); }
+    footer { margin-top: 32px; font-size: .8rem; color: var(--muted); }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>设计语言库</h1>
+    <p class="lead">
+      生成业务 HTML 前，请逐个打开下方「打开预览页」对比风格，再告诉 Agent 选用的 <code>id</code>。
+      目录：<code>_shared/design-languages/</code>
+    </p>
+
+    <article class="card">
+      <h2>Material You (Material Design 3)</h2>
+      <p class="id">id: material-you · 状态: ready</p>
+      <div class="tags">
+        <span class="tag">消费端</span>
+        <span class="tag">移动端</span>
+        <span class="tag">圆角</span>
+        <span class="tag">tonal-surface</span>
+      </div>
+      <p class="meta"><strong>场景</strong>：对外说明页、原型 HTML、偏 C 端叙事</p>
+      <ul class="tokens">
+        <li>主色 #6750A4 · 表面 #F3EDF7 · Roboto</li>
+        <li>Pill 按钮 · 大圆角卡片 · filled 输入框</li>
+      </ul>
+      <a class="preview" href="material-you/preview.html">打开预览页 →</a>
+    </article>
+
+    <article class="card">
+      <h2>Bauhaus</h2>
+      <p class="id">id: bauhaus · 状态: ready</p>
+      <div class="tags">
+        <span class="tag">几何</span>
+        <span class="tag">海报风</span>
+        <span class="tag">原色</span>
+        <span class="tag">硬阴影</span>
+      </div>
+      <p class="meta"><strong>场景</strong>：创意落地页、艺术/品牌宣言、非圆润 UI、包豪斯构成</p>
+      <ul class="tokens">
+        <li>红 / 蓝 / 黄 + 黑描边 · Outfit 大写标题</li>
+        <li>硬偏移阴影 · 仅直角或全圆 · 色块分区</li>
+      </ul>
+      <a class="preview" href="bauhaus/preview.html">打开预览页 →</a>
+    </article>
+
+    <article class="card">
+      <h2>Newsprint</h2>
+      <p class="id">id: newsprint · 状态: ready</p>
+      <div class="tags">
+        <span class="tag">报刊</span>
+        <span class="tag">衬线</span>
+        <span class="tag">网格</span>
+        <span class="tag">高密度</span>
+      </div>
+      <p class="meta"><strong>场景</strong>：新闻/社论、长文、公告、权威信息页、杂志专栏风</p>
+      <ul class="tokens">
+        <li>纸色 #F9F9F7 · 墨 #111111 · 编辑红 #CC0000（极少）</li>
+        <li>Playfair + Lora · 零圆角 · 点阵底纹 · hover 硬阴影</li>
+      </ul>
+      <a class="preview" href="newsprint/preview.html">打开预览页 →</a>
+    </article>
+
+    <article class="card">
+      <h2>Flat Design</h2>
+      <p class="id">id: flat-design · 状态: ready</p>
+      <div class="tags">
+        <span class="tag">扁平</span>
+        <span class="tag">无阴影</span>
+        <span class="tag">色块</span>
+        <span class="tag">SaaS</span>
+      </div>
+      <p class="meta"><strong>场景</strong>：产品官网、SaaS 落地页、效率工具、海报式全幅色块分区</p>
+      <ul class="tokens">
+        <li>蓝 / 绿 / 琥珀 · 白底 · Outfit 粗标题</li>
+        <li>禁止 box-shadow · hover scale · 6–8px 圆角</li>
+      </ul>
+      <a class="preview" href="flat-design/preview.html">打开预览页 →</a>
+    </article>
+
+    <article class="card">
+      <h2>Hand-Drawn</h2>
+      <p class="id">id: hand-drawn · 状态: ready</p>
+      <div class="tags">
+        <span class="tag">手绘</span>
+        <span class="tag">草稿</span>
+        <span class="tag">playful</span>
+        <span class="tag">便签</span>
+      </div>
+      <p class="meta"><strong>场景</strong>：创意工具、头脑风暴、教育、亲和力产品、非正式说明页</p>
+      <ul class="tokens">
+        <li>暖纸底 + 点阵 · Kalam / Patrick Hand</li>
+        <li>不规则圆角 · 4px 硬阴影 · 微旋转</li>
+      </ul>
+      <a class="preview" href="hand-drawn/preview.html">打开预览页 →</a>
+    </article>
+
+    <article class="card">
+      <h2>Industrial Skeuomorphism</h2>
+      <p class="id">id: industrial-skeuomorphism · 状态: ready</p>
+      <div class="tags">
+        <span class="tag">新拟态</span>
+        <span class="tag">工业</span>
+        <span class="tag">控制台</span>
+        <span class="tag">触觉</span>
+      </div>
+      <p class="meta"><strong>场景</strong>：硬件面板、仪表盘、精密工具、Braun/合成器风产品页</p>
+      <ul class="tokens">
+        <li>底盘 #e0e5ec · 安全橙 #ff4757 · Inter + JetBrains Mono</li>
+        <li>左上光源双阴影 · 按下内凹 · LED / 通风槽细节</li>
+      </ul>
+      <a class="preview" href="industrial-skeuomorphism/preview.html">打开预览页 →</a>
+    </article>
+
+    <footer>
+      新增语言后由 Agent 更新本页与各 <code>&lt;id&gt;/preview.html</code>。
+      规范见 <code>design-language-routing.spec.md</code>
+    </footer>
+  </div>
+</body>
+</html>

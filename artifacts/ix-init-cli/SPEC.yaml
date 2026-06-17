@@ -1,0 +1,22 @@
+name: ix-init-cli
+domain: 工作区初始化
+one_liner: 交互式初始化 indexed 的 Git 模式（local/remote）并改写规则
+status: implemented
+intents:
+  - "初始化 indexed、git init、配置 git 模式、本地/远程选择"
+commands:
+  - name: init
+    inputs:
+      - "--mode local|remote  # 跳过交互直接指定"
+      - "--remote-url <url>   # remote 模式的远端"
+    outputs: "改写 .claude/rules/git-workflow.md 标记区 + git init（若未初始化）"
+    example: "python artifacts/ix-init-cli/main.py init --mode remote --remote-url git@github.com:user/indexed.git"
+  - name: status
+    inputs: []
+    outputs: "当前 Git 模式 + git init 状态 + 远端配置（stdout）"
+    example: "python artifacts/ix-init-cli/main.py status"
+credentials: []
+depends_on: []
+notes: |
+  通过 git-workflow.md 的 <!-- IX_GIT_MODE_BEGIN/END --> 标记区定位并改写，
+  仅替换标记区内容，不动文件其余部分。支持重复运行切换模式。

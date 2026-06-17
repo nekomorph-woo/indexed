@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Material You — 设计语言预览</title>
+  <!-- design-language-id: material-you -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --dl-bg: #FFFBFE;
+      --dl-surface: #F3EDF7;
+      --dl-surface-low: #E7E0EC;
+      --dl-on-surface: #1C1B1F;
+      --dl-on-variant: #49454F;
+      --dl-primary: #6750A4;
+      --dl-on-primary: #FFFFFF;
+      --dl-secondary: #E8DEF8;
+      --dl-tertiary: #7D5260;
+      --dl-outline: #79747E;
+      --dl-radius-lg: 24px;
+      --dl-radius-pill: 9999px;
+      --dl-font: 'Roboto', system-ui, sans-serif;
+      --dl-shadow: 0 1px 3px rgba(28,27,31,.12);
+      --dl-shadow-md: 0 4px 12px rgba(28,27,31,.12);
+      --dl-ease: cubic-bezier(0.2, 0, 0, 1);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: var(--dl-font);
+      background: var(--dl-bg);
+      color: var(--dl-on-surface);
+      line-height: 1.5;
+    }
+    .wrap { max-width: 960px; margin: 0 auto; padding: 24px 20px 48px; }
+    .banner {
+      background: var(--dl-surface);
+      border-radius: 48px;
+      padding: 28px 32px;
+      margin-bottom: 24px;
+      box-shadow: var(--dl-shadow);
+      position: relative;
+      overflow: hidden;
+    }
+    .banner::before {
+      content: '';
+      position: absolute;
+      width: 200px; height: 200px;
+      background: var(--dl-primary);
+      opacity: .12;
+      border-radius: 50%;
+      filter: blur(48px);
+      top: -40px; right: -20px;
+    }
+    .banner h1 { margin: 0 0 8px; font-size: 1.75rem; font-weight: 500; position: relative; }
+    .banner p { margin: 0; color: var(--dl-on-variant); font-size: .9rem; position: relative; }
+    section {
+      background: var(--dl-surface);
+      border-radius: var(--dl-radius-lg);
+      padding: 20px 24px;
+      margin-bottom: 20px;
+      box-shadow: var(--dl-shadow);
+      transition: box-shadow .3s var(--dl-ease);
+    }
+    section:hover { box-shadow: var(--dl-shadow-md); }
+    section h2 { margin: 0 0 16px; font-size: 1.1rem; font-weight: 500; }
+    .swatches { display: flex; flex-wrap: wrap; gap: 12px; }
+    .swatch { width: 72px; text-align: center; font-size: .7rem; color: var(--dl-on-variant); }
+    .swatch div {
+      height: 48px; border-radius: 16px; margin-bottom: 6px;
+      border: 1px solid transparent;
+    }
+    .type-samples h3 { margin: 12px 0 4px; font-weight: 500; }
+    .type-samples p { margin: 0 0 8px; }
+    .btn-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      padding: 10px 24px; border: none; cursor: pointer;
+      border-radius: var(--dl-radius-pill);
+      font-family: inherit; font-size: .875rem; font-weight: 500;
+      transition: transform .2s var(--dl-ease), box-shadow .3s var(--dl-ease), background .2s;
+    }
+    .btn:active { transform: scale(.95); }
+    .btn-primary {
+      background: var(--dl-primary); color: var(--dl-on-primary);
+    }
+    .btn-primary:hover { box-shadow: var(--dl-shadow-md); }
+    .btn-tonal {
+      background: var(--dl-secondary); color: #1D192B;
+    }
+    .btn-outline {
+      background: transparent; color: var(--dl-primary);
+      border: 1px solid var(--dl-outline);
+    }
+    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; }
+    .card {
+      padding: 16px; border-radius: var(--dl-radius-lg);
+      background: var(--dl-surface-low);
+      transition: transform .3s var(--dl-ease), box-shadow .3s var(--dl-ease);
+    }
+    .card:hover {
+      transform: scale(1.02);
+      box-shadow: var(--dl-shadow-md);
+    }
+    .card h3 { margin: 0 0 8px; font-size: 1rem; font-weight: 500; }
+    .card p { margin: 0; font-size: .875rem; color: var(--dl-on-variant); }
+    .field {
+      width: 100%; max-width: 360px; height: 56px; padding: 0 16px;
+      border: none; border-bottom: 2px solid var(--dl-outline);
+      border-radius: 12px 12px 0 0;
+      background: var(--dl-surface-low);
+      font-family: inherit; font-size: 1rem;
+      color: var(--dl-on-surface);
+    }
+    .field:focus {
+      outline: none; border-bottom-color: var(--dl-primary);
+      box-shadow: 0 0 0 2px rgba(103,80,164,.2);
+    }
+    footer { text-align: center; font-size: .8rem; color: var(--dl-on-variant); margin-top: 8px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="banner">
+      <h1>Material You (Material Design 3)</h1>
+      <p>id: <code>material-you</code> · 紫系 seed · 圆角 pill · tonal surface</p>
+    </header>
+
+    <section aria-labelledby="sec-colors">
+      <h2 id="sec-colors">色彩</h2>
+      <div class="swatches">
+        <div class="swatch"><div style="background:var(--dl-bg)"></div>Surface</div>
+        <div class="swatch"><div style="background:var(--dl-surface)"></div>Container</div>
+        <div class="swatch"><div style="background:var(--dl-primary)"></div>Primary</div>
+        <div class="swatch"><div style="background:var(--dl-secondary)"></div>Secondary</div>
+        <div class="swatch"><div style="background:var(--dl-tertiary)"></div>Tertiary</div>
+      </div>
+    </section>
+
+    <section aria-labelledby="sec-type">
+      <h2 id="sec-type">字体层级</h2>
+      <div class="type-samples">
+        <h3 style="font-size:2rem;font-weight:500;margin-top:0">Headline Medium</h3>
+        <p style="font-size:1.25rem">Body Large — Roboto</p>
+        <p style="font-size:1rem">Body Medium — 标准段落</p>
+        <p style="font-size:.875rem;color:var(--dl-on-variant)">Label Medium — 辅助说明</p>
+      </div>
+    </section>
+
+    <section aria-labelledby="sec-buttons">
+      <h2 id="sec-buttons">按钮</h2>
+      <div class="btn-row">
+        <button type="button" class="btn btn-primary">主要操作</button>
+        <button type="button" class="btn btn-tonal">次要操作</button>
+        <button type="button" class="btn btn-outline">描边</button>
+      </div>
+    </section>
+
+    <section aria-labelledby="sec-cards">
+      <h2 id="sec-cards">卡片</h2>
+      <div class="cards">
+        <article class="card"><h3>功能 A</h3><p>tonal 表面与 hover 微动效。</p></article>
+        <article class="card"><h3>功能 B</h3><p>24px 圆角卡片容器。</p></article>
+        <article class="card"><h3>功能 C</h3><p>消费端友好气质。</p></article>
+      </div>
+    </section>
+
+    <section aria-labelledby="sec-input">
+      <h2 id="sec-input">输入框</h2>
+      <input class="field" type="text" placeholder="Filled text field" aria-label="示例输入" />
+    </section>
+
+    <footer>indexed 设计语言预览 · material-you</footer>
+  </div>
+</body>
+</html>

@@ -1,0 +1,56 @@
+# 复制到 ix-agents/ix-<business>-agent/manifest.yaml 后填写
+# 规范：CLAUDE.md §3.6 · .claude/rules/ix-agents.md · 执行：artifacts/ix-agent-run-cli
+
+id: ix-<business>-agent
+
+research: research/<topic>   # 可选
+
+# params 是两阶段交互的数据源（见 .claude/rules/ix-agents.md §两阶段开发规范）
+# - required: 阶段 A 必须向用户索取
+# - prompt:    给用户看的提示文案（必须写清业务含义，不能只写参数名）
+# - default / default_from: 让常用场景开箱即用（用户只需确认）
+params:
+  - name: primary_input
+    required: true
+    prompt: "请提供本次运行的主要输入（说明业务含义）"
+    default_from: config/defaults.yaml#primary_input
+  - name: window_days
+    required: false
+    prompt: "分析窗口（天）"
+    default: 7
+
+artifacts:
+  - ix-metabase-cli:question
+
+steps:
+  - id: export_primary
+    type: tool
+    description: 导出主数据到 work/raw
+    tool: shell
+    command: >
+      python {artifacts_root}/ix-metabase-cli/main.py question
+      --url "{params.primary_input}" -O {work_raw}
+    expects:
+      - work/raw/*.csv
+
+  - id: analyze_semantic
+    type: thinking
+    description: 语义分析（ix-agent-run-cli 调 claude -p）
+    inputs:
+      - work/raw/*.csv
+    prompt: |
+      你是业务分析助手。基于 inputs 中的数据，结合 params.window_days={params.window_days}：
+      1. 归纳关键变化与异常
+      2. 按条目列出结论与依据
+      3. 给出可操作建议
+    output: work/thinking/analyze_semantic.md
+
+  - id: write_report
+    type: tool
+    description: 将 thinking 结论复制为最终报告
+    tool: write
+    from: work/thinking/analyze_semantic.md
+    to: output/report.md
+
+# 占位符：{run_id} {work_raw} {work_thinking} {run_output} {run_inbox}
+#          {artifacts_root} {workspace_root} {agent_root} {params.*}

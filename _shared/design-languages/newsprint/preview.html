@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Newsprint — 设计语言预览</title>
+  <!-- design-language-id: newsprint -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;500&family=Lora:wght@400;600&family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --dl-bg: #F9F9F7;
+      --dl-surface: #F9F9F7;
+      --dl-on-surface: #111111;
+      --dl-primary: #111111;
+      --dl-on-primary: #F9F9F7;
+      --dl-secondary: #E5E5E0;
+      --dl-accent: #CC0000;
+      --dl-muted: #737373;
+      --dl-border: #111111;
+      --dl-font-display: 'Playfair Display', 'Times New Roman', serif;
+      --dl-font-body: 'Lora', Georgia, serif;
+      --dl-font-ui: 'Inter', 'Helvetica Neue', sans-serif;
+      --dl-font-mono: 'JetBrains Mono', 'Courier New', monospace;
+    }
+    * { box-sizing: border-box; border-radius: 0 !important; }
+    body {
+      margin: 0;
+      font-family: var(--dl-font-body);
+      background-color: var(--dl-bg);
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4' viewBox='0 0 4 4'%3E%3Cpath fill='%23111111' fill-opacity='0.04' d='M1 3h1v1H1V3zm2-2h1v1H3V1z'%3E%3C/path%3E%3C/svg%3E");
+      color: var(--dl-on-surface);
+      line-height: 1.5;
+    }
+    .wrap { max-width: 960px; margin: 0 auto; padding: 24px 20px 48px; }
+    .edition {
+      font-family: var(--dl-font-mono);
+      font-size: .65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.2em;
+      color: var(--dl-muted);
+      margin-bottom: 12px;
+      border-bottom: 1px solid var(--dl-border);
+      padding-bottom: 8px;
+    }
+    .banner {
+      background: var(--dl-surface);
+      border: 1px solid var(--dl-border);
+      border-bottom-width: 4px;
+      padding: 24px 28px;
+      margin-bottom: 24px;
+      position: relative;
+    }
+    .banner::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(0deg, transparent 98%, rgba(0,0,0,0.02) 100%),
+        linear-gradient(90deg, transparent 98%, rgba(0,0,0,0.02) 100%);
+      background-size: 3px 3px;
+      pointer-events: none;
+      opacity: 0.5;
+    }
+    .banner h1 {
+      margin: 0 0 8px;
+      font-family: var(--dl-font-display);
+      font-size: clamp(2rem, 6vw, 3.25rem);
+      font-weight: 900;
+      line-height: 0.9;
+      letter-spacing: -0.03em;
+      position: relative;
+    }
+    .banner p {
+      margin: 0;
+      font-family: var(--dl-font-ui);
+      font-size: .875rem;
+      position: relative;
+    }
+    .banner code {
+      font-family: var(--dl-font-mono);
+      font-size: .8em;
+      background: var(--dl-secondary);
+      padding: 1px 5px;
+    }
+    section {
+      background: var(--dl-surface);
+      border: 1px solid var(--dl-border);
+      padding: 20px 24px;
+      margin-bottom: 20px;
+      transition: box-shadow .2s ease-out, transform .2s ease-out;
+    }
+    section:hover {
+      box-shadow: 4px 4px 0 0 var(--dl-border);
+      transform: translate(-2px, -2px);
+    }
+    section h2 {
+      margin: 0 0 16px;
+      font-family: var(--dl-font-ui);
+      font-size: .7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.2em;
+    }
+    .swatches { display: flex; flex-wrap: wrap; gap: 0; border: 1px solid var(--dl-border); }
+    .swatch {
+      flex: 1 1 72px;
+      text-align: center;
+      font-family: var(--dl-font-mono);
+      font-size: .6rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      border-right: 1px solid var(--dl-border);
+      padding: 8px 4px;
+    }
+    .swatch:last-child { border-right: none; }
+    .swatch div { height: 40px; margin-bottom: 6px; }
+    .type-samples h3 {
+      margin: 0 0 4px;
+      font-family: var(--dl-font-display);
+      font-size: clamp(1.75rem, 4vw, 2.5rem);
+      font-weight: 900;
+      line-height: 0.95;
+    }
+    .type-samples p { margin: 0 0 8px; font-size: 1rem; }
+    .type-samples .label {
+      font-family: var(--dl-font-mono);
+      font-size: .7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: var(--dl-muted);
+    }
+    .btn-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      min-height: 44px;
+      padding: 10px 22px;
+      border: 1px solid var(--dl-border);
+      cursor: pointer;
+      font-family: var(--dl-font-ui);
+      font-size: .7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      transition: background .2s ease-out, color .2s ease-out, border-color .2s ease-out;
+    }
+    .btn-primary {
+      background: var(--dl-primary);
+      color: var(--dl-on-primary);
+      border-color: transparent;
+    }
+    .btn-primary:hover {
+      background: #fff;
+      color: var(--dl-primary);
+      border-color: var(--dl-primary);
+    }
+    .btn-outline {
+      background: transparent;
+      color: var(--dl-primary);
+    }
+    .btn-outline:hover {
+      background: var(--dl-primary);
+      color: var(--dl-on-primary);
+    }
+    .btn-link {
+      background: none;
+      border: none;
+      text-transform: none;
+      letter-spacing: 0;
+      font-size: .875rem;
+      text-decoration: underline;
+      text-decoration-color: transparent;
+      text-underline-offset: 4px;
+    }
+    .btn-link:hover {
+      text-decoration-color: var(--dl-accent);
+    }
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 0;
+      border: 1px solid var(--dl-border);
+    }
+    .card {
+      padding: 16px;
+      background: var(--dl-surface);
+      border-right: 1px solid var(--dl-border);
+      transition: background .2s;
+    }
+    .card:last-child { border-right: none; }
+    .card:hover { background: #F5F5F5; }
+    .card h3 {
+      margin: 0 0 8px;
+      font-family: var(--dl-font-display);
+      font-size: 1.25rem;
+      font-weight: 700;
+    }
+    .card p { margin: 0; font-size: .875rem; color: var(--dl-muted); }
+    .field {
+      width: 100%; max-width: 360px;
+      height: 44px;
+      padding: 0 12px;
+      border: none;
+      border-bottom: 2px solid var(--dl-border);
+      background: transparent;
+      font-family: var(--dl-font-mono);
+      font-size: .875rem;
+      color: var(--dl-on-surface);
+    }
+    .field:focus {
+      outline: none;
+      background: #F0F0F0;
+    }
+    footer {
+      text-align: center;
+      font-family: var(--dl-font-mono);
+      font-size: .65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: var(--dl-muted);
+      margin-top: 8px;
+      border-top: 1px solid var(--dl-border);
+      padding-top: 16px;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <p class="edition">Vol. 1 · Preview Edition · indexed</p>
+    <header class="banner">
+      <h1>Newsprint</h1>
+      <p>id: <code>newsprint</code> · 报刊网格 · 零圆角 · 编辑红点缀</p>
+    </header>
+
+    <section aria-labelledby="sec-colors">
+      <h2 id="sec-colors">色彩</h2>
+      <div class="swatches">
+        <div class="swatch"><div style="background:var(--dl-bg)"></div>Paper</div>
+        <div class="swatch"><div style="background:var(--dl-primary)"></div>Ink</div>
+        <div class="swatch"><div style="background:var(--dl-secondary)"></div>Rule</div>
+        <div class="swatch"><div style="background:var(--dl-accent)"></div>Red</div>
+      </div>
+    </section>
+
+    <section aria-labelledby="sec-type">
+      <h2 id="sec-type">字体层级</h2>
+      <div class="type-samples">
+        <h3>All the News</h3>
+        <p class="label">Section label</p>
+        <p>Body — Lora，适合长文与专栏排版。</p>
+        <p style="font-family:var(--dl-font-ui);font-size:.875rem">UI — Inter 用于导航与按钮</p>
+      </div>
+    </section>
+
+    <section aria-labelledby="sec-buttons">
+      <h2 id="sec-buttons">按钮</h2>
+      <div class="btn-row">
+        <button type="button" class="btn btn-primary">订阅</button>
+        <button type="button" class="btn btn-outline">次要</button>
+        <button type="button" class="btn btn-link">阅读更多</button>
+      </div>
+    </section>
+
+    <section aria-labelledby="sec-cards">
+      <h2 id="sec-cards">卡片</h2>
+      <div class="cards">
+        <article class="card"><h3>栏目 A</h3><p>折叠网格边框。</p></article>
+        <article class="card"><h3>栏目 B</h3><p>高信息密度。</p></article>
+        <article class="card"><h3>栏目 C</h3><p>hover 硬阴影。</p></article>
+      </div>
+    </section>
+
+    <section aria-labelledby="sec-input">
+      <h2 id="sec-input">输入框</h2>
+      <input class="field" type="text" placeholder="搜索档案…" aria-label="示例输入" />
+    </section>
+
+    <footer>Printed in indexed · newsprint preview</footer>
+  </div>
+</body>
+</html>

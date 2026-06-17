@@ -1,0 +1,22 @@
+# macOS
+.DS_Store
+
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# 各 artifact 的运行时产物
+artifacts/*/output/
+artifacts/ix-agent-run-cli/runs/
+ix-agents/*/runs/
+
+# 环境变量与密钥
+.env
+*.env.local
+
+# 工具配置缓存
+.wok-plans/cache/

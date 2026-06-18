@@ -175,16 +175,29 @@ def cmd_init(args: argparse.Namespace) -> int:
     else:
         print("[2/4] local 模式，无需远端")
 
-    # --- 3. 改写规则标记区 ---
+    # --- 3+4. 改写规则标记区 + 标记文件（事务保护）---
     print("[3/4] 改写规则 ...")
-    _write_git_mode(mode)
-    _write_persona(nick, addr)
-    print("  ✓ git-workflow.md / CLAUDE.md 已更新")
+    old_git_text = GIT_WORKFLOW_RULE.read_text(encoding="utf-8") if GIT_WORKFLOW_RULE.is_file() else ""
+    old_claude_text = CLAUDE_MD.read_text(encoding="utf-8") if CLAUDE_MD.is_file() else ""
+    try:
+        _write_git_mode(mode)
+        _write_persona(nick, addr)
+        print("  ✓ git-workflow.md / CLAUDE.md 已更新")
 
-    # --- 4. 标记文件 ---
-    print("[4/4] 写入初始化标记 ...")
-    _write_init_marker(mode, nick, addr)
-    print(f"  ✓ {INIT_MARKER.name}")
+        print("[4/4] 写入初始化标记 ...")
+        _write_init_marker(mode, nick, addr)
+        print(f"  ✓ {INIT_MARKER.name}")
+    except (OSError, KeyboardInterrupt) as e:
+        # 回滚：恢复标记区原状，删除可能半写的 init marker
+        print(f"\n[error] 初始化中断（{e}），正在回滚标记区 ...", file=sys.stderr)
+        if old_git_text:
+            GIT_WORKFLOW_RULE.write_text(old_git_text, encoding="utf-8")
+        if old_claude_text:
+            CLAUDE_MD.write_text(old_claude_text, encoding="utf-8")
+        if INIT_MARKER.exists():
+            INIT_MARKER.unlink()
+        print("[error] 已回滚。请重新运行 init。", file=sys.stderr)
+        return 1
 
     print(f"\n[done] indexed 已初始化（模式 {mode}，昵称 {nick}，称呼 {addr}）")
     return 0
@@ -214,8 +227,9 @@ def cmd_update(args: argparse.Namespace) -> int:
     # --- 1. 标记区文件：抽用户区 → 覆盖 → 回灌 ---
     print("[1/3] 标记区文件（保护用户区）...")
     for rel in ("CLAUDE.md", ".claude/rules/git-workflow.md",
-                "artifacts/capabilities.md", "artifacts/README.md",
-                "ix-agents/registry.md", "ix-agents/README.md"):
+                "artifacts/capabilities.md", "artifacts/OVERVIEW.md",
+                "ix-agents/registry.md", "ix-agents/OVERVIEW.md",
+                "research/OVERVIEW.md"):
         dst = INDEXED_ROOT / rel
         src_f = src / rel
         if not src_f.is_file():
@@ -224,6 +238,14 @@ def cmd_update(args: argparse.Namespace) -> int:
         _safe_copy(src_f, dst)
         n = restore_user_zones(dst, user_zones)
         protected.append(f"{rel}" + (f"（恢复 {n} 个用户区）" if n else ""))
+        # 告警：用户区非空但回灌数不足 → 新基线缺少标记区，用户区被丢弃
+        if user_zones and n < len(user_zones):
+            lost = len(user_zones) - n
+            print(
+                f"  [warn] {rel}：{lost} 个用户标记区在新基线中未找到对应位置，"
+                f"已被覆盖（用户区内容丢失）",
+                file=sys.stderr,
+            )
     print(f"  ✓ {len(protected)} 个标记区文件已更新（用户区已保护）")
 
     # --- 2. 纯框架文件：直接覆盖 ---
@@ -273,7 +295,7 @@ def cmd_update(args: argparse.Namespace) -> int:
     for bucket in USER_BUCKETS:
         d = INDEXED_ROOT / bucket
         if d.is_dir():
-            items = [x.name for x in d.iterdir() if x.name != "README.md"]
+            items = [x.name for x in d.iterdir() if x.name != "OVERVIEW.md"]
             if items:
                 skipped.append(f"{bucket}/（{len(items)} 个用户条目）")
     user_clis = [x.name for x in (INDEXED_ROOT / "artifacts").iterdir()

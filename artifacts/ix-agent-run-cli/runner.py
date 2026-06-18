@@ -96,9 +96,14 @@ def merge_params(
 def check_expects(run_dir: Path, patterns: list[str]) -> None:
     for pat in patterns:
         rel = pat.replace("\\", "/")
-        hits = list(run_dir.glob(rel))
-        if not hits:
-            raise FileNotFoundError(f"expects 未满足: {pat}")
+        # 绝对路径：直接检查文件是否存在
+        if rel.startswith("/"):
+            if not Path(rel).exists():
+                raise FileNotFoundError(f"expects 未满足: {pat}")
+        else:
+            hits = list(run_dir.glob(rel))
+            if not hits:
+                raise FileNotFoundError(f"expects 未满足: {pat}")
 
 
 def run_tool_step(
@@ -114,7 +119,14 @@ def run_tool_step(
         if dry_run:
             print(f"[dry-run] shell: {cmd[:200]}...")
             return
-        proc = subprocess.run(cmd, shell=True, cwd=ctx["workspace_root"])
+        # 用 Popen + 实时转发避免无 TTY 环境（launchd/cron）下 stdout 死锁
+        proc = subprocess.Popen(
+            cmd, shell=True, cwd=ctx["workspace_root"],
+            stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
+        )
+        for line in proc.stdout:
+            print(line, end="", flush=True)
+        proc.wait()
         if proc.returncode != 0:
             raise RuntimeError(f"tool step {step['id']} shell 退出码 {proc.returncode}")
     elif tool in ("write", "copy"):

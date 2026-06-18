@@ -23,6 +23,7 @@
 - `orchestrate.py`（流程写死在 Python）
 - agent 根下无 run 隔离的 `work/`/`output/`
 - agent 内自编排 import
+- **未经用户明确要求，禁止在 manifest 中增加归档到 `reports/` 的 step**——agent 产出默认留在 `runs/<run-id>/output/`；只有用户明确说「归档」「存到 reports」「生成报告交付物」时才加归档 step
 
 **允许**：`ix-agent-run-cli` 为 thinking 调用 `claude -p`（Claude Code 自动化路径）。
 

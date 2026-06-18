@@ -256,6 +256,7 @@ def execute(
         if sid in completed:
             continue
         stype = step.get("type")
+        # tool step 的 params 做 shlex.quote（防 shell 注入）；thinking step 用原文（prompt 可读）
         ctx = build_context(
             run_id=run_id,
             agent_root=agent_root,
@@ -263,6 +264,7 @@ def execute(
             artifacts_root=ARTIFACTS_ROOT,
             workspace_root=INDEXED_ROOT,
             params=params,
+            quote_params=(stype == "tool"),
         )
         state["next_step"] = sid
         if not dry_run:

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+import shlex
 from pathlib import Path
 from typing import Any
 
@@ -21,6 +22,7 @@ def build_context(
     artifacts_root: Path,
     workspace_root: Path,
     params: dict[str, Any],
+    quote_params: bool = False,
 ) -> dict[str, str]:
     ctx = {
         "run_id": run_id,
@@ -34,7 +36,13 @@ def build_context(
         "run_inbox": str(run_dir / "inbox"),
     }
     for k, v in params.items():
-        ctx[f"params.{k}"] = str(v)
+        val = str(v)
+        # shell 场景（tool step）对 params 做 shlex.quote 防注入；
+        # thinking 场景不 quote（prompt 需要原文可读）
+        if quote_params:
+            ctx[f"params.{k}"] = shlex.quote(val)
+        else:
+            ctx[f"params.{k}"] = val
     return ctx
 
 

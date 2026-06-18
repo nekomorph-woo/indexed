@@ -4,7 +4,6 @@ one_liner: 按 manifest 顺序执行 tool + thinking（claude -p）流水线
 status: implemented
 intents:
   - "执行 ix-*-agent、manifest 编排、tool+thinking 流水线"
-  - "定时跑组合 agent、schedule run"
 commands:
   - name: run
     inputs:
@@ -15,18 +14,8 @@ commands:
       - "--trigger manual|scheduled"
     outputs: "ix-agents/<agent>/runs/<run-id>/（work/raw、work/thinking、output）"
     example: "python main.py run --agent ix-foo-agent"
-  - name: schedule list
-    inputs:
-      - "--enabled-only"
-    outputs: "已登记 jobs 列表（stdout）"
-    example: "python main.py schedule list"
-  - name: schedule run
-    inputs:
-      - "--job-id <id>"
-    outputs: "按 schedule/registry.yaml 的 job 执行（--trigger scheduled）"
-    example: "python main.py schedule run --job-id daily-audit"
 credentials: []
 depends_on: []
 notes: |
   thinking step 调用 Claude Code CLI（claude -p --dangerously-skip-permissions）。
-  定时仅读 ix-agents/schedule/registry.yaml；禁止自建其它计划任务。
+  定时功能已移至 ix-schedule-cli（artifacts/ix-schedule-cli/）。

@@ -21,7 +21,7 @@
 
 ```powershell
 # 工作区根目录
-python artifacts/ix-agent-run-cli/main.py --agent ix-<business>-agent
+python artifacts/ix-agent-run-cli/main.py run --agent ix-<business>-agent
 ```
 
 Claude Code 中说「执行 agent」→ Agent 运行**上述同一条命令**并汇报结果（见 [`.claude/rules/ix-agents.md`](../.claude/rules/ix-agents.md)）。
@@ -43,16 +43,7 @@ Claude Code 中说「执行 agent」→ Agent 运行**上述同一条命令**并
 
 ## 新建 agent
 
-ix-agent 流程或说「新建 lc agent」→ 阶段 B 从 [`_shared/templates/ix-agents/`](../_shared/templates/ix-agents/) 复制 → 更新 [`registry.md`](registry.md)。
-
-## 定时（专用 — 硬约束）
-
-**凡本桶 agent 的定时，仅通过 [`schedule/`](schedule/)**；禁止在 agent 目录或其它桶自建计划任务。
-
-- 说明：[`schedule/README.md`](schedule/README.md)
-- 登记：[`schedule/registry.yaml`](schedule/registry.yaml)
-- 执行：`invoke-job.ps1 -JobId <id>`
-- 注册 Windows 任务：`schedule/register-windows-task.ps1 -JobId <id>`
+ix-agent 流程或说「新建 ix agent」→ 阶段 B 从 [`_shared/templates/ix-agents/`](../_shared/templates/ix-agents/) 复制 → 更新 [`registry.md`](registry.md)。
 
 ## 应用索引 — 框架内置
 

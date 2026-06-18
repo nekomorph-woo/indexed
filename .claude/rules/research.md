@@ -19,6 +19,7 @@
 1. 确认 `research/<topic>/` 不存在；`<topic>` 为 kebab-case
 2. 至少创建 `docs/`；有设计稿或图片时再建 `design/`、`assets/`（轻量专题不强制后两者）
 3. 文档按上表落入对应子目录；**禁止**在 `research/<topic>/` 根堆文件
+4. 跑 `python artifacts/ix-workspace-index-cli/main.py sync`（自动同步专题索引到 `research/OVERVIEW.md` 的 `IX_USER_TOPICS` 标记区）
 
 ## 图示规范（通用方案文档）
 

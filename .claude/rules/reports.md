@@ -7,7 +7,7 @@
 ```
 reports/
 └── <report-type>/        # 报告类型（kebab-case）
-    ├── README.md         # 该类型的说明（新建 <type> 时必建）
+    ├── OVERVIEW.md       # 该类型的说明（新建 <type> 时必建）
     └── <周期或实例>/      # 如 <start>_<end> 或 YYYY-MM-DD_HH-mm
         ├── drafts/        # 中间产物（draft- 前缀）
         └── <final>.md     # 最终交付
@@ -26,9 +26,10 @@ reports/
 ## 新建报告类型
 
 1. 先与用户确认拟议目录树
-2. 创建 `reports/<type>/README.md`
+2. 创建 `reports/<type>/OVERVIEW.md`
 3. 更新 CLAUDE.md §2 目录树、§4 决策树
 4. 按需在 `_shared/specs/<category>/` 建 spec、`_shared/templates/<category>/` 建母版
+5. 跑 `python artifacts/ix-workspace-index-cli/main.py audit --check`（确认桶级 OVERVIEW 一致性）
 
 ## 新建一期报告
 

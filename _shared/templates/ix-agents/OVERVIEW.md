@@ -6,14 +6,13 @@
 |------|--------|
 | `manifest.template.yaml` | `manifest.yaml` |
 | `defaults.template.yaml` | `config/defaults.yaml` |
-| `agent-readme.template.md` | `README.md` |
 | `gitignore.template` | `.gitignore` |
 | `paths.template.py` | `paths.py`（推荐） |
 
 **执行**（勿建 `orchestrate.py`）：
 
 ```powershell
-python artifacts/ix-agent-run-cli/main.py --agent ix-<business>-agent
+python artifacts/ix-agent-run-cli/main.py run --agent ix-<business>-agent
 ```
 
 定时：仅 [`ix-agents/schedule/`](../../../ix-agents/schedule/)（[`README`](../../../ix-agents/schedule/README.md)）；勿用已废弃的 `schedule-task.example.ps1`

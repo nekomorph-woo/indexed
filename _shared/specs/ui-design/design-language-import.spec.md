@@ -63,7 +63,7 @@ _shared/design-languages/<id>/
 
 ### 4.5 索引
 
-1. `_shared/design-languages/README.md` 表格新增一行（含预览列）
+1. `_shared/design-languages/OVERVIEW.md` 表格新增一行（含预览列）
 2. `_shared/design-languages/index.html` 新增一张卡片（链到 `<id>/preview.html`）
 3. `design-language-routing.spec.md` §6 表新增一行（可选，目录为准）
 

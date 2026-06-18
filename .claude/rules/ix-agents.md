@@ -12,7 +12,7 @@
 | **用途** | 多步组合；`tool` = Shell / `ix-*-cli`；`thinking` = `claude -p` 落盘 `work/thinking/` |
 | **命名** | 桶 **`ix-agents/`**；应用 **`ix-<business>-agent`** |
 | **路径** | 每次 **`runs/<run-id>/`**（北京时间隔离）；跨 run 默认 **`config/`** |
-| **执行命令** | `python artifacts/ix-agent-run-cli/main.py --agent ix-<business>-agent` |
+| **执行命令** | `python artifacts/ix-agent-run-cli/main.py run --agent ix-<business>-agent` |
 | **母版 / 新建** | `_shared/templates/ix-agents/` + ix-agent 两阶段流程 |
 | **耦合** | tool：**Shell** 调 `ix-*-cli` 或 agent `scripts/`；禁止 import artifacts |
 | **发现** | [`ix-agents/registry.md`](../../ix-agents/registry.md) → 本文件 |
@@ -30,19 +30,20 @@
 
 1. 命名 `ix-<business>-agent`；从 [`_shared/templates/ix-agents/`](_shared/templates/ix-agents/) 复制母版
 2. 业务只写入 `manifest.yaml`、`config/`、可选 `scripts/`
-3. 更新 `ix-agents/registry.md`、`ix-agents/README.md`
-4. **禁止** `orchestrate.py`
+3. 建 **`SPEC.yaml`**（能力声明真相源；字段规范见 `capability-spec.spec.md`）
+4. 跑 `python artifacts/ix-workspace-index-cli/main.py sync`（自动同步索引到 `IX_USER_*` 标记区）+ `audit --check`
+5. **禁止** `orchestrate.py`
 
 ## 执行（TUI 与定时相同）
 
 ```bash
-python artifacts/ix-agent-run-cli/main.py --agent ix-<business>-agent [--set k=v] [--trigger scheduled] [--resume --run-id <id>]
+python artifacts/ix-agent-run-cli/main.py run --agent ix-<business>-agent [--set k=v] [--trigger scheduled] [--resume --run-id <id>]
 ```
 
 由 run-cli 创建 `runs/<run-id>/`、顺序执行 steps、更新 `run.yaml`。Claude Code 中 **Shell 运行上述命令并监督**，不在对话内逐步手写 manifest。
 
 - thinking step 默认执行器为 **`claude -p`**（Claude Code CLI）；可通过 `--llm-executor`、`IX_LLM_EXECUTOR`、`defaults.yaml` 的 `llm_executor` 覆盖。
-- 详细执行器与配置见 [`artifacts/ix-agent-run-cli/SPEC.md`](../../artifacts/ix-agent-run-cli/SPEC.md)。
+- 详细执行器与配置见 [`artifacts/ix-agent-run-cli/SPEC.yaml`](../../artifacts/ix-agent-run-cli/SPEC.yaml) 或 [`artifacts/OVERVIEW.md`](../../artifacts/OVERVIEW.md) §基线 CLI 深度说明。
 
 ## 两阶段开发规范（核心）
 

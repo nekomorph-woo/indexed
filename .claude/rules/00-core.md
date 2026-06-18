@@ -28,7 +28,7 @@
 根目录**仅允许**以下条目：
 
 - 五个工作桶：`_shared/`、`reports/`、`research/`、`artifacts/`、`ix-agents/`
-- 元文件：`CLAUDE.md`、`README.md`、`.gitignore`
+- 元文件：`CLAUDE.md`、`VERSION`、`.gitignore`
 - 工作区配置目录：`.claude/`、`.wok-plans/`（见 `git-workflow.md`）
 
 完整拓扑图见 [`CLAUDE.md`](../../CLAUDE.md) §2。
@@ -47,7 +47,7 @@
 | 场景 | Agent 行为 |
 |------|------------|
 | 路径明确符合本规范 | 直接创建目录与文件，无需反复确认 |
-| 需要新 `reports/<type>` | 先给出拟议目录树，用户同意后再创建 `reports/<type>/README.md`，并更新 CLAUDE.md §2、§4 |
+| 需要新 `reports/<type>` | 先给出拟议目录树，用户同意后再创建 `reports/<type>/OVERVIEW.md`，并更新 CLAUDE.md §2、§4 |
 | 删除或重命名已有周期/专题 | 先列出影响（链接、system 路径），再执行 |
 | 不符合现有拓扑 | 停止；向用户说明原因，提议 (a) 归入现有桶 或 (b) 修订 CLAUDE.md 增加新 `<type>` |
 

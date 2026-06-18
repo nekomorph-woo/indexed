@@ -14,3 +14,9 @@
 
 - 轻量专题：仅文档调研时只需 `docs/`；`design/`、`assets/` 按需再建。
 - **禁止**在 `research/<topic>/` 根堆文件；**禁止** `research` 下再套 `research`。
+
+## 专题索引 — 用户自建
+
+<!-- IX_USER_TOPICS_BEGIN -->
+<!-- 用户专题由 sync 自动维护 -->
+<!-- IX_USER_TOPICS_END -->

@@ -6,7 +6,7 @@
 
 | 文件 | 路径 | 说明 |
 |------|------|------|
-| 桶索引 | `README.md` | id → 目录 |
+| 桶索引 | `OVERVIEW.md` | id → 目录 |
 | 总览页 | `index.html` | 浏览器打开，链到各 `preview.html` |
 | 元数据 | `<id>/meta.md` | 标签、场景、token 摘要（罗列排序） |
 | 预览页 | `<id>/preview.html` | 结构与其它 id 相同，仅 token 不同 |

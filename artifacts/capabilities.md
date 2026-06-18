@@ -46,5 +46,5 @@
 
 1. 在 cli 目录建/改 `SPEC.yaml`（规范见 `capability-spec.spec.md`）
 2. 在本文件「意图速查」补一行
-3. 更新 [`artifacts/README.md`](README.md) 工具索引表
+3. 更新 [`artifacts/OVERVIEW.md`](OVERVIEW.md) 工具索引表
 4. 运行 `python artifacts/ix-workspace-index-cli/main.py audit --check` 校验一致性

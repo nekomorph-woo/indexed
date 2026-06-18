@@ -1,0 +1,2 @@
+# ix-schedule-cli 依赖：pyyaml（registry.yaml 读写）+ 纯标准库
+pyyaml>=6.0

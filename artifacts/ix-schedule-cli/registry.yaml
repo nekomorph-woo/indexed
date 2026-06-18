@@ -1,0 +1,3 @@
+# ix-schedule-cli 定时 job 登记册
+# 新增 job：参考 job.example.yaml 的字段格式，在 jobs 列表里追加
+jobs: []

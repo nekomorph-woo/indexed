@@ -1,0 +1,14 @@
+# 单条 job 的字段范例（复制到 registry.yaml 的 jobs 列表里使用）
+
+- id: daily-usage-report          # 唯一 ID（kebab-case）
+  agent: ix-foo-agent             # 要执行的 ix-*-agent（在 ix-agents/ 下）
+  params:                          # 传给 agent 的参数（对应 manifest 的 params）
+    primary_input: "https://example.com/data"
+    window_days: 7
+  schedule:
+    kind: daily                    # daily | weekly
+    time: "09:00"                  # HH:MM（24 小时制）
+    weekdays: [MON]                # 仅 weekly 时指定（MON/TUE/WED/THU/FRI/SAT/SUN）
+  enabled: true                    # 是否启用
+  registered: false                # 是否已注册到系统调度器（register 后自动回填）
+  platform_task_name: ""           # 系统任务名（register 后自动回填）

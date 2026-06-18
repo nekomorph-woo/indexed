@@ -1,0 +1,41 @@
+name: ix-schedule-cli
+domain: 定时执行器
+one_liner: 跨平台定时注册（Windows schtasks / macOS launchd）并触发 ix-*-agent
+status: implemented
+intents:
+  - "定时、schedule、cron、schtasks、launchd、定时跑 agent、计划任务"
+commands:
+  - name: register
+    inputs:
+      - "--job-id <id>  # registry.yaml 中的 job ID"
+    outputs: "注册到系统调度器 + 回填 registered/task_name 到 registry.yaml"
+    example: "python main.py register --job-id daily-usage-report"
+  - name: unregister
+    inputs:
+      - "--job-id <id>"
+    outputs: "从系统调度器移除 + 回填 registered=false"
+    example: "python main.py unregister --job-id daily-usage-report"
+  - name: list
+    inputs:
+      - "--enabled-only  # 只列启用的"
+    outputs: "registry 里所有 job 的表格（stdout）"
+    example: "python main.py list"
+  - name: run
+    inputs:
+      - "--job-id <id>"
+    outputs: "手动触发 job → 调 ix-agent-run-cli run --agent <agent> --trigger scheduled"
+    example: "python main.py run --job-id daily-usage-report"
+  - name: status
+    inputs: []
+    outputs: "当前平台 + 系统调度器已注册任务列表（stdout）"
+    example: "python main.py status"
+credentials: []
+depends_on:
+  - ix-agent-run-cli
+notes: |
+  调度模型：系统调度器（非常驻进程）。register 写入 schtasks/launchd，CLI 退出后系统负责触发。
+  触发时执行 main.py run --job-id <id> → 调 ix-agent-run-cli。
+  仅支持 daily/weekly（不用 cron 表达式，避免跨平台转换坑）。
+  macOS: launchd plist 写入 ~/Library/LaunchAgents/com.indexed.<id>.plist。
+  注意：indexed 工作区建议放在用户主目录下（如 ~/）；放在外部卷（/Volumes/）可能因 macOS TCC 限制导致 launchd 无法执行脚本。
+  Windows: schtasks /Create /SC DAILY|WEEKLY。

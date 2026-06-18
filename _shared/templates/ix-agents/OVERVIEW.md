@@ -15,6 +15,6 @@
 python artifacts/ix-agent-run-cli/main.py run --agent ix-<business>-agent
 ```
 
-定时：仅 [`ix-agents/schedule/`](../../../ix-agents/schedule/)（[`README`](../../../ix-agents/schedule/README.md)）；勿用已废弃的 `schedule-task.example.ps1`
+定时：见 [`ix-schedule-cli`](../../../artifacts/ix-schedule-cli/)（跨平台定时执行器，已从 ix-agents 移出）
 
 规范：[`CLAUDE.md`](../../CLAUDE.md) §3.6

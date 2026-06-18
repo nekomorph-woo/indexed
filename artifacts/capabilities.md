@@ -15,7 +15,7 @@
 | 用户意图或关键词 | 模块 | 一句话 | 详情 |
 |------------------|------|--------|------|
 | 执行 ix-*-agent、manifest 编排、tool+thinking 流水线 | `ix-agent-run-cli` | 按 manifest 执行 tool + thinking（claude -p） | [`SPEC.yaml`](ix-agent-run-cli/SPEC.yaml) |
-| 定时跑组合 agent | `ix-agents/schedule/` + `ix-agent-run-cli schedule run` | 读 registry.yaml 执行 job | [`SPEC.yaml`](ix-agent-run-cli/SPEC.yaml) |
+| 定时跑组合 agent | `ix-schedule-cli` | 跨平台定时注册（schtasks/launchd）+ 触发 ix-agent | [`SPEC.yaml`](ix-schedule-cli/SPEC.yaml) |
 | 索引审计 + 用户索引同步 | `ix-workspace-index-cli` | audit / list / sync | [`SPEC.yaml`](ix-workspace-index-cli/SPEC.yaml) |
 | 初始化 indexed（git 模式 + 昵称）、基线更新 | `ix-init-cli` | init / update / status | [`SPEC.yaml`](ix-init-cli/SPEC.yaml) |
 <!-- IX_FRAMEWORK_CLI_INDEX_END -->

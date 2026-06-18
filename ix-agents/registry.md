@@ -39,4 +39,4 @@
 
 新建/变更后：在 agent 目录建/改 `SPEC.yaml` → 在本文件「意图速查」补一行 → 更新 [`README.md`](README.md)。
 运行 `python artifacts/ix-workspace-index-cli/main.py audit --check` 校验一致性。
-**定时**：仅改 [`schedule/registry.yaml`](schedule/registry.yaml)（**禁止**其它计划任务）。
+**定时**：见 [`ix-schedule-cli`](../artifacts/ix-schedule-cli/)（跨平台定时执行器）。

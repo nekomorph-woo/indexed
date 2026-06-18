@@ -25,7 +25,7 @@ MARKER_FILES = [
 ]
 
 # 基线 cli 目录名（update 时整体覆盖；用户 cli 不动）
-BASELINE_CLIS = {"ix-agent-run-cli", "ix-workspace-index-cli", "ix-init-cli"}
+BASELINE_CLIS = {"ix-agent-run-cli", "ix-workspace-index-cli", "ix-init-cli", "ix-schedule-cli"}
 
 # 用户内容目录（update 时整体跳过）
 USER_BUCKETS = {"research", "reports"}

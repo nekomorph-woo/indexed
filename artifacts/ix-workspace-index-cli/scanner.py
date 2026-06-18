@@ -408,7 +408,7 @@ def manifest_snapshot(agent: AgentInfo) -> dict:
 # ---------------------------------------------------------------------------
 
 # 基线 cli（框架内置，不在用户区登记）
-BASELINE_CLIS = {"ix-agent-run-cli", "ix-workspace-index-cli", "ix-init-cli"}
+BASELINE_CLIS = {"ix-agent-run-cli", "ix-workspace-index-cli", "ix-init-cli", "ix-schedule-cli"}
 
 _ZONE_RE = re.compile(
     r"(<!--\s*IX_(\w+)_BEGIN\s*-->)([\s\S]*?)(<!--\s*IX_\2_END\s*-->)"

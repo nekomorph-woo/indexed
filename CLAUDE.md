@@ -22,10 +22,11 @@
 | **周期性报告 / 交付物**——"新报告""周报""report""drafts""周期目录" | 报告目录结构、周期命名（start_end）、drafts 约定、新建报告类型的步骤 | `.claude/rules/reports.md` |
 | **专题调研 / 方案文档**——"研究""调研""research""passkey""写方案""图怎么画" | research/<topic> 结构（docs/design/assets）、轻量专题约定、ASCII 线框图规范、新建专题步骤 | `.claude/rules/research.md` |
 | **可运行 CLI / 小工具**——"写个脚本""新建 cli""ix-*-cli""provider""拉数""发邮件""capabilities" | cli 命名与骨架、SPEC.yaml 能力声明、零 import 耦合、新建清单、能力发现（先 Read capabilities.md） | `.claude/rules/artifacts.md` |
-| **组合业务 Agent**——"执行 agent""ix-*-agent""manifest""定时""thinking""两阶段""params" | manifest 编排、run --agent 执行、两阶段开发规范、禁止主动归档（产出留 runs/ 不主动入 reports）、定时（待设计）、新建 agent 清单 | `.claude/rules/ix-agents.md` |
+| **组合业务 Agent**——"执行 agent""ix-*-agent""manifest""定时""thinking""两阶段""params" | manifest 编排、run --agent 执行、两阶段开发规范、禁止主动归档（产出留 runs/ 不主动入 reports）、新建 agent 清单 | `.claude/rules/ix-agents.md` |
 | **规范 / 模板 / Skill**——"新建 spec""模板""SKILL""两阶段 skill""capability-spec" | specs/templates 目录治理、SPEC.yaml 字段规范、skill 去重、skill 两阶段（fallback）、新建 spec/template 步骤 | `.claude/rules/specs-templates.md` |
 | **HTML / 原型页 / 设计语言**——"写 HTML""设计风格""material-you""bauhaus""选型""导入新语言" | 设计语言库结构、选型流程（禁止自动选用）、导入新语言、preview.html 预览 | `.claude/rules/design-languages.md` |
 | **Git 操作 / 版本号 / commit**——"提交""push""git init""版本号""local/remote""升级基线" | Git 模式（local/remote 标记区）、VERSION 语义化版本、commit 收尾、根目录白名单 | `.claude/rules/git-workflow.md` |
+| **定时 / 计划任务**——"定时跑 agent""schedule""cron""schtasks""launchd""计划任务" | 跨平台定时注册（register/unregister/list）、job 登记册、daily/weekly 调度、系统调度器触发 ix-agent | `artifacts/ix-schedule-cli/` |
 | **回复风格 / 图示 / 任务规划**——"怎么回复""画图""ASCII""规划任务""coding conventions" | 简体中文回复（不随用户语言切换）、ASCII 线框图、禁止「图」列表格、任务规划与编码风格 | `.claude/rules/dialogue-style.md` |
 
 > **规则索引总览**：`.claude/rules/OVERVIEW.md` 列出全部 rules 文件 + 来源章节。
@@ -213,7 +214,7 @@ indexed/
 
 **允许**：`ix-agent-run-cli` 为 thinking 调用 `claude -p`（Claude Code 自动化路径）。
 
-**定时（硬约束）**：`ix-*-agent` 的定时 **仅**指 [`ix-agents/schedule/`](ix-agents/schedule/)（`registry.yaml` + `invoke-job.ps1` / `main.py schedule run`）。**禁止** Agent 自行创建其它计划任务、`schtasks` 或 per-agent 定时脚本。见 [`.claude/rules/ix-agents.md`](.claude/rules/ix-agents.md) §定时。
+**定时**：已独立为 [`ix-schedule-cli`](artifacts/ix-schedule-cli/)（跨平台：Windows schtasks / macOS launchd）。定时注册/触发不经过 ix-agent-run-cli。见 [`.claude/rules/ix-agents.md`](.claude/rules/ix-agents.md) §定时。
 
 ### 3.7 Agent 规范 `_shared/specs/`
 

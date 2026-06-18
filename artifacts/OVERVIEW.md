@@ -54,6 +54,7 @@ artifacts/ix-<domain>-cli/
 | [`ix-agent-run-cli/`](ix-agent-run-cli/) | `run --agent …` | 统一执行 `ix-*-agent` manifest（TUI 与定时同命令） |
 | [`ix-workspace-index-cli/`](ix-workspace-index-cli/) | `audit` / `list` / `sync` | capabilities/registry 与磁盘一致性审计 + 索引同步 |
 | [`ix-init-cli/`](ix-init-cli/) | `init` / `update` / `status` | 工作区初始化（git 模式 + 昵称）+ 基线更新 |
+| [`ix-schedule-cli/`](ix-schedule-cli/) | `register` / `unregister` / `list` / `run` / `status` | 跨平台定时执行器（schtasks / launchd） |
 <!-- IX_FRAMEWORK_CLI_INDEX_END -->
 
 ## 工具索引 — 用户自建

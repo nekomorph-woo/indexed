@@ -21,5 +21,3 @@ ix-agents/*/runs/
 # 初始化标记（用户本地，不入版本库）
 .indexed-initialized
 
-# 工具配置缓存
-.wok-plans/cache/

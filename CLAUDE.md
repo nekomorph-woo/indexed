@@ -115,7 +115,7 @@ indexed/
 
 ### 2.1 禁止项（硬约束）
 
-- 在 `indexed/` 根下新建 `projects/`、`docs/`、`temp/`、`00-*` 等桶（工具配置目录 `.claude/`、`.wok-plans/` 除外，见 `.claude/rules/git-workflow.md`）
+- 在 `indexed/` 根下新建 `projects/`、`docs/`、`temp/`、`00-*` 等桶（工具配置目录 `.claude/` 除外，见 `.claude/rules/git-workflow.md`）
 - 使用中文或空格作为**目录名**
 - 在 `reports/<type>/<period>/`、`research/<topic>/`、`artifacts/<artifact-name>/` 或 `ix-agents/<agent-name>/` 内 `git clone`
 - 使用 `tmp-` 作为报告中间产物前缀（统一 `draft-`）
@@ -447,7 +447,7 @@ git checkout <branch>
 | 需要新 `artifacts/ix-<domain>-cli` | 按 `.claude/rules/artifacts.md` 创建；更新 `artifacts/OVERVIEW.md` 与 `capabilities.md` |
 | 需要新 `reports/<type>` | 先给出拟议目录树，用户同意后再创建 `reports/<type>/OVERVIEW.md`，并更新本文件 §2、§4 |
 | 删除或重命名已有周期/专题 | 先列出影响（链接、system 路径），再执行 |
-| 在根目录新增文件 | 仅允许：`CLAUDE.md`、`VERSION`、`.gitignore`、`.claude/`、`.wok-plans/` |
+| 在根目录新增文件 | 仅允许：`CLAUDE.md`、`VERSION`、`.gitignore`、`.claude/` |
 | commit / zap 收尾 | 按 git-workflow.md 当前模式处理（local 不提示 push；remote 可 push） |
 
 ---

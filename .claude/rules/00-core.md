@@ -29,7 +29,7 @@
 
 - 五个工作桶：`_shared/`、`reports/`、`research/`、`artifacts/`、`ix-agents/`
 - 元文件：`CLAUDE.md`、`VERSION`、`.gitignore`
-- 工作区配置目录：`.claude/`、`.wok-plans/`（见 `git-workflow.md`）
+- 工作区配置目录：`.claude/`（见 `git-workflow.md`）
 
 完整拓扑图见 [`CLAUDE.md`](../../CLAUDE.md) §2。
 

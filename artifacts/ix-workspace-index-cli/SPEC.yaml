@@ -23,5 +23,4 @@ commands:
 credentials: []
 depends_on: []
 notes: |
-  真相源为各 cli/agent 的 SPEC.yaml；校验 capabilities.md/registry.md 薄索引是否覆盖且无孤儿。
-  脚本只诊断，不改 Markdown；据 audit 输出由 Agent 更新索引页。
+  真相源为各 cli/agent 的 SPEC.yaml。audit 只诊断不写文件；sync 把用户 SPEC.yaml 同步到薄索引 IX_USER_* 标记区（会写）。

@@ -20,14 +20,15 @@ except ImportError:
 WORKSPACE_ROOT = Path(__file__).resolve().parents[2]
 ARTIFACTS_DIR = WORKSPACE_ROOT / "artifacts"
 AGENTS_DIR = WORKSPACE_ROOT / "ix-agents"
+RESEARCH_DIR = WORKSPACE_ROOT / "research"
 SHARED_SPECS_DIR = WORKSPACE_ROOT / "_shared" / "specs"
 SHARED_TEMPS_DIR = WORKSPACE_ROOT / "_shared" / "templates"
 RULES_DIR = WORKSPACE_ROOT / ".claude" / "rules"
 CLAUDE_MD = WORKSPACE_ROOT / "CLAUDE.md"
 CAPABILITIES_PATH = ARTIFACTS_DIR / "capabilities.md"
 REGISTRY_PATH = AGENTS_DIR / "registry.md"
-ARTIFACTS_README = ARTIFACTS_DIR / "README.md"
-AGENTS_README = AGENTS_DIR / "README.md"
+ARTIFACTS_README = ARTIFACTS_DIR / "OVERVIEW.md"
+AGENTS_README = AGENTS_DIR / "OVERVIEW.md"
 
 CLI_DIR_RE = re.compile(r"^ix-.+-cli$")
 AGENT_DIR_RE = re.compile(r"^ix-.+-agent$")
@@ -42,7 +43,6 @@ class CliInfo:
     name: str
     path: Path
     subcommands: list[str] = field(default_factory=list)
-    has_spec_md: bool = False
     has_spec_yaml: bool = False
     spec: dict[str, Any] | None = None  # SPEC.yaml 解析结果
 
@@ -57,7 +57,6 @@ class AgentInfo:
     required_params: list[str] = field(default_factory=list)
     research: str | None = None
     artifact_refs: list[str] = field(default_factory=list)
-    has_spec_md: bool = False
     has_spec_yaml: bool = False
     spec: dict[str, Any] | None = None
 
@@ -104,7 +103,6 @@ def discover_clis() -> list[CliInfo]:
                 name=d.name,
                 path=d,
                 subcommands=subs,
-                has_spec_md=(d / "SPEC.md").is_file(),
                 has_spec_yaml=spec is not None,
                 spec=spec,
             )
@@ -120,7 +118,7 @@ def discover_agents() -> list[AgentInfo]:
         if not d.is_dir() or not AGENT_DIR_RE.match(d.name):
             continue
         manifest = d / "manifest.yaml"
-        info = AgentInfo(name=d.name, path=d, has_spec_md=(d / "SPEC.md").is_file())
+        info = AgentInfo(name=d.name, path=d)
         if manifest.is_file():
             _load_manifest(manifest, info)
         spec = _load_yaml(d / "SPEC.yaml")
@@ -202,11 +200,6 @@ def audit_index() -> tuple[list[CliInfo], list[AgentInfo], list[IndexIssue]]:
             issues.append(
                 IndexIssue("error", "cli_missing_spec_yaml", f"{c.name} 缺少 SPEC.yaml（能力真相源）", c.name)
             )
-        # SPEC.md 人类可读说明（warn，非必须但建议）
-        if not c.has_spec_md:
-            issues.append(
-                IndexIssue("warn", "cli_missing_spec_md", f"{c.name} 缺少 SPEC.md（人类可读说明）", c.name)
-            )
         # 必须出现在 capabilities.md 薄索引
         if c.name not in cap_cli_names:
             issues.append(
@@ -235,10 +228,6 @@ def audit_index() -> tuple[list[CliInfo], list[AgentInfo], list[IndexIssue]]:
         if not a.has_spec_yaml:
             issues.append(
                 IndexIssue("error", "agent_missing_spec_yaml", f"{a.name} 缺少 SPEC.yaml（能力真相源）", a.name)
-            )
-        if not a.has_spec_md:
-            issues.append(
-                IndexIssue("warn", "agent_missing_spec_md", f"{a.name} 缺少 SPEC.md（人类可读说明）", a.name)
             )
         if a.name not in reg_agent_names:
             issues.append(
@@ -358,12 +347,13 @@ def _check_cross_refs(files: list[Path], issues: list[IndexIssue]) -> None:
 def _check_shared_paths(issues: list[IndexIssue]) -> None:
     """检查桶级 README 是否存在。"""
     bucket_readmes = [
-        WORKSPACE_ROOT / "research" / "README.md",
-        WORKSPACE_ROOT / "artifacts" / "README.md",
-        WORKSPACE_ROOT / "ix-agents" / "README.md",
-        SHARED_SPECS_DIR / "README.md",
-        SHARED_TEMPS_DIR / "README.md",
-        WORKSPACE_ROOT / "_shared" / "design-languages" / "README.md",
+        WORKSPACE_ROOT / "reports" / "OVERVIEW.md",
+        WORKSPACE_ROOT / "research" / "OVERVIEW.md",
+        WORKSPACE_ROOT / "artifacts" / "OVERVIEW.md",
+        WORKSPACE_ROOT / "ix-agents" / "OVERVIEW.md",
+        SHARED_SPECS_DIR / "OVERVIEW.md",
+        SHARED_TEMPS_DIR / "OVERVIEW.md",
+        WORKSPACE_ROOT / "_shared" / "design-languages" / "OVERVIEW.md",
     ]
     for p in bucket_readmes:
         if not p.is_file():
@@ -499,16 +489,16 @@ def sync_indexes() -> dict[str, int]:
             cap_path.write_text(new_text, encoding="utf-8")
             results["capabilities.md"] = len(user_clis)
 
-    # artifacts/README.md → IX_USER_CLI_INDEX
-    art_readme = ARTIFACTS_DIR / "README.md"
+    # artifacts/OVERVIEW.md → IX_USER_CLI_INDEX
+    art_readme = ARTIFACTS_DIR / "OVERVIEW.md"
     if art_readme.is_file():
         text = art_readme.read_text(encoding="utf-8")
         rows = _gen_cli_rows(user_clis)
         new_text = _replace_zone(text, "USER_CLI_INDEX", "\n" + rows)
         if new_text != text:
             art_readme.write_text(new_text, encoding="utf-8")
-            if "README.md" not in results:
-                results["artifacts/README.md"] = len(user_clis)
+            if "OVERVIEW.md" not in results:
+                results["artifacts/OVERVIEW.md"] = len(user_clis)
 
     # registry.md → IX_USER_AGENT_INDEX
     reg_path = AGENTS_DIR / "registry.md"
@@ -520,15 +510,38 @@ def sync_indexes() -> dict[str, int]:
             reg_path.write_text(new_text, encoding="utf-8")
             results["registry.md"] = len(user_agents)
 
-    # ix-agents/README.md → IX_USER_AGENT_INDEX
-    agents_readme = AGENTS_DIR / "README.md"
+    # ix-agents/OVERVIEW.md → IX_USER_AGENT_INDEX
+    agents_readme = AGENTS_DIR / "OVERVIEW.md"
     if agents_readme.is_file():
         text = agents_readme.read_text(encoding="utf-8")
         rows = _gen_agent_rows(user_agents)
         new_text = _replace_zone(text, "USER_AGENT_INDEX", "\n" + rows)
         if new_text != text:
             agents_readme.write_text(new_text, encoding="utf-8")
-            if "ix-agents/README.md" not in results:
-                results["ix-agents/README.md"] = len(user_agents)
+            if "ix-agents/OVERVIEW.md" not in results:
+                results["ix-agents/OVERVIEW.md"] = len(user_agents)
+
+    # research/OVERVIEW.md → IX_USER_TOPICS
+    research_overview = RESEARCH_DIR / "OVERVIEW.md"
+    if research_overview.is_file() and RESEARCH_DIR.is_dir():
+        # 扫描 research 下的专题目录（排除 OVERVIEW.md 等非目录文件）
+        topics = []
+        if RESEARCH_DIR.is_dir():
+            topics = sorted([
+                d.name for d in RESEARCH_DIR.iterdir()
+                if d.is_dir() and not d.name.startswith(".") and not d.name.startswith("_")
+            ])
+        if topics:
+            lines = ["| 专题 | 说明 |", "|------|------|"]
+            for topic in topics:
+                lines.append(f"| `{topic}/` | （见专题内 docs/） |")
+            rows = "\n".join(lines) + "\n"
+        else:
+            rows = "<!-- 用户专题由 sync 自动维护 -->\n"
+        text = research_overview.read_text(encoding="utf-8")
+        new_text = _replace_zone(text, "USER_TOPICS", "\n" + rows)
+        if new_text != text:
+            research_overview.write_text(new_text, encoding="utf-8")
+            results["research/OVERVIEW.md"] = len(topics)
 
     return results

@@ -15,7 +15,6 @@ def _cli_row(c) -> dict:
         "name": c.name,
         "subcommands": c.subcommands,
         "has_spec_yaml": c.has_spec_yaml,
-        "has_spec_md": c.has_spec_md,
     }
 
 
@@ -50,11 +49,11 @@ def cmd_audit(args: argparse.Namespace) -> int:
 def _print_human(clis, agents, issues, errors, warns) -> None:
     print(f"indexed 索引审计 @ {WORKSPACE_ROOT}\n")
     print("## 磁盘发现\n")
-    print("| CLI | 子命令 | SPEC.yaml | SPEC.md |")
+    print("| CLI | 子命令 | SPEC.yaml |")
     print("|-----|--------|-----------|---------|")
     for c in clis:
         subs = ", ".join(c.subcommands) or "—"
-        print(f"| {c.name} | {subs} | {'yes' if c.has_spec_yaml else 'no'} | {'yes' if c.has_spec_md else 'no'} |")
+        print(f"| {c.name} | {subs} | {'yes' if c.has_spec_yaml else 'no'} |")
     print()
     print("| Agent | thinking | 步骤摘要 |")
     print("|-------|----------|----------|")

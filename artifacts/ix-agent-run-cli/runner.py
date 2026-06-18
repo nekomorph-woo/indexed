@@ -213,7 +213,8 @@ def execute(
     else:
         run_id = run_id or new_run_id(runs_dir)
         run_dir = runs_dir / run_id
-        ensure_run_tree(run_dir)
+        if not dry_run:
+            ensure_run_tree(run_dir)
         defaults = load_defaults(agent_root)
         params = merge_params(manifest, defaults, param_overrides)
         completed = set()
@@ -279,7 +280,7 @@ def execute(
             raise
 
         completed.add(sid)
-        state["steps_completed"] = sorted(completed)
+        state["steps_completed"] = list(completed)  # 保持执行顺序，不用 sorted()
         state["next_step"] = None
         if not dry_run:
             save_yaml(run_dir / "run.yaml", state)

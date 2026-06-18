@@ -18,9 +18,10 @@ MARKER_FILES = [
     CLAUDE_MD,
     GIT_WORKFLOW_RULE,
     INDEXED_ROOT / "artifacts" / "capabilities.md",
-    INDEXED_ROOT / "artifacts" / "README.md",
+    INDEXED_ROOT / "artifacts" / "OVERVIEW.md",
     INDEXED_ROOT / "ix-agents" / "registry.md",
-    INDEXED_ROOT / "ix-agents" / "README.md",
+    INDEXED_ROOT / "ix-agents" / "OVERVIEW.md",
+    INDEXED_ROOT / "research" / "OVERVIEW.md",
 ]
 
 # 基线 cli 目录名（update 时整体覆盖；用户 cli 不动）

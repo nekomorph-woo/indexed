@@ -1,7 +1,0 @@
-# ix-agents 专用定时 — 唯一机读登记册
-# 执行：ix-agents/schedule/invoke-job.ps1 -JobId <id>
-#        或 python artifacts/ix-agent-run-cli/main.py schedule run --job-id <id>
-# 注册 Windows 任务：register-windows-task.ps1 -JobId <id>（禁止其它 schtasks 方式）
-# 范例条目：job.entry.example.yaml
-
-jobs: []

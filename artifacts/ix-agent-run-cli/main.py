@@ -98,30 +98,15 @@ def main() -> int:
     sch_run.add_argument("--llm-bin")
     sch_run.add_argument("--dry-run", action="store_true")
 
-    # 兼容：无子命令时视为 run --agent（旧用法）
-    parser.add_argument("--agent", help=argparse.SUPPRESS)
-    parser.add_argument("--run-id", help=argparse.SUPPRESS)
-    parser.add_argument("--resume", action="store_true", help=argparse.SUPPRESS)
-    parser.add_argument("--set", action="append", default=[], help=argparse.SUPPRESS)
-    parser.add_argument("--params-json", help=argparse.SUPPRESS)
-    parser.add_argument("--trigger", choices=("manual", "scheduled"), default="manual", help=argparse.SUPPRESS)
-    parser.add_argument("--llm-bin", help=argparse.SUPPRESS)
-    parser.add_argument("--llm-executor", default="claude-p", help=argparse.SUPPRESS)
-    parser.add_argument("--dry-run", action="store_true", help=argparse.SUPPRESS)
-
     args = parser.parse_args()
 
     if args.command == "schedule":
         return _cmd_schedule(args)
 
-    # 子命令 run 或旧式全局 --agent
-    agent = getattr(args, "agent", None)
-    if args.command == "run":
-        agent = args.agent
-    elif not agent:
-        parser.error("请使用: main.py run --agent <id>  或  main.py schedule run --job-id <id>")
+    # 仅子命令 run（旧式全局 --agent 兼容层已移除）
+    agent = args.agent
 
-    overrides = _parse_set(getattr(args, "set", None) or [])
+    overrides = _parse_set(args.set or [])
     pj = getattr(args, "params_json", None)
     if pj:
         overrides.update(json.loads(pj))
@@ -129,13 +114,13 @@ def main() -> int:
     try:
         run_dir = execute(
             agent_id=agent,
-            run_id=getattr(args, "run_id", None),
-            resume=getattr(args, "resume", False),
+            run_id=args.run_id,
+            resume=args.resume,
             param_overrides=overrides,
-            trigger=getattr(args, "trigger", "manual"),
-            llm_bin=getattr(args, "llm_bin", None),
-            llm_executor=getattr(args, "llm_executor", None),
-            dry_run=getattr(args, "dry_run", False),
+            trigger=args.trigger,
+            llm_bin=args.llm_bin,
+            llm_executor=args.llm_executor,
+            dry_run=args.dry_run,
         )
     except (FileNotFoundError, KeyError, RuntimeError, ValueError) as e:
         print(f"错误: {e}", file=sys.stderr)

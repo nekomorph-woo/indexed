@@ -3,27 +3,32 @@
 > **权威来源**：本文件 + `.claude/rules/`（各领域细化规则）+ `.claude/settings.json`（机器可执行的硬约束）。
 > 用户不自行搭目录；Agent 必须按本规范创建、移动、命名。若任务不符合现有拓扑，先提议修订本文件，再动手。
 
-> **分层记忆**：本文件是「宪法」——精炼的整体把控（目录索引 + 顶层方向 + 核心原则）。各领域细化规则独立存放于 `.claude/rules/`，并通过下方 import 一并纳入记忆，使助手成为伙伴/伴侣式协作者而非一次性工具。
+> **按需加载规则**：本文件是「宪法」——精炼的整体把控（目录索引 + 顶层方向 + 核心原则）。各领域细化规则独立存放于 `.claude/rules/`。Claude Code 会自动加载 rules 目录；ZCode 等不支持自动加载的环境，按下方「场景路由」**按需 Read** 对应 rules 文件。
 
 <!-- IX_PERSONA_BEGIN -->
 > **助手昵称**：Xi酱　　**对用户称呼**：您
 <!-- IX_PERSONA_END -->
 
-```text
-@.claude/rules/00-core.md
-@.claude/rules/naming.md
-@.claude/rules/shared-repos.md
-@.claude/rules/reports.md
-@.claude/rules/research.md
-@.claude/rules/artifacts.md
-@.claude/rules/ix-agents.md
-@.claude/rules/specs-templates.md
-@.claude/rules/design-languages.md
-@.claude/rules/git-workflow.md
-@.claude/rules/dialogue-style.md
-```
+### 场景路由 — 遇到什么任务，Read 什么规则
 
-> 上述 `@import` 为 Claude Code 记忆导入语法，使 `.claude/rules/*.md` 自动随本文件进入上下文。rules 文件内容是本规范各章节的细化展开，与本文件一致、不冲突。
+> Claude Code 自动加载全部 rules；ZCode 等不支持自动加载的环境，按此表**按需 Read**。
+> 拿不准时先 Read `.claude/rules/OVERVIEW.md` 总览。
+
+| 场景 / 触发词 | 回答什么问题 | Read |
+|---------------|-------------|------|
+| **新建/移动文件、路径是否合法**——"放哪""能建这个目录吗""根目录能放什么" | 五桶拓扑、根目录白名单、禁止项（禁止中文目录名/桶内 clone/tmp- 前缀）、与用户协作的边界 | `.claude/rules/00-core.md` |
+| **命名拿不准、桶级入口文件**——"叫什么名字""要不要 OVERVIEW""日期格式" | kebab-case 约定、日期/区间格式、draft- 前缀、哪些桶必须有 OVERVIEW.md、clone 仓库的目录命名 | `.claude/rules/naming.md` |
+| **要 clone / 分析 Git 代码、想跑构建**——"clone 仓库""fetch""mvn install""npm build""清理产物" | 浅克隆命令、fetch --depth、禁止构建清单（mvn/gradle/npm/go/docker/make）、误生成产物怎么清理 | `.claude/rules/shared-repos.md` |
+| **周期性报告 / 交付物**——"新报告""周报""report""drafts""周期目录" | 报告目录结构、周期命名（start_end）、drafts 约定、新建报告类型的步骤 | `.claude/rules/reports.md` |
+| **专题调研 / 方案文档**——"研究""调研""research""passkey""写方案""图怎么画" | research/<topic> 结构（docs/design/assets）、轻量专题约定、ASCII 线框图规范、新建专题步骤 | `.claude/rules/research.md` |
+| **可运行 CLI / 小工具**——"写个脚本""新建 cli""ix-*-cli""provider""拉数""发邮件""capabilities" | cli 命名与骨架、SPEC.yaml 能力声明、零 import 耦合、新建清单、能力发现（先 Read capabilities.md） | `.claude/rules/artifacts.md` |
+| **组合业务 Agent**——"执行 agent""ix-*-agent""manifest""定时""thinking""两阶段""params" | manifest 编排、run --agent 执行、两阶段开发规范、禁止主动归档（产出留 runs/ 不主动入 reports）、定时（待设计）、新建 agent 清单 | `.claude/rules/ix-agents.md` |
+| **规范 / 模板 / Skill**——"新建 spec""模板""SKILL""两阶段 skill""capability-spec" | specs/templates 目录治理、SPEC.yaml 字段规范、skill 去重、skill 两阶段（fallback）、新建 spec/template 步骤 | `.claude/rules/specs-templates.md` |
+| **HTML / 原型页 / 设计语言**——"写 HTML""设计风格""material-you""bauhaus""选型""导入新语言" | 设计语言库结构、选型流程（禁止自动选用）、导入新语言、preview.html 预览 | `.claude/rules/design-languages.md` |
+| **Git 操作 / 版本号 / commit**——"提交""push""git init""版本号""local/remote""升级基线" | Git 模式（local/remote 标记区）、VERSION 语义化版本、commit 收尾、根目录白名单 | `.claude/rules/git-workflow.md` |
+| **回复风格 / 图示 / 任务规划**——"怎么回复""画图""ASCII""规划任务""coding conventions" | 简体中文回复（不随用户语言切换）、ASCII 线框图、禁止「图」列表格、任务规划与编码风格 | `.claude/rules/dialogue-style.md` |
+
+> **规则索引总览**：`.claude/rules/OVERVIEW.md` 列出全部 rules 文件 + 来源章节。
 
 ---
 
@@ -496,5 +501,5 @@ git checkout <branch>
 | 日期 | 变更 |
 |------|------|
 | 2026-05 ~ 2026-06 上旬 | 早期演进（详见基线快照） |
-| 2026-06-16 | **建立 Claude Code 单平台底座**：`CLAUDE.md` 成为唯一权威；细化规则提取为 `.claude/rules/<domain>.md` 并经 `@import` 纳入记忆；硬约束写入 `.claude/settings.json` |
+| 2026-06-16 | **建立 Claude Code 单平台底座**：`CLAUDE.md` 成为唯一权威；细化规则提取为 `.claude/rules/<domain>.md`，CLAUDE.md 用场景路由表按需加载；硬约束写入 `.claude/settings.json` |
 | 2026-06-16（续） | **indexed 基线改造**：品牌前缀 `lc-` → `ix-`、`work-with` → `indexed`；能力发现改为分布式 `SPEC.yaml` + 薄索引；失效登记清除；`README.md` → `SPEC.md` 体系；引入 `VERSION` 版本号 |

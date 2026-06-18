@@ -1,6 +1,6 @@
 name: ix-workspace-index-cli
 domain: 索引一致性审计
-one_liner: 以 SPEC.yaml 为真相校验薄索引页与磁盘一致性
+one_liner: 以 SPEC.yaml 为真相校验一致性 + 同步用户索引
 status: implemented
 intents:
   - "索引审计、capabilities/registry 漂移检测"
@@ -16,6 +16,10 @@ commands:
     inputs: []
     outputs: "已发现的 cli/agent 列表（stdout）"
     example: "python main.py list"
+  - name: sync
+    inputs: []
+    outputs: "把用户 SPEC.yaml 同步到薄索引 IX_USER_* 标记区"
+    example: "python main.py sync"
 credentials: []
 depends_on: []
 notes: |

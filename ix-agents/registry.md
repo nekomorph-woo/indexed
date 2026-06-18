@@ -9,13 +9,17 @@
 
 ---
 
-## 按意图 / 关键词速查
+## 按意图速查 — 框架内置
 
-> 当前无已实现的 ix-*-agent。新建 agent 后在此补一行：
+<!-- IX_FRAMEWORK_AGENT_INDEX_BEGIN -->
+<!-- 框架内置 agent 索引行（基线维护，update 时覆盖） -->
+<!-- IX_FRAMEWORK_AGENT_INDEX_END -->
 
-| 用户意图或关键词 | 应用 | 一句话 | 详情 |
-|------------------|------|--------|------|
-| _(待新建)_ | `ix-<business>-agent` | _(一句话)_ | [`SPEC.yaml`](ix-<business>-agent/SPEC.yaml) |
+## 按意图速查 — 用户自建
+
+<!-- IX_USER_AGENT_INDEX_BEGIN -->
+<!-- 用户自建 agent 由 sync 自动维护 -->
+<!-- IX_USER_AGENT_INDEX_END -->
 
 ---
 

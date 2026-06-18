@@ -54,10 +54,14 @@ ix-agent 流程或说「新建 lc agent」→ 阶段 B 从 [`_shared/templates/i
 - 执行：`invoke-job.ps1 -JobId <id>`
 - 注册 Windows 任务：`schedule/register-windows-task.ps1 -JobId <id>`
 
-## 应用索引
+## 应用索引 — 框架内置
 
-| 应用 | 说明 |
-|------|------|
-| [`ix-rollout-audit-agent/`](ix-rollout-audit-agent/) | 上线单据审计（信号 + Wiki 部署文档 + 测试报告） |
-| [`ix-aiagent-negative-feedback-agent/`](ix-aiagent-negative-feedback-agent/) | AiAgent 服务差评根因分析（Metabase 3098/3178 + bb-browser） |
-| [`ix-ims-release-flow-agent/`](ix-ims-release-flow-agent/) | 版本迭代流速监控（Metabase 6998 多版本合并 → HTML 报告） |
+<!-- IX_FRAMEWORK_AGENT_INDEX_BEGIN -->
+<!-- 框架内置 agent 索引行（基线维护，update 时覆盖） -->
+<!-- IX_FRAMEWORK_AGENT_INDEX_END -->
+
+## 应用索引 — 用户自建
+
+<!-- IX_USER_AGENT_INDEX_BEGIN -->
+<!-- 用户自建 agent 由 sync 自动维护 -->
+<!-- IX_USER_AGENT_INDEX_END -->

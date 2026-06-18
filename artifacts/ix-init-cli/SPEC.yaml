@@ -1,6 +1,6 @@
 name: ix-init-cli
 domain: 工作区初始化
-one_liner: 交互式初始化 indexed 的 Git 模式（local/remote）并改写规则
+one_liner: 初始化工作区（git 模式 + 昵称/称呼）+ 基线更新
 status: implemented
 intents:
   - "初始化 indexed、git init、配置 git 模式、本地/远程选择"
@@ -9,11 +9,18 @@ commands:
     inputs:
       - "--mode local|remote  # 跳过交互直接指定"
       - "--remote-url <url>   # remote 模式的远端"
-    outputs: "改写 .claude/rules/git-workflow.md 标记区 + git init（若未初始化）"
-    example: "python artifacts/ix-init-cli/main.py init --mode remote --remote-url git@github.com:user/indexed.git"
+      - "--nick <昵称>        # 助手昵称（默认 Xi酱）"
+      - "--addr <称呼>        # 对用户称呼（默认 您）"
+    outputs: "git init + 改写 git-workflow.md/CLAUDE.md 标记区 + .indexed-initialized"
+    example: "python artifacts/ix-init-cli/main.py init --mode local --nick Xi酱"
+  - name: update
+    inputs:
+      - "<source>  # 新基线解压后的目录路径"
+    outputs: "覆盖框架文件 + 保护用户标记区 + 保留用户内容"
+    example: "python artifacts/ix-init-cli/main.py update /path/to/indexed-0.2.0"
   - name: status
     inputs: []
-    outputs: "当前 Git 模式 + git init 状态 + 远端配置（stdout）"
+    outputs: "版本 + git 模式 + 昵称/称呼 + 初始化状态（stdout）"
     example: "python artifacts/ix-init-cli/main.py status"
 credentials: []
 depends_on: []

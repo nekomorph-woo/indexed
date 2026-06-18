@@ -7,7 +7,7 @@ import argparse
 import json
 import sys
 
-from scanner import WORKSPACE_ROOT, audit_index, audit_governance, discover_agents, discover_clis, manifest_snapshot
+from scanner import WORKSPACE_ROOT, audit_index, audit_governance, discover_agents, discover_clis, manifest_snapshot, sync_indexes
 
 
 def _cli_row(c) -> dict:
@@ -94,6 +94,18 @@ def cmd_list(_: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_sync(_: argparse.Namespace) -> int:
+    """把用户 cli/agent 的 SPEC.yaml 同步到薄索引的 IX_USER_* 标记区。"""
+    results = sync_indexes()
+    if not results:
+        print("[sync] 无变更（用户区已是最新）")
+        return 0
+    print(f"[sync] 已同步 {len(results)} 个文件的 IX_USER_* 标记区:")
+    for fname, count in results.items():
+        print(f"  ✓ {fname}（{count} 个用户条目）")
+    return 0
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="indexed 索引一致性审计（SPEC.yaml 为真相源）")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -105,6 +117,9 @@ def main() -> int:
 
     pl = sub.add_parser("list", help="列出已发现的 cli/agent")
     pl.set_defaults(func=cmd_list)
+
+    ps = sub.add_parser("sync", help="把用户 SPEC.yaml 同步到薄索引 IX_USER_* 标记区")
+    ps.set_defaults(func=cmd_sync)
 
     args = parser.parse_args()
     return args.func(args)

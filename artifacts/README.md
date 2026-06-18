@@ -42,19 +42,21 @@ artifacts/ix-<domain>-cli/
 3. 更新**本文件**索引表与 **[`capabilities.md`](capabilities.md)**（意图速查 + 能力卡片）
 4. 不写 `.env` 真实密钥进 Git
 
-## 工具索引
+## 工具索引 — 框架内置
 
+<!-- IX_FRAMEWORK_CLI_INDEX_BEGIN -->
 | 工具 | 子命令 | 说明 |
 |------|--------|------|
 | [`ix-agent-run-cli/`](ix-agent-run-cli/) | `main.py --agent …` | 统一执行 `ix-*-agent` manifest（TUI 与定时同命令） |
-| [`ix-metabase-cli/`](ix-metabase-cli/) | `question` | Metabase Question CSV；`--url` / `--param` |
-| [`ix-mail-cli/`](ix-mail-cli/) | `send` | SMTP HTML + 附件 |
-| [`ix-lark-im-fetch-cli/`](ix-lark-im-fetch-cli/) | `fetch-messages` | 飞书群消息拉取（群+时间+发送者） |
-| [`ix-rollout-audit-cli/`](ix-rollout-audit-cli/) | `prepare-raw` … `render-report` | 上线信号、Wiki 部署文档、测试审计 |
-| [`ix-workspace-index-cli
-- `ix-init-cli` — 工作区初始化（git 模式）/`](ix-workspace-index-cli/) | `audit` / `list` | capabilities/registry 与磁盘一致性审计 |
-| [`ix-aiagent-feedback-cli/`](ix-aiagent-feedback-cli/) | `fetch-negative` … | AiAgent 差评 3098/3178（bb-browser） |
-| [`ix-things-model-cli/`](ix-things-model-cli/) | `query` / `search` / `list` / `stats` | 物模型 identifier/ref 查询（IoT Thing Model） |
+| [`ix-workspace-index-cli/`](ix-workspace-index-cli/) | `audit` / `list` / `sync` | capabilities/registry 与磁盘一致性审计 |
+| [`ix-init-cli/`](ix-init-cli/) | `init` / `update` / `status` | 工作区初始化（git 模式）+ 基线更新 |
+<!-- IX_FRAMEWORK_CLI_INDEX_END -->
+
+## 工具索引 — 用户自建
+
+<!-- IX_USER_CLI_INDEX_BEGIN -->
+<!-- 用户自建 cli 的索引行由 sync 自动维护 -->
+<!-- IX_USER_CLI_INDEX_END -->
 
 **串联（零 import）**：
 

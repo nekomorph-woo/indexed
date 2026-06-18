@@ -411,3 +411,124 @@ def manifest_snapshot(agent: AgentInfo) -> dict:
         "artifacts": agent.artifact_refs,
         "has_spec_yaml": agent.has_spec_yaml,
     }
+
+
+# ---------------------------------------------------------------------------
+# sync：把 SPEC.yaml 真相同步到薄索引的 IX_USER_* 标记区
+# ---------------------------------------------------------------------------
+
+# 基线 cli（框架内置，不在用户区登记）
+BASELINE_CLIS = {"ix-agent-run-cli", "ix-workspace-index-cli", "ix-init-cli"}
+
+_ZONE_RE = re.compile(
+    r"(<!--\s*IX_(\w+)_BEGIN\s*-->)([\s\S]*?)(<!--\s*IX_\2_END\s*-->)"
+)
+
+
+def _replace_zone(text: str, zone_name: str, new_content: str) -> str:
+    pattern = re.compile(
+        r"(<!--\s*IX_" + re.escape(zone_name) + r"_BEGIN\s*-->)([\s\S]*?)(<!--\s*IX_"
+        + re.escape(zone_name) + r"_END\s*-->)"
+    )
+    return pattern.sub(lambda m: m.group(1) + new_content + m.group(3), text, count=1)
+
+
+def _spec_field(spec: dict | None, key: str, default: str = "") -> str:
+    """从 SPEC.yaml 取字段，降级时返回 default。"""
+    if not spec:
+        return default
+    val = spec.get(key, default)
+    return str(val) if val is not None else default
+
+
+def _gen_cli_rows(user_clis: list[CliInfo]) -> str:
+    """根据用户 cli 的 SPEC.yaml 生成索引表行（markdown）。"""
+    if not user_clis:
+        return "<!-- 用户自建 cli 的索引行由 sync 自动维护 -->\n"
+    lines = ["| 用户意图或关键词 | 模块 | 一句话 | 详情 |",
+             "|------------------|------|--------|------|"]
+    for c in user_clis:
+        one_liner = _spec_field(c.spec, "one_liner", c.name)
+        first_intent = ""
+        if c.spec and isinstance(c.spec.get("intents"), list) and c.spec["intents"]:
+            first_intent = str(c.spec["intents"][0])
+        lines.append(
+            f"| {first_intent or c.name} | `{c.name}` | {one_liner} | "
+            f"[`SPEC.yaml`]({c.name}/SPEC.yaml) |"
+        )
+    return "\n".join(lines) + "\n"
+
+
+def _gen_agent_rows(user_agents: list[AgentInfo]) -> str:
+    """根据用户 agent 的 SPEC.yaml 生成索引表行。"""
+    if not user_agents:
+        return "<!-- 用户自建 agent 由 sync 自动维护 -->\n"
+    lines = ["| 用户意图或关键词 | 应用 | 一句话 | 详情 |",
+             "|------------------|------|--------|------|"]
+    for a in user_agents:
+        one_liner = _spec_field(a.spec, "one_liner", a.name)
+        first_intent = ""
+        if a.spec and isinstance(a.spec.get("intents"), list) and a.spec["intents"]:
+            first_intent = str(a.spec["intents"][0])
+        lines.append(
+            f"| {first_intent or a.name} | `{a.name}` | {one_liner} | "
+            f"[`SPEC.yaml`]({a.name}/SPEC.yaml) |"
+        )
+    return "\n".join(lines) + "\n"
+
+
+def sync_indexes() -> dict[str, int]:
+    """把用户 cli/agent 的 SPEC.yaml 同步到薄索引的 IX_USER_* 标记区。
+
+    返回 {文件名: 写入行数} 的摘要。
+    """
+    all_clis = discover_clis()
+    all_agents = discover_agents()
+    user_clis = [c for c in all_clis if c.name not in BASELINE_CLIS and c.spec]
+    user_agents = [a for a in all_agents if a.spec]
+
+    results: dict[str, int] = {}
+
+    # capabilities.md → IX_USER_CLI_INDEX
+    cap_path = ARTIFACTS_DIR / "capabilities.md"
+    if cap_path.is_file():
+        text = cap_path.read_text(encoding="utf-8")
+        rows = _gen_cli_rows(user_clis)
+        new_text = _replace_zone(text, "USER_CLI_INDEX", "\n" + rows)
+        if new_text != text:
+            cap_path.write_text(new_text, encoding="utf-8")
+            results["capabilities.md"] = len(user_clis)
+
+    # artifacts/README.md → IX_USER_CLI_INDEX
+    art_readme = ARTIFACTS_DIR / "README.md"
+    if art_readme.is_file():
+        text = art_readme.read_text(encoding="utf-8")
+        rows = _gen_cli_rows(user_clis)
+        new_text = _replace_zone(text, "USER_CLI_INDEX", "\n" + rows)
+        if new_text != text:
+            art_readme.write_text(new_text, encoding="utf-8")
+            if "README.md" not in results:
+                results["artifacts/README.md"] = len(user_clis)
+
+    # registry.md → IX_USER_AGENT_INDEX
+    reg_path = AGENTS_DIR / "registry.md"
+    if reg_path.is_file():
+        text = reg_path.read_text(encoding="utf-8")
+        rows = _gen_agent_rows(user_agents)
+        new_text = _replace_zone(text, "USER_AGENT_INDEX", "\n" + rows)
+        if new_text != text:
+            reg_path.write_text(new_text, encoding="utf-8")
+            results["registry.md"] = len(user_agents)
+
+    # ix-agents/README.md → IX_USER_AGENT_INDEX
+    agents_readme = AGENTS_DIR / "README.md"
+    if agents_readme.is_file():
+        text = agents_readme.read_text(encoding="utf-8")
+        rows = _gen_agent_rows(user_agents)
+        new_text = _replace_zone(text, "USER_AGENT_INDEX", "\n" + rows)
+        if new_text != text:
+            agents_readme.write_text(new_text, encoding="utf-8")
+            if "ix-agents/README.md" not in results:
+                results["ix-agents/README.md"] = len(user_agents)
+
+    return results

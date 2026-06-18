@@ -18,7 +18,7 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
-from config import AGENT_RUN_CLI, INDEXED_ROOT, LOGS_DIR, REGISTRY_PATH, _PKG
+from config import AGENT_RUN_CLI, INDEXED_ROOT, LOGS_DIR, REGISTRY_PATH, _PKG, is_on_external_volume
 from registry import get_job, list_jobs, update_job
 from providers import get_provider, supported_platform
 
@@ -40,6 +40,31 @@ def cmd_register(args: argparse.Namespace) -> int:
     if not job.get("enabled", True):
         print(f"[error] job {args.job_id} 已禁用（enabled: false），无法注册", file=sys.stderr)
         return 1
+
+    # 外部卷检测（macOS TCC 会阻止 launchd 访问 /Volumes/ 上的文件）
+    if is_on_external_volume():
+        print()
+        print("⚠️  警告：indexed 工作区位于外部卷（/Volumes/ 或 /mnt/）")
+        print()
+        print("   macOS 的 TCC 安全机制会阻止 launchd 进程访问外部卷上的文件，")
+        print("   导致注册的定时任务无法执行（进程被静默终止，无错误输出）。")
+        print()
+        print("   解决方案（任选其一）：")
+        print()
+        print("   方案 A（推荐）— 授予 Python 完全磁盘访问权限：")
+        print("     1. 打开「系统设置」→「隐私与安全性」→「完全磁盘访问权限」")
+        print(f"     2. 点击「+」，添加: {sys.executable}")
+        print("     3. 如果路径找不到，在 Finder 按 Cmd+Shift+G 粘贴上述路径")
+        print("     4. 确保开关打开，然后重新运行 register")
+        print()
+        print("   方案 B — 将 indexed 移到用户主目录：")
+        print("     把工作区从外部卷移到 ~/indexed 或类似本地路径")
+        print()
+        resp = input("   已了解并处理？继续注册？[y/N]: ").strip().lower()
+        if resp != "y":
+            print("   已取消注册。请先处理上述问题。")
+            return 1
+        print()
 
     provider = get_provider()
     LOGS_DIR.mkdir(parents=True, exist_ok=True)

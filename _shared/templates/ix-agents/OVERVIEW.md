@@ -5,6 +5,7 @@
 | 母版 | 复制到 |
 |------|--------|
 | `manifest.template.yaml` | `manifest.yaml` |
+| `SPEC.template.yaml` | `SPEC.yaml`（能力声明真相源） |
 | `defaults.template.yaml` | `config/defaults.yaml` |
 | `gitignore.template` | `.gitignore` |
 | `paths.template.py` | `paths.py`（推荐） |

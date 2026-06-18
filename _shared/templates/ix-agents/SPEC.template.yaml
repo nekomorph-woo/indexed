@@ -1,0 +1,30 @@
+# ix-<business>-agent 的能力声明（复制后填写）
+# 字段规范见 _shared/specs/capability/capability-spec.spec.md §agent SPEC.yaml schema
+# 这是机器可读的能力真相源，scanner 读它做 audit/sync
+
+name: ix-<business>-agent
+domain: <业务领域一句话>
+one_liner: <能力一句话>
+status: implemented   # implemented | planned | deprecated
+intents:
+  - "<用户意图关键词，供 registry 薄索引匹配>"
+
+# 执行参数（与 manifest.yaml 的 params 对应）
+params_required:
+  - primary_input
+params_optional:
+  - window_days
+
+# 流水线
+has_thinking: true    # 是否含 thinking（claude -p）step
+steps:
+  - export_primary
+  - analyze_semantic
+  - write_report
+
+# 定时安全性
+schedule_safe: true   # 是否适合无人值守定时执行
+schedule_note: "全自动（有 thinking 但不依赖交互输入）"
+
+# 关联调研（可选）
+research: null

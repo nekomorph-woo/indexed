@@ -20,7 +20,7 @@ params:
     default: 7
 
 artifacts:
-  - ix-metabase-cli:question
+  - ix-workspace-index-cli:audit
 
 steps:
   - id: export_primary
@@ -28,10 +28,10 @@ steps:
     description: 导出主数据到 work/raw
     tool: shell
     command: >
-      python {artifacts_root}/ix-metabase-cli/main.py question
-      --url "{params.primary_input}" -O {work_raw}
+      python3 {artifacts_root}/ix-workspace-index-cli/main.py audit
+      --json > {work_raw}/audit-result.json
     expects:
-      - work/raw/*.csv
+      - work/raw/audit-result.json
 
   - id: analyze_semantic
     type: thinking
@@ -39,7 +39,7 @@ steps:
     inputs:
       - work/raw/*.csv
     prompt: |
-      你是业务分析助手。基于 inputs 中的数据，结合 params.window_days={params.window_days}：
+      你是审计分析助手。基于 inputs 中的审计结果（JSON），结合窗口 {params.window_days} 天：
       1. 归纳关键变化与异常
       2. 按条目列出结论与依据
       3. 给出可操作建议

@@ -270,7 +270,7 @@ def cmd_update(args: argparse.Namespace) -> int:
                 dst.parent.mkdir(parents=True, exist_ok=True)
                 if _safe_copy(f, dst):
                     covered.append(str(rel))
-    # artifacts/ix-*-cli（仅基线 3 个）
+    # artifacts/ix-*-cli（仅基线 4 个，见 config.py BASELINE_CLIS）
     for cli in BASELINE_CLIS:
         cli_src = src / "artifacts" / cli
         if cli_src.is_dir():

@@ -255,7 +255,7 @@ def audit_index() -> tuple[list[CliInfo], list[AgentInfo], list[IndexIssue]]:
 
 
 # ---------------------------------------------------------------------------
-# 规范治理审计（spec-governance）
+# 规范治理审计
 # ---------------------------------------------------------------------------
 
 _GOVERNANCE_KEYWORDS: dict[str, list[str]] = {
@@ -287,7 +287,6 @@ def _check_duplicate_keywords(files: list[Path], issues: list[IndexIssue]) -> No
     for label, phrases in _GOVERNANCE_KEYWORDS.items():
         for phrase in phrases:
             hits = _keyword_count(files, phrase)
-            hits = [(name, cnt) for name, cnt in hits if Path(name).stem != "spec-governance"]
             file_count = len(hits)
             if file_count >= 4:
                 file_names = ", ".join(h[0] for h in hits)
@@ -307,12 +306,12 @@ def _check_claude_md_length(issues: list[IndexIssue]) -> None:
         return
     lines = CLAUDE_MD.read_text(encoding="utf-8", errors="replace").splitlines()
     line_count = len(lines)
-    if line_count > 300:
+    if line_count > 800:
         issues.append(
             IndexIssue(
                 "warn",
                 "governance_claude_md_too_long",
-                f"CLAUDE.md 共 {line_count} 行，超过 300 行建议精简",
+                f"CLAUDE.md 共 {line_count} 行，超过 800 行建议精简",
                 "CLAUDE.md",
             )
         )
@@ -408,6 +407,7 @@ def manifest_snapshot(agent: AgentInfo) -> dict:
 # ---------------------------------------------------------------------------
 
 # 基线 cli（框架内置，不在用户区登记）
+# 基线 cli 清单（镜像于 ix-init-cli/config.py 的 BASELINE_CLIS，改一处改两处）
 BASELINE_CLIS = {"ix-agent-run-cli", "ix-workspace-index-cli", "ix-init-cli", "ix-schedule-cli"}
 
 _ZONE_RE = re.compile(

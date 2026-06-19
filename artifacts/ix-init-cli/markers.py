@@ -64,16 +64,24 @@ def extract_all_user_zones(file_path: Path) -> dict[str, str]:
 
 
 def restore_user_zones(file_path: Path, user_zones: dict[str, str]) -> int:
-    """把用户标记区内容回灌到文件。返回成功回灌的数量。"""
+    """把用户标记区内容回灌到文件。返回成功回灌的数量。
+
+    成功 = 新文件中存在对应的标记区（内容相同也算成功，因为说明没丢失）。
+    """
     if not file_path.is_file():
         return 0
     text = file_path.read_text(encoding="utf-8")
+    existing_zones = extract_zones(text)
     count = 0
+    changed = False
     for name, content in user_zones.items():
+        if name not in existing_zones:
+            continue
+        count += 1
         new_text = replace_zone(text, name, content)
         if new_text != text:
             text = new_text
-            count += 1
-    if count > 0:
+            changed = True
+    if changed:
         file_path.write_text(text, encoding="utf-8")
     return count

@@ -87,8 +87,9 @@ def _detect_persona() -> tuple[str, str]:
     nick = "Xi酱"
     addr = "您"
     import re
-    nm = re.search(r"昵称[：:]\s*(\S+)", block)
-    am = re.search(r"称呼[：:]\s*(\S+)", block)
+    # 跳过 markdown 加粗标记 ** 匹配「昵称**：value」或「昵称：value」
+    nm = re.search(r"昵称[\*]*[：:]\s*(\S+)", block)
+    am = re.search(r"称呼[\*]*[：:]\s*(\S+)", block)
     if nm:
         nick = nm.group(1)
     if am:

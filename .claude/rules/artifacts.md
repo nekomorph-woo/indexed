@@ -42,13 +42,18 @@ ix-<domain>-cli/
 
 **同域扩展**：优先在同 artifact 加 `providers/<name>.py` + `main.py` 子命令，不新建目录。
 
-## 能力发现（做大应用前先做）
+## 能力发现（做大应用前必须先做）
 
-用户要做大应用、自动化流水线、Agent、定时任务、报表系统等——任务里可能出现**拉数、发邮件、导出 CSV** 等可执行需求时：
+**硬性要求**：任务涉及可执行能力（拉数、发邮件、导出、审计、定时等）时，**必须先跑 search 命令**，不要直接搜目录或等用户口述模块名：
 
-1. **先 Read** [`artifacts/capabilities.md`](../../artifacts/capabilities.md)
-2. 按意图/关键词匹配已有 `ix-*-cli`
-3. 优先 shell 串联复用；勿等用户口述模块名，勿重复造轮子
+```bash
+python artifacts/ix-workspace-index-cli/main.py search "意图关键词"
+```
+
+- search 读所有 SPEC.yaml 的 intents 字段做意图匹配，返回名称+一句话+SPEC 路径
+- **有匹配** → Read 对应 SPEC.yaml 取命令/输入/输出详情 → shell 串联复用
+- **无匹配** → 新建 ix-<domain>-cli（见下方新建清单）
+- 勿重复造轮子：同域已有能力就扩展 providers/，不新建 cli
 
 ## 现有范例
 

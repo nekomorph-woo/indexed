@@ -21,8 +21,8 @@
 | **要 clone / 分析 Git 代码、想跑构建**——"clone 仓库""fetch""mvn install""npm build""清理产物" | 浅克隆命令、fetch --depth、禁止构建清单（mvn/gradle/npm/go/docker/make）、误生成产物怎么清理 | `.claude/rules/shared-repos.md` |
 | **周期性报告 / 交付物**——"新报告""周报""report""drafts""周期目录" | 报告目录结构、周期命名（start_end）、drafts 约定、新建报告类型的步骤 | `.claude/rules/reports.md` |
 | **专题调研 / 方案文档**——"研究""调研""research""passkey""写方案""图怎么画" | research/<topic> 结构（docs/design/assets）、轻量专题约定、ASCII 线框图规范、新建专题步骤 | `.claude/rules/research.md` |
-| **可运行 CLI / 小工具**——"写个脚本""新建 cli""ix-*-cli""provider""拉数""发邮件""capabilities" | cli 命名与骨架、SPEC.yaml 能力声明、零 import 耦合、新建清单、能力发现（先 Read capabilities.md） | `.claude/rules/artifacts.md` |
-| **组合业务 Agent**——"执行 agent""ix-*-agent""manifest""定时""thinking""两阶段""params" | manifest 编排、run --agent 执行、两阶段开发规范、禁止主动归档（产出留 runs/ 不主动入 reports）、新建 agent 清单 | `.claude/rules/ix-agents.md` |
+| **可运行 CLI / 小工具**——"写个脚本""新建 cli""ix-*-cli""provider""拉数""发邮件""capabilities" | cli 命名与骨架、SPEC.yaml 能力声明、零 import 耦合、新建清单、**能力发现（必须先跑 `ix-workspace-index-cli search` 命令）** | `.claude/rules/artifacts.md` |
+| **组合业务 Agent**——"执行 agent""ix-*-agent""manifest""定时""thinking""两阶段""params" | manifest 编排、run --agent 执行、两阶段开发规范、禁止主动归档、**能力发现（必须先跑 `search` 命令）**、新建 agent 清单 | `.claude/rules/ix-agents.md` |
 | **规范 / 模板 / Skill**——"新建 spec""模板""SKILL""两阶段 skill""capability-spec" | specs/templates 目录治理、SPEC.yaml 字段规范、skill 去重、skill 两阶段（fallback）、新建 spec/template 步骤 | `.claude/rules/specs-templates.md` |
 | **HTML / 原型页 / 设计语言**——"写 HTML""设计风格""material-you""bauhaus""选型""导入新语言" | 设计语言库结构、选型流程（禁止自动选用）、导入新语言、preview.html 预览 | `.claude/rules/design-languages.md` |
 | **Git 操作 / 版本号 / commit**——"提交""push""git init""版本号""local/remote""升级基线" | Git 模式（local/remote 标记区）、VERSION 语义化版本、commit 收尾、根目录白名单 | `.claude/rules/git-workflow.md` |
@@ -285,11 +285,11 @@ indexed/
 │   └─ _shared/repos/<repo-kebab>/  （禁止放在 reports/research/artifacts 下）
 │
 ├─ 可运行 CLI / 小工具（ix-*-cli）
-│   ├─ 发现已有能力：artifacts/capabilities.md
+│   ├─ 发现已有能力：ix-workspace-index-cli search（必须先跑）
 │   └─ 实现/扩展：artifacts/ix-<domain>-cli/  （见 §3.5、.claude/rules/artifacts.md；禁止跨 artifact import）
 │
 ├─ 组合应用 / 业务 Agent（ix-*-agent）
-│   ├─ 发现：ix-agents/registry.md
+│   ├─ 发现：ix-workspace-index-cli search（必须先跑）
 │   ├─ 执行：artifacts/ix-agent-run-cli（TUI 与定时同命令）；ix-agent 流程
 │   ├─ 规范：§3.6、.claude/rules/ix-agents.md
 │   └─ 母版：_shared/templates/ix-agents/

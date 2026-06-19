@@ -38,4 +38,5 @@ notes: |
   仅支持 daily/weekly（不用 cron 表达式，避免跨平台转换坑）。
   macOS: launchd plist 写入 ~/Library/LaunchAgents/com.indexed.<id>.plist。
   注意：indexed 工作区建议放在用户主目录下（如 ~/）；放在外部卷（/Volumes/）可能因 macOS TCC 限制导致 launchd 无法执行脚本。
+  仅支持 Windows 和 macOS；Linux 不支持（providers 无 Linux 实现）。
   Windows: schtasks /Create /SC DAILY|WEEKLY。

@@ -1,7 +1,7 @@
 # _shared/templates — 文档母版索引
 
 > 跨任务可复用的文档母版（`*.template.md` / `*.template.yaml`）。
-> 与 **`_shared/specs/`**（流程规范）职责不同，见 [`../specs/README.md`](../specs/README.md)。
+> 与 **`_shared/specs/`**（流程规范）职责不同，见 [`../specs/OVERVIEW.md`](../specs/OVERVIEW.md)。
 > 规范：[`CLAUDE.md`](../../CLAUDE.md) §3.8
 
 ## 现有母版

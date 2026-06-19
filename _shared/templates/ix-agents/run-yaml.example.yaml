@@ -12,6 +12,10 @@ params:
   primary_input: "..."
   window_days: 7
 
+# thinking 执行器（当前固定 claude-p，无论设置什么都用 Claude Code CLI）
+# --resume 时自动恢复此字段
+llm_executor: claude-p
+
 steps_completed:
   - export_primary
   - analyze_semantic

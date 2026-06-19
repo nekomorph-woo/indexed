@@ -7,7 +7,7 @@ import argparse
 import json
 import sys
 
-from scanner import WORKSPACE_ROOT, audit_index, audit_governance, discover_agents, discover_clis, manifest_snapshot, sync_indexes
+from scanner import WORKSPACE_ROOT, audit_index, audit_governance, discover_agents, discover_clis, manifest_snapshot, search_capabilities, sync_indexes
 
 
 def _cli_row(c) -> dict:
@@ -35,7 +35,7 @@ def cmd_audit(args: argparse.Namespace) -> int:
             {"level": i.level, "code": i.code, "message": i.message, "target": i.target}
             for i in issues
         ],
-        "agent_sync_hints": {a.name: manifest_snapshot(a) for a in agents},
+        "agent_info": {a.name: manifest_snapshot(a) for a in agents},
     }
 
     if args.json:
@@ -50,7 +50,7 @@ def _print_human(clis, agents, issues, errors, warns) -> None:
     print(f"indexed 索引审计 @ {WORKSPACE_ROOT}\n")
     print("## 磁盘发现\n")
     print("| CLI | 子命令 | SPEC.yaml |")
-    print("|-----|--------|-----------|---------|")
+    print("|-----|--------|-----------|")
     for c in clis:
         subs = ", ".join(c.subcommands) or "—"
         print(f"| {c.name} | {subs} | {'yes' if c.has_spec_yaml else 'no'} |")
@@ -105,6 +105,36 @@ def cmd_sync(_: argparse.Namespace) -> int:
     return 0
 
 
+
+def cmd_search(args: argparse.Namespace) -> int:
+    """按意图关键词搜索 cli/agent 能力（渐进式发现第 1 步）。"""
+    result = search_capabilities(args.query)
+    if result["total"] == 0:
+        print(f'[search] 未找到匹配「{args.query}」的 cli/agent')
+        print('  → 可能需要新建。见 .claude/rules/artifacts.md')
+        return 0
+    if args.json:
+        import json
+        print(json.dumps(result, ensure_ascii=False, indent=2))
+        return 0
+    print(f'[search] 「{args.query}」匹配 {result["total"]} 个结果：\n')
+    if result["clis"]:
+        print("CLI:")
+        for c in result["clis"]:
+            print(f"  {c['name']:<25} {c['one_liner']}")
+            print(f"  {'':25} 意图: {', '.join(c['intents'][:3])}")
+            print(f"  {'':25} 详情: {c['spec']}")
+            print()
+    if result["agents"]:
+        print("Agent:")
+        for a in result["agents"]:
+            print(f"  {a['name']:<25} {a['one_liner']}")
+            print(f"  {'':25} 意图: {', '.join(a['intents'][:3])}")
+            print(f"  {'':25} 详情: {a['spec']}")
+            print()
+    print("→ Read SPEC.yaml 获取命令/输入/输出详情")
+    return 0
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="indexed 索引一致性审计（SPEC.yaml 为真相源）")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -119,6 +149,11 @@ def main() -> int:
 
     ps = sub.add_parser("sync", help="把用户 SPEC.yaml 同步到薄索引 IX_USER_* 标记区")
     ps.set_defaults(func=cmd_sync)
+
+    psearch = sub.add_parser("search", help="按意图关键词搜索 cli/agent 能力（渐进式发现第 1 步）")
+    psearch.add_argument("query", help="意图关键词，如 '拉数' '定时' '审计'")
+    psearch.add_argument("--json", action="store_true", help="输出 JSON")
+    psearch.set_defaults(func=cmd_search)
 
     args = parser.parse_args()
     return args.func(args)

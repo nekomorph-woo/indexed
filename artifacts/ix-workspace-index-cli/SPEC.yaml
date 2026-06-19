@@ -12,6 +12,12 @@ commands:
       - "--check  # 有 error 则退出码 1（CI 门禁）"
     outputs: "人类可读报告或 JSON（含 issues、agent_sync_hints）"
     example: "python main.py audit"
+  - name: search
+    inputs:
+      - "<query>  # 意图关键词，如 '拉数' '定时' '审计'"
+      - "--json   # 输出 JSON（供 AI 程序化消费）"
+    outputs: "匹配的 cli/agent 列表（名称+一句话+意图+SPEC 路径），按分数排序"
+    example: "python main.py search 审计"
   - name: list
     inputs: []
     outputs: "已发现的 cli/agent 列表（stdout）"

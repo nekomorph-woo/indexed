@@ -383,8 +383,6 @@ def steps_summary(agent: AgentInfo) -> str:
         st = agent.step_types.get(sid, "tool")
         if st == "thinking":
             parts.append(f"{sid}(thinking)")
-        elif sid.startswith("publish") or sid == "archive_report":
-            continue
         else:
             parts.append(sid.replace("_", "-"))
     return " → ".join(parts)
@@ -545,3 +543,86 @@ def sync_indexes() -> dict[str, int]:
             results["research/OVERVIEW.md"] = len(topics)
 
     return results
+
+
+# ---------------------------------------------------------------------------
+# search：按意图关键词搜索 cli/agent 能力
+# ---------------------------------------------------------------------------
+
+def search_capabilities(query: str) -> dict:
+    """按意图关键词搜索 cli/agent，返回匹配结果。
+
+    渐进式发现：先跑这个命令拿"有什么 + 在哪"，再按需 Read SPEC.yaml 取详情。
+    """
+    query_lower = query.lower()
+    query_terms = set(query_lower.replace("，", " ").replace(",", " ").split())
+
+    clis = discover_clis()
+    agents = discover_agents()
+
+    matched_clis: list[dict] = []
+    matched_agents: list[dict] = []
+
+    for c in clis:
+        if not c.spec:
+            continue
+        score = _match_score(c.spec, query_lower, query_terms, c.name)
+        if score > 0:
+            matched_clis.append({
+                "name": c.name,
+                "domain": _spec_field(c.spec, "domain"),
+                "one_liner": _spec_field(c.spec, "one_liner"),
+                "intents": c.spec.get("intents", []) if isinstance(c.spec.get("intents"), list) else [],
+                "spec": f"artifacts/{c.name}/SPEC.yaml",
+                "score": score,
+            })
+
+    for a in agents:
+        if not a.spec:
+            continue
+        score = _match_score(a.spec, query_lower, query_terms, a.name)
+        if score > 0:
+            matched_agents.append({
+                "name": a.name,
+                "domain": _spec_field(a.spec, "domain"),
+                "one_liner": _spec_field(a.spec, "one_liner"),
+                "intents": a.spec.get("intents", []) if isinstance(a.spec.get("intents"), list) else [],
+                "spec": f"ix-agents/{a.name}/SPEC.yaml",
+                "score": score,
+            })
+
+    # 按分数降序
+    matched_clis.sort(key=lambda x: x["score"], reverse=True)
+    matched_agents.sort(key=lambda x: x["score"], reverse=True)
+
+    return {
+        "query": query,
+        "clis": matched_clis,
+        "agents": matched_agents,
+        "total": len(matched_clis) + len(matched_agents),
+    }
+
+
+def _match_score(spec: dict, query_lower: str, query_terms: set[str], name: str) -> int:
+    """计算意图匹配分数。0 = 不匹配。"""
+    score = 0
+    # 名称匹配
+    if query_lower in name.lower():
+        score += 3
+    # intents 匹配（权重最高）
+    intents = spec.get("intents", [])
+    if isinstance(intents, list):
+        for intent in intents:
+            intent_lower = str(intent).lower()
+            for term in query_terms:
+                if term in intent_lower:
+                    score += 5
+            if query_lower in intent_lower:
+                score += 3
+    # domain / one_liner 匹配
+    for field in ("domain", "one_liner"):
+        val = str(spec.get(field, "")).lower()
+        for term in query_terms:
+            if term in val:
+                score += 2
+    return score

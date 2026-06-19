@@ -169,7 +169,9 @@ def run_thinking_step(
         run_id=run_id,
         params=params,
     )
-    prompt_file = run_dir / "work" / f".prompt-{step['id']}.txt"
+    # prompt 文件：含 run_id 命名，保留在 runs/<run-id>/work/ 下供复盘
+    # 同一 run_id 不会并发（顺序执行）；不同 run_id 各自独立目录，天然隔离
+    prompt_file = run_dir / "work" / f".prompt-{run_id}-{step['id']}.txt"
     if not dry_run:
         prompt_file.write_text(prompt, encoding="utf-8")
     # step 级 llm_executor 覆盖全局默认

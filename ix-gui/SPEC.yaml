@@ -1,7 +1,7 @@
 name: ix-gui
 domain: indexed 图形操作面板
 one_liner: GUI 应用（Tauri+React），可视化 indexed 资产 + 可见终端 claude + 表单执行
-status: planned
+status: implemented
 # 注意：ix-gui 是「框架设施」（见 CLAUDE.md §2.ix-gui），不纳入业务索引。
 # 本 SPEC.yaml 仅供 ix-gui 自身维护参考，不参与 capabilities.md/registry.md 审计。
 intents:
@@ -19,16 +19,22 @@ capabilities:
     detail: 调 ix-workspace-index-cli audit/sync，展示一致性结果
 platform: tauri-2
 stack:
-  desktop: "Tauri 2.x + Rust (portable-pty + tokio)"
+  desktop: "Tauri 2.x + Rust (tauri-plugin-pty + tokio)"
   frontend: "React 18 + TypeScript + Vite"
-  terminal: "xterm.js"
+  terminal: "xterm.js + @xterm/addon-fit"
 zero_intrusion: |
   遵守「零侵入铁律」（见 OVERVIEW.md）：
   GUI 对工作区的字节级改动 = claude code 做同样的事。
   不发明新格式/结构；不直接创建资产（创建走可见终端的 claude）；
   只做只读展示 + 调用既有 CLI。
 phase:
-  current: "web（纯 UI + 交互 + mock 契约，bb-browser 验证）"
-  next: "tauri（PtyBridge/CliRunner/WorkspaceIo 真实实现 + 打包）"
+  current: "tauri（M1-M5 全部完成；Rust WorkspaceIo/CliRunner + tauri-plugin-pty + 打包）"
+  next: "跨平台（Windows/Linux）+ Tauri Updater + 切换工作区 UI（后续 plan）"
 notes: |
   不参与 capabilities.md/registry.md 索引审计（框架设施，非业务桶）。
+  M1-M5 实施：
+  - M1 ix-agent-run-cli run 输出 JSON Lines 流式事件（对齐 CliEvent）
+  - M2 src-tauri/ 骨架 + WorkspaceIo 8 command
+  - M3 CliRunner 4 command（run_agent 用 Tauri Channel 流式）
+  - M4 tauri-plugin-pty + xterm.js 替换 web 占位
+  - M5 backend.ts 全切 tauriBackend + macOS 打包

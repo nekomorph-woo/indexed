@@ -1,12 +1,8 @@
 /**
- * TauriBackend —— Tauri+Rust 阶段的真实后端实现。
+ * TauriBackend —— Tauri+Rust 阶段的真实后端实现（M2-M5 全部完成）。
  *
  * 业务代码不直接 import 本文件；通过 `api/backend.ts` 的 export 间接使用。
- * 阶段切换（M2 → M5）只改 `backend.ts` 的 export，本文件逐步完善：
- *   - M2（当前）：workspace 完整（8 个 invoke）；cli/pty fallback 到 mockBackend
- *   - M3：cli 用 invoke + Channel 流式（删 mockBackend.cli 引用）
- *   - M4：pty 用 tauri-pty 包（删 mockBackend.pty 引用）
- *   - M5：backend.ts 改 export tauriBackend（删 mockBackend 引用）
+ * backend.ts（M5）已切换为 export tauriBackend；mock 代码仅保留用于测试。
  */
 import { Channel, invoke } from "@tauri-apps/api/core";
 import { spawn } from "tauri-pty";

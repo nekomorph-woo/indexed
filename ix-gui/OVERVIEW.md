@@ -95,19 +95,27 @@ GUI 的「新建 agent/cli」**只做 prompt 生成器**，绝不直接写 manif
 
 ---
 
-## 📐 渐进实施（当前阶段）
+## 📐 渐进实施（阶段 1+2 已完成）
 
 ```
-阶段 1（当前）：纯 Web
+阶段 1 ✅ 已完成：纯 Web
   • Vite + React + TS，UI 与交互逻辑全部完成
   • Mock 后端契约（模拟 PtyBridge/CliRunner/WorkspaceIo 的返回）
   • bb-browser 端到端验证
   • 用户人工验收
 
-阶段 2（验收后）：Tauri + Rust
-  • 把 mock 换成真实 Rust 实现
-  • xterm.js + portable-pty 接可见终端
-  • 打包分发
+阶段 2 ✅ 已实施：Tauri + Rust
+  • src-tauri/ 实现 WorkspaceIo（8 command）+ CliRunner（4 command，含 Channel 流式）
+  • tauri-plugin-pty + xterm.js 接可见终端（替换 web 占位）
+  • ix-agent-run-cli run 输出 JSON Lines 流式事件
+  • cargo tauri build 出 macOS .app + .dmg
+  • backend.ts 全切换 tauriBackend（mock 保留仅用于测试）
+
+阶段 3（后续 plan）：
+  • 跨平台打包（Windows / Linux）
+  • Tauri Updater 自动更新
+  • 「切换工作区」UI（生产期 .app 不在源码树）
+  • 多 tab terminal、i18n 等
 ```
 
 ---

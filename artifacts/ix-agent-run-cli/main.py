@@ -15,7 +15,7 @@ from pathlib import Path
 import yaml
 
 from config import INDEXED_ROOT, IX_AGENTS_ROOT
-from runner import execute, load_manifest, load_defaults
+from runner import emit_event, execute, load_defaults, load_manifest
 
 
 def _parse_set(items: list[str]) -> dict:
@@ -333,11 +333,9 @@ def main() -> int:
             dry_run=args.dry_run,
         )
     except (FileNotFoundError, KeyError, RuntimeError, ValueError) as e:
-        print(f"错误: {e}", file=sys.stderr)
+        emit_event({"kind": "error", "message": f"{type(e).__name__}: {e}"})
         return 1
 
-    print(f"完成: {run_dir}")
-    print(f"output: {run_dir / 'output'}")
     return 0
 
 

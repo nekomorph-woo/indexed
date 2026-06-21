@@ -6,6 +6,7 @@ import json
 import os
 import shutil
 import subprocess
+import sys
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -18,6 +19,43 @@ from placeholders import build_context, resolve_run_path, substitute
 from thinking import render_thinking_prompt, run_agent_print
 
 _TZ = ZoneInfo("Asia/Shanghai")
+
+
+def emit_event(event: dict[str, Any]) -> None:
+    """流式事件输出。
+
+    - stdout 是 tty（用户在终端直接跑）：输出人读文本，每事件一行
+    - stdout 不是 tty（GUI/CI/pipe）：输出 JSON Lines，每行一个 event
+
+    event 字段对齐前端 types/indexed.ts 的 CliEvent tagged union：
+    started / stdout / stderr / step / status / finished / error
+    """
+    if sys.stdout.isatty():
+        _print_human(event)
+    else:
+        sys.stdout.write(json.dumps(event, ensure_ascii=False) + "\n")
+        sys.stdout.flush()
+
+
+def _print_human(event: dict[str, Any]) -> None:
+    """tty 模式的人读输出。"""
+    kind = event.get("kind")
+    if kind == "started":
+        print(f"▶ 开始 run_id={event['run_id']}  agent={event['agent_id']}")
+    elif kind == "step":
+        status = event["status"]
+        marker = {"running": "→", "done": "✓", "failed": "✕"}.get(status, "?")
+        print(f"  {marker} {event['step_id']} [{status}]")
+    elif kind == "stdout":
+        print(f"  {event['line']}")
+    elif kind == "stderr":
+        print(f"  ! {event['line']}", file=sys.stderr)
+    elif kind == "status":
+        print(f"状态: {event['status']}")
+    elif kind == "finished":
+        print(f"■ 完成 exit={event['exit_code']}  run_dir={event['run_dir']}")
+    elif kind == "error":
+        print(f"错误: {event['message']}", file=sys.stderr)
 
 
 def _write_last_run(agent_root: Path, state: dict[str, Any], total_steps: int) -> None:
@@ -155,7 +193,7 @@ def run_tool_step(
     if tool == "shell":
         cmd = substitute(step["command"].strip(), ctx)
         if dry_run:
-            print(f"[dry-run] shell: {cmd[:200]}...")
+            emit_event({"kind": "stdout", "line": f"[dry-run] shell: {cmd[:200]}..."})
             return
         # 用 Popen + 实时转发避免无 TTY 环境（launchd/cron）下 stdout 死锁
         proc = subprocess.Popen(
@@ -163,7 +201,7 @@ def run_tool_step(
             stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
         )
         for line in proc.stdout:
-            print(line, end="", flush=True)
+            emit_event({"kind": "stdout", "line": line.rstrip("\n")})
         proc.wait()
         if proc.returncode != 0:
             raise RuntimeError(f"tool step {step['id']} shell 退出码 {proc.returncode}")
@@ -173,7 +211,7 @@ def run_tool_step(
         if not src.is_file():
             raise FileNotFoundError(f"{tool} 源文件不存在: {src}")
         if dry_run:
-            print(f"[dry-run] {tool}: {src} -> {dst}")
+            emit_event({"kind": "stdout", "line": f"[dry-run] {tool}: {src} -> {dst}"})
             return
         dst.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(src, dst)
@@ -287,6 +325,8 @@ def execute(
         if not dry_run:
             save_yaml(run_dir / "run.yaml", state)
 
+    emit_event({"kind": "started", "run_id": run_id, "agent_id": agent_id})
+
     steps = manifest.get("steps") or []
     if not steps:
         raise ValueError("manifest.steps 为空")
@@ -310,6 +350,12 @@ def execute(
         if not dry_run:
             save_yaml(run_dir / "run.yaml", state)
 
+        desc = step.get("description") or (
+            "语义分析（claude -p）" if stype == "thinking" else f"{step.get('tool', 'shell')} 执行"
+        )
+        emit_event({"kind": "stdout", "line": f"[{sid}] {desc}"})
+        emit_event({"kind": "step", "step_id": sid, "status": "running"})
+
         try:
             if stype == "tool":
                 run_tool_step(step, ctx=ctx, run_dir=run_dir, dry_run=dry_run)
@@ -328,6 +374,8 @@ def execute(
             else:
                 raise ValueError(f"未知 step type: {stype}")
         except Exception as e:
+            emit_event({"kind": "step", "step_id": sid, "status": "failed"})
+            emit_event({"kind": "error", "message": f"{type(e).__name__}: {e}"})
             state["status"] = "failed"
             if not dry_run:
                 save_yaml(run_dir / "run.yaml", state)
@@ -342,6 +390,7 @@ def execute(
         state["next_step"] = None
         if not dry_run:
             save_yaml(run_dir / "run.yaml", state)
+        emit_event({"kind": "step", "step_id": sid, "status": "done"})
 
     state["status"] = "completed"
     state["completed_at"] = datetime.now(_TZ).isoformat()
@@ -349,4 +398,11 @@ def execute(
         save_yaml(run_dir / "run.yaml", state)
         # P2-3 反哺：写 last-run.json（成功状态）
         _write_last_run(agent_root, state, len(steps))
+    emit_event({"kind": "status", "status": "completed"})
+    emit_event({
+        "kind": "finished",
+        "run_id": run_id,
+        "exit_code": 0,
+        "run_dir": str(run_dir.relative_to(INDEXED_ROOT)) if run_dir.is_relative_to(INDEXED_ROOT) else str(run_dir),
+    })
     return run_dir

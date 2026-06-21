@@ -39,3 +39,4 @@ notes: |
   thinking step 调用 Claude Code CLI（claude -p --dangerously-skip-permissions）。
   定时功能已移至 ix-schedule-cli（artifacts/ix-schedule-cli/）。
   P2-3 反哺：run 完成时写 last-run.json（tracked，最近状态）；失败时追加 failures.log（tracked，跨 run 累积）。runs/ 本身仍 untracked。
+  run 子命令的 stdout 为「JSON Lines 流式事件」：stdout 是 tty 时输出人读文本，否则（pipe/redirect/前端 subprocess）每行一个 CliEvent JSON（kind: started/step/stdout/stderr/status/finished/error）。供 ix-gui 阶段 2 Rust 端 Channel 流式解析。

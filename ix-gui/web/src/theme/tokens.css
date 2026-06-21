@@ -1,0 +1,68 @@
+/*
+ * 设计令牌默认值（material-you）。
+ * ThemeProvider 运行时按选中的设计语言覆盖这些 CSS 变量。
+ * 真相源：_shared/design-languages/<id>/meta.md 的「Token 摘要」
+ */
+:root {
+  --ix-primary: #6750a4;
+  --ix-bg: #fffbfe;
+  --ix-surface: #f3edf7;
+  --ix-surface-alt: #e7e0ec;
+  --ix-text: #1d1b20;
+  --ix-text-muted: #49454f;
+  --ix-border: #cac4d0;
+  --ix-accent: #6750a4;
+  --ix-danger: #b3261e;
+  --ix-success: #2e7d32;
+  --ix-warning: #ed6c02;
+  --ix-radius: 24px;
+  --ix-radius-sm: 12px;
+  --ix-radius-pill: 999px;
+  --ix-font: Roboto, system-ui, -apple-system, sans-serif;
+  --ix-font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+  --ix-easing: cubic-bezier(0.2, 0, 0, 1);
+  --ix-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --ix-shadow-hover: 0 4px 12px rgba(0, 0, 0, 0.12);
+
+  --ix-sidebar-w: 260px;
+  --ix-header-h: 48px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  height: 100%;
+}
+
+body {
+  font-family: var(--ix-font);
+  background: var(--ix-bg);
+  color: var(--ix-text);
+  -webkit-font-smoothing: antialiased;
+  transition: background 0.3s var(--ix-easing), color 0.3s var(--ix-easing);
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--ix-border);
+  border-radius: var(--ix-radius-pill);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--ix-text-muted);
+}

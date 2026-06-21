@@ -1,0 +1,34 @@
+name: ix-gui
+domain: indexed 图形操作面板
+one_liner: GUI 应用（Tauri+React），可视化 indexed 资产 + 可见终端 claude + 表单执行
+status: planned
+# 注意：ix-gui 是「框架设施」（见 CLAUDE.md §2.ix-gui），不纳入业务索引。
+# 本 SPEC.yaml 仅供 ix-gui 自身维护参考，不参与 capabilities.md/registry.md 审计。
+intents:
+  - "indexed 的 GUI、桌面应用、可视化、操作面板"
+capabilities:
+  - name: 资产可视化
+    detail: 只读展示 indexed 五桶（artifacts/ix-agents/reports/research/_shared）的树形结构
+  - name: 可见终端会话
+    detail: PTY(portable-pty) 跑交互式 claude，xterm.js 渲染，用户直接打字（创建资产的主场）
+  - name: 表单执行 agent
+    detail: 读 manifest.params 自动渲染表单（两阶段表单化），subprocess 调 ix-agent-run-cli
+  - name: Runs 浏览
+    detail: 浏览 ix-agents/<agent>/runs/<id>/ 的 run.yaml + output + work/thinking
+  - name: 索引仪表盘
+    detail: 调 ix-workspace-index-cli audit/sync，展示一致性结果
+platform: tauri-2
+stack:
+  desktop: "Tauri 2.x + Rust (portable-pty + tokio)"
+  frontend: "React 18 + TypeScript + Vite"
+  terminal: "xterm.js"
+zero_intrusion: |
+  遵守「零侵入铁律」（见 OVERVIEW.md）：
+  GUI 对工作区的字节级改动 = claude code 做同样的事。
+  不发明新格式/结构；不直接创建资产（创建走可见终端的 claude）；
+  只做只读展示 + 调用既有 CLI。
+phase:
+  current: "web（纯 UI + 交互 + mock 契约，bb-browser 验证）"
+  next: "tauri（PtyBridge/CliRunner/WorkspaceIo 真实实现 + 打包）"
+notes: |
+  不参与 capabilities.md/registry.md 索引审计（框架设施，非业务桶）。

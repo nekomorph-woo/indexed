@@ -1,6 +1,6 @@
 # design-languages — 设计语言库与选型
 
-> **来源**：[`CLAUDE.md`](../../CLAUDE.md) §3.11。本文件是其细化展开，冲突时以 CLAUDE.md 为准。
+> **来源**：[`CLAUDE.md`](../../CLAUDE.md) §3.8。本文件是其细化展开，冲突时以 CLAUDE.md 为准。
 
 ## 设计语言库 `_shared/design-languages/`
 

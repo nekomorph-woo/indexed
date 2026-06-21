@@ -40,10 +40,10 @@
 | 原则 | 说明 |
 |------|------|
 | **结构先于文件** | 先确认路径合法，再创建文件 |
-| **不发明顶层** | 根目录只允许 `_shared/`、`reports/`、`research/`、`artifacts/`、`ix-agents/` 五个工作桶 + 元文件 |
+| **不发明顶层** | 根目录允许 `_shared/`、`reports/`、`research/`、`artifacts/`、`ix-agents/` 五个工作桶 + 框架设施 `ix-gui/`（见 §ix-gui）+ 元文件 |
 | **英文 kebab-case** | 目录与文件名默认英文；中文仅出现在 Markdown 正文标题或交付物内容 |
 | **引用本规范** | 新建周期/专题前，对照第 3、4 节清单 |
-| **仓库最小占用** | clone/fetch 浅克隆；禁止构建；禁止产生编译/打包产物（见 §5.5；硬约束已写入 `.claude/settings.json`） |
+| **仓库最小占用** | clone/fetch 浅克隆；禁止构建；禁止产生编译/打包产物（见 §5.4；硬约束已写入 `.claude/settings.json`） |
 | **Skill 优先** | 同名 skill + command 只执行 skill 定义（见 `.claude/rules/specs-templates.md` §skill 去重） |
 | **Skill 两阶段** | slash 仅阶段 A（模板 + 已 clone 仓库列表）→ 用户填好再阶段 B；**禁止**单独建 command（见 `.claude/rules/specs-templates.md` §两阶段） |
 | **简体中文回复** | 始终用简体中文回复用户，不随用户输入语言切换（见 `.claude/rules/dialogue-style.md`「简体中文回复」） |
@@ -111,7 +111,25 @@ indexed/
                 ├── work/raw/
                 ├── work/thinking/
                 └── output/
+│
+└── ix-gui/                     # 框架设施：indexed 的 GUI 应用（Tauri+React）
+    ├── OVERVIEW.md             # 定位 + 「零侵入铁律 + 三边界」
+    ├── SPEC.yaml               # GUI 自身能力声明（不纳入业务索引）
+    ├── web/                    # 纯 Web 工程阶段（UI + 交互 + mock 契约）
+    └── src-tauri/              # Tauri+Rust 阶段（PtyBridge/CliRunner/WorkspaceIo）
 ```
+
+### 2.ix-gui `ix-gui/` — GUI 应用（框架设施，非桶）
+
+> **定位**：indexed 的图形操作面板，与 `.claude/` 同性质，**不是**业务资产。详见 [`ix-gui/OVERVIEW.md`](ix-gui/OVERVIEW.md)。
+
+| 说明 | 约定 |
+|------|------|
+| **性质** | 框架设施；**不纳入** `capabilities.md`/`registry.md` 索引，**不被**当 `ix-*-cli` 管理 |
+| **零侵入铁律** | GUI 对工作区的任何字节级改动，必须与 claude code 做同样的事等价（详见 `ix-gui/OVERVIEW.md` §零侵入铁律） |
+| **创建资产** | GUI 绝不直接写 manifest/SPEC；创建一律走「可见终端里的 claude」（单一写入源）。GUI 的「新建」只能是 prompt 生成器 |
+| **§5.4 豁免** | `ix-gui/` 作为自有应用设施，**不受** §5.4 构建禁令约束，可在其目录内执行 `cargo build`/`npm install`/`tauri dev` |
+| **并存保证** | GUI 方式与纯 claude code 方式读写同一工作区，产物 100% 互通，两种方式可随时切换 |
 
 ### 2.1 禁止项（硬约束）
 
@@ -120,7 +138,7 @@ indexed/
 - 在 `reports/<type>/<period>/`、`research/<topic>/`、`artifacts/<artifact-name>/` 或 `ix-agents/<agent-name>/` 内 `git clone`
 - 使用 `tmp-` 作为报告中间产物前缀（统一 `draft-`）
 - 未经用户确认删除 `_shared/repos/` 下已有 clone
-- 在 `_shared/repos/` 内执行 **构建、编译、打包、安装依赖**（见 §5.5；已写入 `.claude/settings.json` deny）
+- 在 `_shared/repos/` 内执行 **构建、编译、打包、安装依赖**（见 §5.4；已写入 `.claude/settings.json` deny）
 
 ---
 
@@ -132,7 +150,7 @@ indexed/
 |------|------|------|
 | 目录 | 英文 kebab-case | `team-usage`, `passkey` |
 
-### 3.1.1 桶级 `OVERVIEW.md`（硬约束）
+### 3.2 桶级 `OVERVIEW.md`（硬约束）
 
 **仅下列「桶」必须有 `OVERVIEW.md`**（桶的概览/入口：介绍 + 索引 + 指导；非权威，细节以本文件为准）：
 
@@ -163,7 +181,7 @@ indexed/
 | 草稿文件 | `draft-` + 语义 | `draft-passkey-survey-report.md` |
 | 文档 | `.md` / `.html` / `.txt`；说明性用 kebab-case | `passkey-peer-proposal.txt` |
 
-### 3.4 专题 `research/<topic>/`
+### 3.3 专题 `research/<topic>/`
 
 | 子目录 | 内容 |
 |--------|------|
@@ -177,7 +195,7 @@ indexed/
 
 通用设计语言全文在 `_shared/design-languages/<id>/`，**不要**在专题 `design/` 重复存放可复用 token 库。
 
-### 3.5 小工具 `artifacts/ix-<domain>-cli/`
+### 3.4 小工具 `artifacts/ix-<domain>-cli/`
 
 > 细则：`.claude/rules/artifacts.md`（命名、骨架、provider、新建清单）。**新建 artifact 时 Agent 直接按该 rule 执行，无需用户重复说明。**
 
@@ -194,7 +212,7 @@ indexed/
 
 **现有范例**：`ix-agent-run-cli`（组合 agent 执行）、`ix-workspace-index-cli`（索引审计）。
 
-### 3.6 组合应用 `ix-agents/ix-<business>-agent/`
+### 3.5 组合应用 `ix-agents/ix-<business>-agent/`
 
 > 细则：`.claude/rules/ix-agents.md`（编排、run-cli、runs 隔离、发现、定时）。
 > **编排**：仅 **`manifest.yaml`**（`params` + 顺序 `steps`）。
@@ -216,7 +234,7 @@ indexed/
 
 **定时**：已独立为 [`ix-schedule-cli`](artifacts/ix-schedule-cli/)（跨平台：Windows schtasks / macOS launchd）。定时注册/触发不经过 ix-agent-run-cli。见 [`.claude/rules/ix-agents.md`](.claude/rules/ix-agents.md) §定时。
 
-### 3.7 Agent 规范 `_shared/specs/`
+### 3.6 Agent 规范 `_shared/specs/`
 
 | 类型 | 文件 | 说明 |
 |------|------|------|
@@ -224,20 +242,20 @@ indexed/
 | UI 设计语言导入 | `ui-design/design-language-import.spec.md` | 粘贴 prompt → 新建 `design-languages/<id>/` |
 
 - spec 目录 **只放规范**；禁止在 spec 上直接填写某次评审的业务结论
-- 新 spec 类别：`_shared/specs/<category>/`，文件名 `*.spec.md`；**更新** `_shared/specs/OVERVIEW.md` 索引行，**不强制**该子目录单独 `OVERVIEW.md`（见 §3.1.1）
+- 新 spec 类别：`_shared/specs/<category>/`，文件名 `*.spec.md`；**更新** `_shared/specs/OVERVIEW.md` 索引行，**不强制**该子目录单独 `OVERVIEW.md`（见 §3.2）
 - 触发：用户提及相关领域时按本文件 §5 流程执行
 
-### 3.8 文档模板 `_shared/templates/`
+### 3.7 文档模板 `_shared/templates/`
 
 | 类型 | 模板文件 | 说明 |
 |------|----------|------|
 | 设计语言导入 | `design-languages/design-language-intake.template.md` | 粘贴外部 prompt；见 import spec |
 | 设计语言元数据 | `design-languages/meta.template.md` | 导入产出 `meta.md` 结构参考 |
 | ix-*-agent 母版 | `ix-agents/manifest.template.yaml` 等 | 新建 `ix-agents/ix-<business>-agent/` |
-- 新模板类别：`_shared/templates/<category>/`，文件名 `*.template.md`；**更新** `_shared/templates/OVERVIEW.md` 索引行，**不强制**该子目录单独 `OVERVIEW.md`（见 §3.1.1）
+- 新模板类别：`_shared/templates/<category>/`，文件名 `*.template.md`；**更新** `_shared/templates/OVERVIEW.md` 索引行，**不强制**该子目录单独 `OVERVIEW.md`（见 §3.2）
 - 图示：架构/流程/交互用 **`###`/`####` 分节 + fenced code block ASCII 线框图**；禁止「图」列表格（见 `.claude/rules/dialogue-style.md`）
 
-### 3.11 设计语言库 `_shared/design-languages/`
+### 3.8 设计语言库 `_shared/design-languages/`
 
 | 文件 | 路径 | 说明 |
 |------|------|------|
@@ -286,12 +304,12 @@ indexed/
 │
 ├─ 可运行 CLI / 小工具（ix-*-cli）
 │   ├─ 发现已有能力：ix-workspace-index-cli search（必须先跑）
-│   └─ 实现/扩展：artifacts/ix-<domain>-cli/  （见 §3.5、.claude/rules/artifacts.md；禁止跨 artifact import）
+│   └─ 实现/扩展：artifacts/ix-<domain>-cli/  （见 §3.4、.claude/rules/artifacts.md；禁止跨 artifact import）
 │
 ├─ 组合应用 / 业务 Agent（ix-*-agent）
 │   ├─ 发现：ix-workspace-index-cli search（必须先跑）
 │   ├─ 执行：artifacts/ix-agent-run-cli（TUI 与定时同命令）；ix-agent 流程
-│   ├─ 规范：§3.6、.claude/rules/ix-agents.md
+│   ├─ 规范：§3.5、.claude/rules/ix-agents.md
 │   └─ 母版：_shared/templates/ix-agents/
 │
 └─ 不符合以上
@@ -304,15 +322,15 @@ indexed/
 
 > 以下工作流的 skill 当前**尚未迁移为 `.claude/skills/`**；两阶段流程（阶段 A 模板 → 阶段 B 执行）以本节文字描述为准，待后续单独迁移 skill。
 
-### 5.2 新建 `research/<topic>` 专题
+### 5.1 新建 `research/<topic>` 专题
 
 **触发**：用户开始新调研/方案主题。
 
 1. 确认 `research/<topic>/` 不存在；`<topic>` 为 kebab-case
 2. 至少创建 `docs/`；有设计稿或图片时再建 `design/`、`assets/`（轻量专题不强制后两者）
-3. 文档按 3.4 落入对应子目录；**禁止**在 `research/<topic>/` 根堆文件
+3. 文档按 3.3 落入对应子目录；**禁止**在 `research/<topic>/` 根堆文件
 
-### 5.3 新建 `artifacts/ix-<domain>-cli`
+### 5.2 新建 `artifacts/ix-<domain>-cli`
 
 **触发**：用户要从 `_shared/repos` / `research` 落地可运行 CLI，或明确要求新建 artifact。
 
@@ -326,7 +344,7 @@ indexed/
 
 **同域扩展**：优先在同 artifact 加 `providers/<name>.py` + `main.py` 子命令，不新建目录。
 
-### 5.4 新建 / 执行 `ix-agents/ix-<business>-agent`
+### 5.3 新建 / 执行 `ix-agents/ix-<business>-agent`
 
 **触发**：新建组合 agent、执行/定时跑 agent、用户提及 ix-agent 流程。
 
@@ -349,17 +367,17 @@ python artifacts/ix-agent-run-cli/main.py run --agent ix-<business>-agent [--set
 
 由 run-cli 创建 `runs/<run-id>/`、顺序执行 steps、更新 `run.yaml`。Claude Code 中 **Shell 运行上述命令并监督**，不在对话内逐步手写 manifest。
 
-### 5.5 Clone / 更新仓库（最小存储 · 只读 Git）
+### 5.4 Clone / 更新仓库（最小存储 · 只读 Git）
 
 **目标**：`_shared/repos/` 仅用于 `git log` / `checkout` / `diff` 等读操作，**不是**开发构建环境。
 
-#### 5.5.1 路径与去重
+#### 5.4.1 路径与去重
 
 1. 目标路径仅：`_shared/repos/<repo-kebab>/`
 2. 已存在同远程仓库 → 只 `fetch` / `checkout`，**禁止**重复 clone
 3. 目录名必须符合 `.claude/rules/naming.md` 的 clone 命名约定
 
-#### 5.5.2 Clone（首次）
+#### 5.4.2 Clone（首次）
 
 默认使用浅克隆，减少 `.git` 与检出体积：
 
@@ -370,7 +388,7 @@ git clone --depth 1 --single-branch --branch <默认分支> <url> _shared/repos/
 - 需分析多个分支：在同一 clone 上 `git fetch origin <分支名>:<分支名> --depth 1`，再 `checkout`；仍不要 `clone --mirror` 或全历史
 - 超大仓库且只需部分路径：可选用 `git sparse-checkout`，须先与用户确认范围
 
-#### 5.5.3 更新（已存在）
+#### 5.4.3 更新（已存在）
 
 ```bash
 cd _shared/repos/<repo-kebab>
@@ -381,9 +399,13 @@ git checkout <branch>
 - 优先 `fetch --depth 1`；避免 `git pull` 拉全量历史
 - 禁止：`git fetch --unshallow`、`git clone --mirror`、无 `--depth` 的完整历史同步（除非用户明确要求且说明磁盘影响）
 
-#### 5.5.4 禁止的构建与产物（硬约束）
+#### 5.4.4 禁止的构建与产物（硬约束）
 
-**不得执行**（含但不限于；已写入 `.claude/settings.json` 的 deny 权限）：
+> **适用范围**：本小节针对 `_shared/repos/` 内的 clone 仓库。`ix-gui/` 作为 indexed **自有应用设施**，**不受本小节约束**——可在其目录内执行 `cargo build`/`npm install`/`tauri dev` 等（见 §2.ix-gui）。
+>
+> **机器层实现**：构建禁令通过 `.claude/hooks/bash-build-guard.sh`（PreToolUse hook）实现——`ix-gui/` 子树下放行所有命令；其它路径拦截全生态构建命令（npm/pnpm/yarn/bun/mvn/gradle/cargo/pip/poetry/uv/go/tauri/flutter/docker/make/cmake/composer/bundle/gem/mix/rebar3/deno/swc/esbuild/webpack/rollup/vite/parcel 等）。完整清单见脚本本身。
+
+**不得执行**（含但不限于；已写入 `.claude/settings.json` 的 deny 权限；仅约束 `_shared/repos/`）：
 
 | 生态 | 禁止命令示例 |
 |------|----------------|
@@ -397,7 +419,7 @@ git checkout <branch>
 
 `target/`、`build/`、`dist/`、`out/`、`node_modules/`、`.gradle/`、`*.jar`、`*.war`、`*.class`（工作区检出中的已跟踪源码除外）
 
-#### 5.5.5 误生成产物的清理
+#### 5.4.5 误生成产物的清理
 
 若发现上述目录（且为未跟踪或本地生成）：
 
@@ -405,31 +427,31 @@ git checkout <branch>
 2. 在仓库根执行：`git clean -fdX`（仅删除 ignore 规则内的文件）或手动删除明确为产物的目录
 3. 向用户简要说明删除了哪些路径
 
-#### 5.5.6 与报告流水线的关系
+#### 5.4.6 与报告流水线的关系
 
 报告统计仅需 **Git 历史与 numstat**，**不需要**也不应为了报告而编译项目。若缺少依赖导致无法「理解」某段代码，用阅读源码与 `git show`，不要 `mvn install`。
 
-### 5.6 修改跨周期规范（spec / 模板）
+### 5.5 修改跨周期规范（spec / 模板）
 
 - **Spec / 示例**：在 `_shared/specs/<category>/` 维护；**禁止**写入当期 draft/定稿。
 - **模板**：在 `_shared/templates/<category>/` 维护。
 - 周期报告**不再**使用 `reports/<type>/_pipeline/` 或每期 `system.md`。
 
-### 5.9 新增 Agent 规范（spec）
+### 5.6 新增 Agent 规范（spec）
 
 1. 在 `_shared/specs/<category>/` 新建 `*.spec.md`
-2. 更新 `_shared/specs/OVERVIEW.md` 与本文件 §3.7
-3. 配套 skill 须符合 §5.11 两阶段；rule 见 `.claude/rules/specs-templates.md` §两阶段
+2. 更新 `_shared/specs/OVERVIEW.md` 与本文件 §3.6
+3. 配套 skill 须符合 §5.8 两阶段；rule 见 `.claude/rules/specs-templates.md` §两阶段
 
-### 5.10 新增文档模板（通用）
+### 5.7 新增文档模板（通用）
 
 1. 在 `_shared/templates/<category>/` 新建 `*.template.md`
-2. 更新 `_shared/templates/OVERVIEW.md` 与本文件 §3.8
+2. 更新 `_shared/templates/OVERVIEW.md` 与本文件 §3.7
 3. 若需专用 rule，在 `.claude/rules/` 增加指向该目录的说明
 
-### 5.11 Skill（fallback，少数场景）
+### 5.8 Skill（fallback，少数场景）
 
-> ix-*-agent 是 indexed 的**首选编排范式**，其两阶段规范见 §5.4 / `.claude/rules/ix-agents.md`。
+> ix-*-agent 是 indexed 的**首选编排范式**，其两阶段规范见 §5.3 / `.claude/rules/ix-agents.md`。
 > Skill 仅在 **manifest 流水线不适用**（需要对话式交互而非 tool+thinking 编排）时作为 fallback。
 
 若确需新建 skill，须遵循两阶段（A 给模板→停止 / B 用户填→执行），见 `.claude/rules/specs-templates.md` §两阶段。
@@ -504,3 +526,4 @@ git checkout <branch>
 | 2026-05 ~ 2026-06 上旬 | 早期演进（详见基线快照） |
 | 2026-06-16 | **建立 Claude Code 单平台底座**：`CLAUDE.md` 成为唯一权威；细化规则提取为 `.claude/rules/<domain>.md`，CLAUDE.md 用场景路由表按需加载；硬约束写入 `.claude/settings.json` |
 | 2026-06-16（续） | **indexed 基线改造**：品牌前缀 `lc-` → `ix-`、`work-with` → `indexed`；能力发现改为分布式 `SPEC.yaml` + 薄索引；失效登记清除；`README.md` → `SPEC.md` 体系；引入 `VERSION` 版本号 |
+| 2026-06-20 | **新增 `ix-gui/` 框架设施**：indexed 的 GUI 应用（Tauri+React）。根目录白名单 + §2 拓扑 + §2.ix-gui 定位 + §5.4.4 豁免；确立「零侵入铁律 + 三边界」，保证 GUI 方式与纯 claude code 方式并存互通。详见 [`ix-gui/OVERVIEW.md`](ix-gui/OVERVIEW.md) |

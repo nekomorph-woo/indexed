@@ -1,6 +1,6 @@
 # ix-agents — 组合业务 Agent
 
-> **来源**：[`CLAUDE.md`](../../CLAUDE.md) §3.6、§5.4。本文件是其细化展开，冲突时以 CLAUDE.md 为准。
+> **来源**：[`CLAUDE.md`](../../CLAUDE.md) §3.5、§5.3。本文件是其细化展开，冲突时以 CLAUDE.md 为准。
 
 ## 编排与执行
 

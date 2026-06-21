@@ -2,7 +2,7 @@
 
 > 跨任务可复用的文档母版（`*.template.md` / `*.template.yaml`）。
 > 与 **`_shared/specs/`**（流程规范）职责不同，见 [`../specs/OVERVIEW.md`](../specs/OVERVIEW.md)。
-> 规范：[`CLAUDE.md`](../../CLAUDE.md) §3.8
+> 规范：[`CLAUDE.md`](../../CLAUDE.md) §3.7
 
 ## 现有母版
 
@@ -15,4 +15,4 @@
 
 1. 在 `_shared/templates/<category>/` 新建 `*.template.md`
 2. 更新本索引表
-3. 更新 CLAUDE.md §3.8
+3. 更新 CLAUDE.md §3.7

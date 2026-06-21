@@ -1,6 +1,6 @@
 # shared-repos — Git 仓库：最小存储 · 只读
 
-> **来源**：[`CLAUDE.md`](../../CLAUDE.md) §5.5。本文件是其细化展开，冲突时以 CLAUDE.md 为准。
+> **来源**：[`CLAUDE.md`](../../CLAUDE.md) §5.4。本文件是其细化展开，冲突时以 CLAUDE.md 为准。
 
 ## 目标
 

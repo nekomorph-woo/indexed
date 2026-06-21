@@ -1,6 +1,6 @@
 # research — 专题调研
 
-> **来源**：[`CLAUDE.md`](../../CLAUDE.md) §3.4、§5.2。本文件是其细化展开，冲突时以 CLAUDE.md 为准。
+> **来源**：[`CLAUDE.md`](../../CLAUDE.md) §3.3、§5.1。本文件是其细化展开，冲突时以 CLAUDE.md 为准。
 
 ## 专题 `research/<topic>/`
 

@@ -1,7 +1,7 @@
 # _shared/specs — Agent 规范索引
 
 > 仅放可跨周期复用的规范（`*.spec.md`）；禁止写入单次任务的业务结论。
-> 规范：[`CLAUDE.md`](../../CLAUDE.md) §3.7
+> 规范：[`CLAUDE.md`](../../CLAUDE.md) §3.6
 
 ## 现有规范
 
@@ -18,4 +18,4 @@
 
 1. 在 `_shared/specs/<category>/` 新建 `*.spec.md`
 2. 更新本索引表
-3. 更新 CLAUDE.md §3.7
+3. 更新 CLAUDE.md §3.6

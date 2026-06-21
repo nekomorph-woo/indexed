@@ -1,6 +1,6 @@
 # naming — 命名规范与桶级 README
 
-> **来源**：[`CLAUDE.md`](../../CLAUDE.md) §3.1、§3.1.1。本文件是其细化展开，冲突时以 CLAUDE.md 为准。
+> **来源**：[`CLAUDE.md`](../../CLAUDE.md) §3.1、§3.2。本文件是其细化展开，冲突时以 CLAUDE.md 为准。
 
 ## 通用命名
 

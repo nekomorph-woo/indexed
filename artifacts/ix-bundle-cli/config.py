@@ -72,7 +72,7 @@ SKIP_DIRS = {
 SKIP_FILES = {
     ".DS_Store",
     ".env",
-    ".indexed-initialized",
+    ".indexed-update-check.json",  # 用户本地检查更新缓存
 }
 
 SKIP_FILE_SUFFIXES = (

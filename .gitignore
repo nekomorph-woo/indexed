@@ -18,6 +18,9 @@ ix-agents/*/runs/
 .env
 *.env.local
 
-# 初始化标记（用户本地，不入版本库）
-.indexed-initialized
+# 工作区状态文件
+.indexed-baseline-version    # 基线版本水位线（tracked，update 时更新）
+.indexed-migrations.log      # 迁移历史日志（tracked，append-only）
 
+# 检查更新缓存（用户本地，不入版本库）
+.indexed-update-check.json

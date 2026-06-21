@@ -10,6 +10,9 @@
 from __future__ import annotations
 
 import argparse
+import importlib.util
+import json
+import re
 import shutil
 import subprocess
 import sys
@@ -19,10 +22,11 @@ from zoneinfo import ZoneInfo
 
 from config import (
     BASELINE_CLIS,
+    BASELINE_VERSION_FILE,
     CLAUDE_MD,
     GIT_WORKFLOW_RULE,
     INDEXED_ROOT,
-    INIT_MARKER,
+    MIGRATIONS_LOG,
     MARKER_FILES,
     USER_BUCKETS,
     VERSION_FILE,
@@ -115,12 +119,124 @@ def _write_persona(nick: str, addr: str) -> bool:
     return True
 
 
-def _write_init_marker(mode: str, nick: str, addr: str) -> None:
-    ts = datetime.now(_TZ).strftime("%Y-%m-%d %H:%M:%S")
-    INIT_MARKER.write_text(
-        f"initialized_at: {ts}\nmode: {mode}\nnick: {nick}\naddr: {addr}\n",
-        encoding="utf-8",
-    )
+def _write_baseline_version() -> None:
+    """写 .indexed-baseline-version（迁移水位线，update 时用）。
+
+    mode/persona 不在这里——它们在 git-workflow.md 的 GIT_MODE 标记区。
+    """
+    version = VERSION_FILE.read_text(encoding="utf-8").strip().split("\n")[0]
+    BASELINE_VERSION_FILE.write_text(version + "\n", encoding="utf-8")
+
+
+# ---------------------------------------------------------------------------
+# Migration 链（M9.3）
+# ---------------------------------------------------------------------------
+
+def _parse_version(s: str) -> tuple[int, ...]:
+    """'0.1.0' → (0, 1, 0)；非法格式返回 ()。"""
+    try:
+        return tuple(int(x) for x in s.strip().split("."))
+    except ValueError:
+        return ()
+
+
+def _is_newer(a: str, b: str) -> bool:
+    """a 是否比 b 新（semver 比较）。解析失败保守返回 False。"""
+    pa, pb = _parse_version(a), _parse_version(b)
+    if not pa or not pb:
+        return False
+    return pa > pb
+
+
+def _load_migrations() -> dict[tuple[str, str], object]:
+    """扫描 migrations/ 目录，加载所有 migration 模块。
+
+    返回 {(VERSION_FROM, VERSION_TO): module}。非法 migration 跳过并 warn。
+    """
+    mig_dir = INDEXED_ROOT / "artifacts" / "ix-init-cli" / "migrations"
+    if not mig_dir.is_dir():
+        return {}
+    result: dict[tuple[str, str], object] = {}
+    pattern = re.compile(r"^(.+)_to_(.+)\.py$")
+    for py in sorted(mig_dir.glob("*_to_*.py")):
+        if py.name == "__init__.py":
+            continue
+        m = pattern.match(py.name)
+        if not m:
+            continue
+        vf, vt = m.group(1), m.group(2)
+        try:
+            spec = importlib.util.spec_from_file_location(
+                f"migration_{vf}_to_{vt}", py
+            )
+            mod = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(mod)  # type: ignore[union-attr]
+            required = (
+                "VERSION_FROM", "VERSION_TO",
+                "describe", "check", "migrate", "verify",
+            )
+            if not all(hasattr(mod, attr) for attr in required):
+                print(f"[warn] migration 缺接口: {py.name}（跳过）", file=sys.stderr)
+                continue
+            if mod.VERSION_FROM != vf or mod.VERSION_TO != vt:  # type: ignore[attr-defined]
+                print(
+                    f"[warn] migration 文件名与 VERSION_FROM/TO 不一致: {py.name}（跳过）",
+                    file=sys.stderr,
+                )
+                continue
+            result[(vf, vt)] = mod
+        except Exception as e:
+            print(f"[warn] migration 加载失败: {py.name}（{e}）", file=sys.stderr)
+    return result
+
+
+def _compute_migration_chain(
+    cur: str,
+    new: str,
+    all_migrations: dict[tuple[str, str], object],
+) -> list[object] | None:
+    """计算从 cur 到 new 的 migration 链。
+
+    - 返回 migration module 列表（顺序：cur → ... → new）
+    - 链不完整（中间有缺环）返回 None
+    - 防环（visited set）
+    """
+    if cur == new:
+        return []
+    chain: list[object] = []
+    current = cur
+    visited: set[str] = set()
+    while current != new:
+        if current in visited:
+            return None  # 环
+        visited.add(current)
+        next_step = None
+        # 优先匹配直接到 new 的
+        if (current, new) in all_migrations:
+            next_step = all_migrations[(current, new)]
+        else:
+            # 找 current → next，next 比 current 新且不超 new
+            for (vf, vt), mod in all_migrations.items():
+                if vf != current:
+                    continue
+                if _is_newer(vt, current) and not _is_newer(vt, new):
+                    if next_step is None or _is_newer(vt, next_step.VERSION_TO):  # type: ignore[attr-defined]
+                        next_step = mod
+        if next_step is None:
+            return None  # 缺环
+        chain.append(next_step)
+        current = next_step.VERSION_TO  # type: ignore[attr-defined]
+    return chain
+
+
+def _append_migration_log(entries: list[dict]) -> None:
+    """追加迁移记录到 .indexed-migrations.log（append-only）。"""
+    tz = ZoneInfo("Asia/Shanghai")
+    with MIGRATIONS_LOG.open("a", encoding="utf-8") as f:
+        for entry in entries:
+            ts = datetime.now(tz).strftime("%Y-%m-%d %H:%M:%S")
+            changes_str = "; ".join(entry["changes"]) if entry["changes"] else "(无变更)"
+            f.write(f"{ts} {entry['from']} → {entry['to']}: {changes_str}\n")
 
 
 # ---------------------------------------------------------------------------
@@ -185,18 +301,18 @@ def cmd_init(args: argparse.Namespace) -> int:
         _write_persona(nick, addr)
         print("  ✓ git-workflow.md / CLAUDE.md 已更新")
 
-        print("[4/4] 写入初始化标记 ...")
-        _write_init_marker(mode, nick, addr)
-        print(f"  ✓ {INIT_MARKER.name}")
+        print("[4/4] 写入基线版本水位线 ...")
+        _write_baseline_version()
+        print(f"  ✓ {BASELINE_VERSION_FILE.name}")
     except (OSError, KeyboardInterrupt) as e:
-        # 回滚：恢复标记区原状，删除可能半写的 init marker
+        # 回滚：恢复标记区原状，删除可能半写的 baseline version
         print(f"\n[error] 初始化中断（{e}），正在回滚标记区 ...", file=sys.stderr)
         if old_git_text:
             GIT_WORKFLOW_RULE.write_text(old_git_text, encoding="utf-8")
         if old_claude_text:
             CLAUDE_MD.write_text(old_claude_text, encoding="utf-8")
-        if INIT_MARKER.exists():
-            INIT_MARKER.unlink()
+        if BASELINE_VERSION_FILE.exists():
+            BASELINE_VERSION_FILE.unlink()
         print("[error] 已回滚。请重新运行 init。", file=sys.stderr)
         return 1
 
@@ -217,9 +333,88 @@ def cmd_update(args: argparse.Namespace) -> int:
         print(f"[error] {src} 不像 indexed 基线（无 VERSION）", file=sys.stderr)
         return 1
 
-    cur_ver = VERSION_FILE.read_text(encoding="utf-8").strip().split("\n")[0] if VERSION_FILE.is_file() else "?"
-    new_ver = (src / "VERSION").read_text(encoding="utf-8").strip().split("\n")[0]
+    # cur_ver 优先从 .indexed-baseline-version 读（迁移水位线），fallback VERSION
+    if BASELINE_VERSION_FILE.is_file():
+        cur_ver = BASELINE_VERSION_FILE.read_text(encoding="utf-8").strip()
+    elif VERSION_FILE.is_file():
+        cur_ver = VERSION_FILE.read_text(encoding="utf-8").strip()
+    else:
+        cur_ver = "?"
+    new_ver = (src / "VERSION").read_text(encoding="utf-8").strip()
+
+    # 版本检查：拒绝同级 + 拒绝降级
+    if cur_ver == new_ver:
+        print(f"[update] 当前版本已是 {new_ver}（无需更新）")
+        return 0
+    if cur_ver != "?" and not _is_newer(new_ver, cur_ver):
+        print(
+            f"[error] 不支持降级或同级更新（当前 {cur_ver} → 目标 {new_ver}）",
+            file=sys.stderr,
+        )
+        return 1
+
     print(f"update: {cur_ver} → {new_ver}\n")
+
+    # migration 链计算 + 显示 changelog + 交互式确认
+    all_migrations = _load_migrations()
+    chain = _compute_migration_chain(cur_ver, new_ver, all_migrations)
+    if chain is None:
+        print(
+            f"[error] migration 链不完整（{cur_ver} → {new_ver} 中间有缺环）",
+            file=sys.stderr,
+        )
+        print(f"       已有 migrations: {sorted(all_migrations.keys())}", file=sys.stderr)
+        return 1
+
+    migration_entries: list[dict] = []
+    if chain:
+        print(f"[migration] 需要 {len(chain)} 次迁移：\n")
+        for m in chain:
+            print(f"═══ {m.VERSION_FROM} → {m.VERSION_TO} ═══")
+            print(m.describe())
+            affected = m.check(INDEXED_ROOT)
+            if affected:
+                print(f"\n影响 {len(affected)} 个用户文件：")
+                for f in affected[:5]:
+                    print(f"  - {f}")
+                if len(affected) > 5:
+                    print(f"  ... 还有 {len(affected) - 5} 个")
+            print()
+
+        if not args.yes:
+            confirm = input(
+                f"确认从 {cur_ver} 升级到 {new_ver}（含 {len(chain)} 次迁移）？[y/N] "
+            ).strip().lower()
+            if confirm != "y":
+                print("[update] 已取消")
+                return 0
+
+        # 顺序跑 migrations + 自验证
+        print(f"[migration] 开始执行 {len(chain)} 次迁移...\n")
+        for m in chain:
+            print(f"  [migrate] {m.VERSION_FROM} → {m.VERSION_TO}...")
+            changes = m.migrate(INDEXED_ROOT)
+            migration_entries.append({
+                "from": m.VERSION_FROM,
+                "to": m.VERSION_TO,
+                "changes": changes,
+            })
+            problems = m.verify(INDEXED_ROOT)
+            if problems:
+                print(f"  [error] {m.VERSION_TO} 验证失败：", file=sys.stderr)
+                for p in problems:
+                    print(f"    - {p}", file=sys.stderr)
+                _append_migration_log(migration_entries)
+                print(
+                    f"\n[update] 已中止。工作区处于中间状态（{cur_ver} → {m.VERSION_TO}）。",
+                    file=sys.stderr,
+                )
+                print(
+                    "建议检查 .indexed-migrations.log 已跑的迁移；修复后重跑 update。",
+                    file=sys.stderr,
+                )
+                return 1
+        print()
 
     covered: list[str] = []
     protected: list[str] = []
@@ -313,8 +508,14 @@ def cmd_update(args: argparse.Namespace) -> int:
     else:
         print("  → 无用户内容")
 
+    # --- 更新水位线 + 追加迁移历史 ---
+    BASELINE_VERSION_FILE.write_text(new_ver + "\n", encoding="utf-8")
+    if migration_entries:
+        _append_migration_log(migration_entries)
+
     # --- 摘要 ---
-    print(f"\n[done] indexed 已更新到 {new_ver}")
+    print(f"\n[done] {cur_ver} → {new_ver} 升级完成")
+    print(f"  迁移次数: {len(migration_entries)}")
     print(f"  标记区文件保护: {len(protected)}")
     print(f"  框架文件覆盖: {len(covered)}")
     print(f"  用户内容保留: {len(skipped)}")
@@ -335,10 +536,10 @@ def cmd_status(_: argparse.Namespace) -> int:
     print(f"昵称: {nick}")
     print(f"称呼: {addr}")
     print(f"git init: {'是' if _git_initialized() else '否'}")
-    if INIT_MARKER.is_file():
-        print(f"初始化: {INIT_MARKER.read_text(encoding='utf-8').strip()}")
+    if BASELINE_VERSION_FILE.is_file():
+        print(f"基线版本: {BASELINE_VERSION_FILE.read_text(encoding='utf-8').strip()}")
     else:
-        print("初始化: 未初始化（运行 init）")
+        print("基线版本: 未初始化（运行 init）")
     if _git_initialized() and mode == "remote":
         code, out = _run_git(["remote", "-v"])
         if out:
@@ -357,8 +558,9 @@ def main() -> int:
     pi.add_argument("--addr", help="对用户称呼（默认 您）")
     pi.set_defaults(func=cmd_init)
 
-    pu = sub.add_parser("update", help="从新基线目录更新框架文件")
+    pu = sub.add_parser("update", help="从新基线目录更新框架文件（含 migration 链）")
     pu.add_argument("source", help="新基线解压后的目录路径")
+    pu.add_argument("--yes", "-y", action="store_true", help="跳过交互式确认（用于脚本/CI）")
     pu.set_defaults(func=cmd_update)
 
     ps = sub.add_parser("status", help="查看当前状态")

@@ -55,7 +55,7 @@ REL="${REL#/}"
 # 若 REL 不含 /，说明是根目录直接文件
 if [ "${REL}" = "${REL%%/*}" ]; then
   case "${REL}" in
-    CLAUDE.md|VERSION|.gitignore|_findings.md|.indexed-initialized|README-cli.md) ;;
+    CLAUDE.md|VERSION|.gitignore|_findings.md|.indexed-baseline-version|.indexed-migrations.log|.indexed-update-check.json|README-cli.md) ;;
     *) deny "禁止在根目录新建文件: ${REL} (白名单: CLAUDE.md/VERSION/.gitignore + .claude/ + 5 桶)" ;;
   esac
 else

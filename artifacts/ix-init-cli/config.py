@@ -11,7 +11,9 @@ GIT_WORKFLOW_RULE = RULES_DIR / "git-workflow.md"
 CLAUDE_MD = INDEXED_ROOT / "CLAUDE.md"
 VERSION_FILE = INDEXED_ROOT / "VERSION"
 GITIGNORE = INDEXED_ROOT / ".gitignore"
-INIT_MARKER = INDEXED_ROOT / ".indexed-initialized"
+BASELINE_VERSION_FILE = INDEXED_ROOT / ".indexed-baseline-version"
+MIGRATIONS_LOG = INDEXED_ROOT / ".indexed-migrations.log"
+UPDATE_CHECK_CACHE = INDEXED_ROOT / ".indexed-update-check.json"
 
 # 标记区文件（update 时需要保护用户区）
 MARKER_FILES = [

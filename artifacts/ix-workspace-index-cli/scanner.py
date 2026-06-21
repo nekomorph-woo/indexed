@@ -380,7 +380,7 @@ IX_GUI_ENABLED = True
 
 _BASE_ROOT_DIRS = {"_shared", "reports", "research", "artifacts", "ix-agents", ".claude", ".git"}
 _ROOT_WHITELIST_DIRS = _BASE_ROOT_DIRS | ({"ix-gui"} if IX_GUI_ENABLED else set())
-_ROOT_WHITELIST_FILES = {"CLAUDE.md", "VERSION", ".gitignore", ".gitkeep", "README.md", "README-cli.md", "_findings.md", ".DS_Store", ".indexed-initialized"}
+_ROOT_WHITELIST_FILES = {"CLAUDE.md", "VERSION", ".gitignore", ".gitkeep", "README.md", "README-cli.md", "_findings.md", ".DS_Store", ".indexed-baseline-version", ".indexed-migrations.log", ".indexed-update-check.json"}
 
 # kebab-case：[a-z0-9]+(-[a-z0-9]+)*
 _KEBAB_RE = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")

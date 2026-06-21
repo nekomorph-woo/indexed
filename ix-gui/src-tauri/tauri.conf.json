@@ -7,7 +7,7 @@
     "frontendDist": "../web/dist",
     "devUrl": "http://localhost:5173",
     "beforeDevCommand": "npm run dev",
-    "beforeBuildCommand": "npm run build && python ../../artifacts/ix-bundle-cli/main.py app-bundle --output ../src-tauri/baseline/"
+    "beforeBuildCommand": "npm run build && python3 ../../artifacts/ix-bundle-cli/main.py app-bundle --output ../src-tauri/baseline/"
   },
   "app": {
     "windows": [

@@ -1,36 +1,43 @@
 //! 应用全局状态。
 //!
-//! AppState.workspace_root 是所有 WorkspaceIo 命令的相对根。
-//! 解析优先级：
-//!   1. IX_WORKSPACE_ROOT 环境变量（测试 / 自定义）
-//!   2. CARGO_MANIFEST_DIR 反推（src-tauri/ → ix-gui/ → indexed/）
-//! 生产期 .app 不在源码树内，需要「切换工作区」UI（M5 后做）覆盖。
+//! AppState.workspace_root 是所有 WorkspaceIo/CliRunner 命令的相对根。
+//! 用 RwLock<PathBuf> 支持「切换工作区」UI 改写。
+//!
+//! 启动时从 ~/Library/Application Support/indexed/workspaces.json 读
+//! current；不存在则 workspace_root 为空（PathBuf::default()），前端进 wizard。
 
 use std::path::PathBuf;
+use std::sync::RwLock;
 
 pub struct AppState {
-    pub workspace_root: PathBuf,
+    workspace_root: RwLock<PathBuf>,
 }
 
 impl Default for AppState {
     fn default() -> Self {
-        Self::new()
+        Self::new(None)
     }
 }
 
 impl AppState {
-    pub fn new() -> Self {
-        let root = std::env::var("IX_WORKSPACE_ROOT")
-            .map(PathBuf::from)
-            .unwrap_or_else(|_| {
-                let manifest_dir = env!("CARGO_MANIFEST_DIR");
-                PathBuf::from(manifest_dir)
-                    .parent()
-                    .expect("ix-gui/src-tauri/ 应有父目录 ix-gui/")
-                    .parent()
-                    .expect("ix-gui/ 应有父目录 indexed/")
-                    .to_path_buf()
-            });
-        Self { workspace_root: root }
+    pub fn new(initial: Option<PathBuf>) -> Self {
+        Self {
+            workspace_root: RwLock::new(initial.unwrap_or_default()),
+        }
+    }
+
+    /// 当前 workspace_root 的克隆。空 PathBuf 表示未设置（前端进 wizard）。
+    pub fn root(&self) -> PathBuf {
+        self.workspace_root.read().unwrap().clone()
+    }
+
+    pub fn has_root(&self) -> bool {
+        let guard = self.workspace_root.read().unwrap();
+        !guard.as_os_str().is_empty() && guard.is_dir()
+    }
+
+    /// 切换工作区（设置页 / wizard / 启动时调用）
+    pub fn set_root(&self, new_root: PathBuf) {
+        *self.workspace_root.write().unwrap() = new_root;
     }
 }

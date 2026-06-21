@@ -10,7 +10,7 @@ use crate::models::{
 };
 use crate::state::AppState;
 use std::path::Path;
-use tauri::State;
+use tauri::{Manager, State};
 
 const SKIP_DIRS: &[&str] = &[
     "node_modules",
@@ -28,7 +28,7 @@ const SKIP_DIRS: &[&str] = &[
 
 #[tauri::command]
 pub async fn list_agents(state: State<'_, AppState>) -> Result<Vec<AgentInfo>> {
-    let agents_dir = state.workspace_root.join("ix-agents");
+    let agents_dir = state.root().join("ix-agents");
     let mut agents = vec![];
     if !agents_dir.is_dir() {
         return Ok(agents);
@@ -51,7 +51,7 @@ pub async fn list_agents(state: State<'_, AppState>) -> Result<Vec<AgentInfo>> {
 
 #[tauri::command]
 pub async fn list_clis(state: State<'_, AppState>) -> Result<Vec<CliInfo>> {
-    let artifacts_dir = state.workspace_root.join("artifacts");
+    let artifacts_dir = state.root().join("artifacts");
     let mut clis = vec![];
     if !artifacts_dir.is_dir() {
         return Ok(clis);
@@ -157,8 +157,7 @@ fn parse_cli_info(name: &str, path: &Path) -> Result<CliInfo> {
 
 #[tauri::command]
 pub async fn read_manifest(agent: String, state: State<'_, AppState>) -> Result<Manifest> {
-    let path = state
-        .workspace_root
+    let path = state.root()
         .join("ix-agents")
         .join(&agent)
         .join("manifest.yaml");
@@ -171,8 +170,7 @@ pub async fn read_manifest(agent: String, state: State<'_, AppState>) -> Result<
 
 #[tauri::command]
 pub async fn read_agent_spec(agent: String, state: State<'_, AppState>) -> Result<AgentSpec> {
-    let path = state
-        .workspace_root
+    let path = state.root()
         .join("ix-agents")
         .join(&agent)
         .join("SPEC.yaml");
@@ -185,8 +183,7 @@ pub async fn read_agent_spec(agent: String, state: State<'_, AppState>) -> Resul
 
 #[tauri::command]
 pub async fn read_cli_spec(cli: String, state: State<'_, AppState>) -> Result<CliSpec> {
-    let path = state
-        .workspace_root
+    let path = state.root()
         .join("artifacts")
         .join(&cli)
         .join("SPEC.yaml");
@@ -203,8 +200,7 @@ pub async fn read_cli_spec(cli: String, state: State<'_, AppState>) -> Result<Cl
 
 #[tauri::command]
 pub async fn list_runs(agent: String, state: State<'_, AppState>) -> Result<Vec<RunSummary>> {
-    let runs_dir = state
-        .workspace_root
+    let runs_dir = state.root()
         .join("ix-agents")
         .join(&agent)
         .join("runs");
@@ -244,8 +240,7 @@ pub async fn read_run(
     run_id: String,
     state: State<'_, AppState>,
 ) -> Result<RunDetail> {
-    let run_dir = state
-        .workspace_root
+    let run_dir = state.root()
         .join("ix-agents")
         .join(&agent)
         .join("runs")
@@ -329,7 +324,7 @@ fn is_text_ext(ext: &str) -> bool {
 
 #[tauri::command]
 pub async fn read_workspace_tree(state: State<'_, AppState>) -> Result<TreeNode> {
-    let root = &state.workspace_root;
+    let root = &state.root();
     let root_name = root
         .file_name()
         .map(|n| n.to_string_lossy().to_string())
@@ -421,5 +416,200 @@ fn _types_marker(_: RunStatus, _: RunTrigger) {}
 
 #[tauri::command]
 pub async fn get_workspace_root(state: State<'_, AppState>) -> Result<String> {
-    Ok(state.workspace_root.to_string_lossy().to_string())
+    Ok(state.root().to_string_lossy().to_string())
+}
+
+#[tauri::command]
+pub async fn get_workspace_version(state: State<'_, AppState>) -> Result<Option<String>> {
+    let path = state.root().join("VERSION");
+    if !path.is_file() {
+        return Ok(None);
+    }
+    Ok(Some(std::fs::read_to_string(path)?.trim().to_string()))
+}
+
+// ─────────────────────────────────────────────────────
+// Baseline（M7.2）— 释放/初始化/升级
+//
+// .app bundle 内 baseline/ 由 tauri.conf.json bundle.resources 引用。
+// 通过 app.path().resource_dir() 拿 .app/Contents/Resources/ 路径。
+// ─────────────────────────────────────────────────────
+
+#[tauri::command]
+pub async fn get_baseline_dir(app: tauri::AppHandle) -> Result<String> {
+    let resource = app
+        .path()
+        .resource_dir()
+        .map_err(|e| AppError::Other(format!("resource_dir 解析失败: {e}")))?
+        .join("baseline");
+    Ok(resource.to_string_lossy().to_string())
+}
+
+#[tauri::command]
+pub async fn get_baseline_version(app: tauri::AppHandle) -> Result<Option<String>> {
+    let path = app
+        .path()
+        .resource_dir()
+        .map_err(|e| AppError::Other(format!("resource_dir 解析失败: {e}")))?
+        .join("baseline")
+        .join("VERSION");
+    if !path.is_file() {
+        return Ok(None);
+    }
+    Ok(Some(std::fs::read_to_string(path)?.trim().to_string()))
+}
+
+#[tauri::command]
+pub async fn release_baseline(
+    app: tauri::AppHandle,
+    target_dir: String,
+) -> Result<()> {
+    let baseline = app
+        .path()
+        .resource_dir()
+        .map_err(|e| AppError::Other(format!("resource_dir 解析失败: {e}")))?
+        .join("baseline");
+    if !baseline.is_dir() {
+        return Err(AppError::NotFound(format!(
+            "baseline 目录不存在: {}",
+            baseline.display()
+        )));
+    }
+    let target = std::path::PathBuf::from(&target_dir);
+    if target.exists() {
+        let count = std::fs::read_dir(&target)?.count();
+        if count > 0 {
+            return Err(AppError::Other(format!(
+                "目标目录非空（{count} 个条目），请选空目录：{target_dir}"
+            )));
+        }
+    } else {
+        std::fs::create_dir_all(&target)?;
+    }
+    copy_dir_all(&baseline, &target)?;
+    Ok(())
+}
+
+/// 包装 ix-init-cli init（GUI wizard 用）。
+/// 在 target_dir 内跑（target_dir/artifacts/ix-init-cli/main.py），
+/// 因为 release_baseline 已经把基线（含 ix-init-cli）释放到 target_dir。
+#[tauri::command]
+pub async fn init_workspace(
+    target_dir: String,
+    mode: String,
+    remote_url: Option<String>,
+    nick: String,
+    addr: String,
+) -> Result<()> {
+    let target = std::path::PathBuf::from(&target_dir);
+    let init_cli = target.join("artifacts/ix-init-cli/main.py");
+    if !init_cli.is_file() {
+        return Err(AppError::NotFound(format!(
+            "ix-init-cli 不存在（target_dir 似乎未释放基线）: {}",
+            init_cli.display()
+        )));
+    }
+
+    let mut cmd = tokio::process::Command::new("python3");
+    cmd.arg(&init_cli)
+        .arg("init")
+        .arg("--mode")
+        .arg(&mode)
+        .arg("--nick")
+        .arg(&nick)
+        .arg("--addr")
+        .arg(&addr)
+        .current_dir(&target);
+
+    if let Some(url) = &remote_url {
+        cmd.arg("--remote-url").arg(url);
+    }
+
+    let output = cmd.output().await?;
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        return Err(AppError::Other(format!(
+            "ix-init-cli init 退出码 {}: {}",
+            output.status.code().unwrap_or(-1),
+            stderr.trim()
+        )));
+    }
+    Ok(())
+}
+
+/// 包装 ix-init-cli update <baseline>（升级引导用）。
+/// 在 workspace_root 内跑（state.workspace_root 已切换）。
+/// update 后自动跑 sync 同步索引（ix-init-cli update 不自动 sync）。
+#[tauri::command]
+pub async fn upgrade_baseline(
+    app: tauri::AppHandle,
+    state: State<'_, AppState>,
+) -> Result<()> {
+    let baseline = app
+        .path()
+        .resource_dir()
+        .map_err(|e| AppError::Other(format!("resource_dir 解析失败: {e}")))?
+        .join("baseline");
+    if !baseline.is_dir() {
+        return Err(AppError::NotFound(format!(
+            "baseline 目录不存在: {}",
+            baseline.display()
+        )));
+    }
+
+    let workspace_root = state.root();
+    let init_cli = workspace_root.join("artifacts/ix-init-cli/main.py");
+    if !init_cli.is_file() {
+        return Err(AppError::NotFound(format!(
+            "工作区无 ix-init-cli: {}",
+            init_cli.display()
+        )));
+    }
+
+    let output = tokio::process::Command::new("python3")
+        .arg(&init_cli)
+        .arg("update")
+        .arg(&baseline)
+        .current_dir(&workspace_root)
+        .output()
+        .await?;
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        return Err(AppError::Other(format!(
+            "升级失败（退出码 {}）: {}",
+            output.status.code().unwrap_or(-1),
+            stderr.trim()
+        )));
+    }
+
+    // 自动跑 sync（ix-init-cli update 不自动 sync）
+    let sync_cli = workspace_root.join("artifacts/ix-workspace-index-cli/main.py");
+    if sync_cli.is_file() {
+        let _ = tokio::process::Command::new("python3")
+            .arg(&sync_cli)
+            .arg("sync")
+            .current_dir(&workspace_root)
+            .output()
+            .await;
+    }
+
+    Ok(())
+}
+
+/// 递归复制目录（Rust 标准库无现成 API）
+fn copy_dir_all(src: &Path, dst: &Path) -> Result<()> {
+    std::fs::create_dir_all(dst)?;
+    for entry in std::fs::read_dir(src)? {
+        let entry = entry?;
+        let src_path = entry.path();
+        let dst_path = dst.join(entry.file_name());
+        let ft = entry.file_type()?;
+        if ft.is_dir() {
+            copy_dir_all(&src_path, &dst_path)?;
+        } else if ft.is_file() {
+            std::fs::copy(&src_path, &dst_path)?;
+        }
+        // symlink 等其它类型跳过
+    }
+    Ok(())
 }

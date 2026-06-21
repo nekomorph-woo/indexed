@@ -27,8 +27,7 @@ pub async fn run_agent(
     state: State<'_, AppState>,
     on_event: Channel<CliEvent>,
 ) -> Result<()> {
-    let run_cli = state
-        .workspace_root
+    let run_cli = state.root()
         .join("artifacts/ix-agent-run-cli/main.py");
 
     if !run_cli.is_file() {
@@ -43,7 +42,7 @@ pub async fn run_agent(
         .arg("run")
         .arg("--agent")
         .arg(&req.agent)
-        .current_dir(&state.workspace_root)
+        .current_dir(&state.root())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .kill_on_drop(true);
@@ -109,13 +108,13 @@ fn json_value_to_str(v: &serde_json::Value) -> String {
 
 #[tauri::command]
 pub async fn audit(state: State<'_, AppState>) -> Result<AuditReport> {
-    let report = run_json_cli::<AuditReport>(&state.workspace_root, "ix-workspace-index-cli", &["audit", "--json"]).await?;
+    let report = run_json_cli::<AuditReport>(&state.root(), "ix-workspace-index-cli", &["audit", "--json"]).await?;
     Ok(report)
 }
 
 #[tauri::command]
 pub async fn sync(state: State<'_, AppState>) -> Result<SyncResult> {
-    let out = run_text_cli(&state.workspace_root, "ix-workspace-index-cli", &["sync"]).await?;
+    let out = run_text_cli(&state.root(), "ix-workspace-index-cli", &["sync"]).await?;
     // sync 输出形如 "[sync] 无变更（用户区已是最新）" 或 "[sync] 已更新 X 个文件"
     let changed = !out.contains("无变更");
     let synced_files = parse_sync_count(&out);
@@ -127,7 +126,7 @@ pub async fn sync(state: State<'_, AppState>) -> Result<SyncResult> {
 
 #[tauri::command]
 pub async fn init_status(state: State<'_, AppState>) -> Result<InitStatus> {
-    let out = run_text_cli(&state.workspace_root, "ix-init-cli", &["status"]).await?;
+    let out = run_text_cli(&state.root(), "ix-init-cli", &["status"]).await?;
     parse_init_status(&out)
 }
 

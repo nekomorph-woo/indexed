@@ -19,6 +19,11 @@ done
 case "$CWD" in
   "$PROJECT_ROOT/ix-gui"|"$PROJECT_ROOT/ix-gui"/*) exit 0 ;;
 esac
+# cwd 不在 ix-gui 子树时，检查命令是否明确 cd / --prefix / 路径引用 ix-gui 子树
+# （例：`cd ix-gui/web && npm install`、`npm --prefix ix-gui/web install`）
+case "$CMD" in
+  *"ix-gui/web"*|*"ix-gui/src-tauri"*) exit 0 ;;
+esac
 
 # 全生态构建命令禁止清单（_shared/repos/ 最小存储原则）
 # 命中即拦截；命令前后必须是空格或字符串边界，避免误伤（如 npm-install.sh 这类文件名）

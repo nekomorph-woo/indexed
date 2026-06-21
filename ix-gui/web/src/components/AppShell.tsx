@@ -67,9 +67,9 @@ export function AppShell() {
           }}
         >
           <span style={{ fontSize: 18 }}>🗂️</span>
-          <span style={{ fontWeight: 700, fontSize: 15, letterSpacing: 0.3 }}>indexed</span>
+          <span style={{ fontWeight: 700, fontSize: 16, letterSpacing: 0.3 }}>indexed</span>
           {init && (
-            <span className="ix-mono" style={{ fontSize: 11, color: "var(--ix-text-muted)", marginLeft: "auto" }}>
+            <span className="ix-mono" style={{ fontSize: 12, color: "var(--ix-text-muted)", marginLeft: "auto" }}>
               v{init.version}
             </span>
           )}
@@ -83,7 +83,7 @@ export function AppShell() {
             style={{
               padding: "6px 12px",
               borderTop: "1px solid var(--ix-border)",
-              fontSize: 11,
+              fontSize: 12,
               color: "var(--ix-text-muted)",
               whiteSpace: "nowrap",
               overflow: "hidden",
@@ -119,7 +119,7 @@ export function AppShell() {
                 border: "none",
                 borderRadius: "var(--ix-radius-pill)",
                 padding: "6px 14px",
-                fontSize: 13,
+                fontSize: 14,
                 fontWeight: view === n.id ? 600 : 400,
                 color: view === n.id ? "var(--ix-primary)" : "var(--ix-text-muted)",
                 display: "flex",
@@ -128,7 +128,7 @@ export function AppShell() {
                 transition: "all 0.2s var(--ix-easing)",
               }}
             >
-              <span style={{ fontSize: 14 }}>{n.icon}</span>
+              <span style={{ fontSize: 15 }}>{n.icon}</span>
               {n.label}
             </button>
           ))}
@@ -136,7 +136,7 @@ export function AppShell() {
           {init && (
             <>
               <Badge tone={init.gitMode === "remote" ? "success" : "neutral"}>{init.gitMode}</Badge>
-              <span style={{ fontSize: 12, color: "var(--ix-text-muted)" }}>
+              <span style={{ fontSize: 13, color: "var(--ix-text-muted)" }}>
                 {init.nick} · {init.addr}
               </span>
             </>

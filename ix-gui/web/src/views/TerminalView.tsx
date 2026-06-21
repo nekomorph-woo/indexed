@@ -96,7 +96,7 @@ export function TerminalView() {
     <div style={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0 }}>
       <div style={{ display: "flex", gap: 8, alignItems: "center", padding: "8px 0", marginBottom: 4 }}>
         <Badge tone="warning">web 占位</Badge>
-        <span style={{ fontSize: 12, color: "var(--ix-text-muted)" }}>
+        <span style={{ fontSize: 13, color: "var(--ix-text-muted)" }}>
           可见终端 · 交互可验证 · Tauri 阶段接真实 claude（PTY）
         </span>
         <div style={{ flex: 1 }} />
@@ -144,7 +144,7 @@ export function TerminalView() {
               border: "none",
               outline: "none",
               color: "var(--ix-text)",
-              fontSize: 13,
+              fontSize: 14,
               fontFamily: "var(--ix-font-mono)",
             }}
           />

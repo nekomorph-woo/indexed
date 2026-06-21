@@ -20,7 +20,7 @@ function IssueRow({ issue }: { issue: AuditIssue }) {
         background: "var(--ix-surface)",
         borderRadius: "0 var(--ix-radius-sm) var(--ix-radius-sm) 0",
         marginBottom: 6,
-        fontSize: 13,
+        fontSize: 14,
       }}
     >
       <Badge tone={tone}>{issue.level.toUpperCase()}</Badge>
@@ -92,36 +92,36 @@ export function IndexDashboard() {
           <Badge tone={report.ok ? "success" : "danger"}>{report.ok ? "索引一致" : "存在 error"}</Badge>
         )}
         {syncResult && (
-          <span style={{ fontSize: 12, color: "var(--ix-success)" }}>
+          <span style={{ fontSize: 13, color: "var(--ix-success)" }}>
             ✓ 已同步 {syncResult.syncedFiles.length} 个文件的 IX_USER_* 标记区
           </span>
         )}
-        {err && <span style={{ fontSize: 12, color: "var(--ix-danger)" }}>{err}</span>}
+        {err && <span style={{ fontSize: 13, color: "var(--ix-danger)" }}>{err}</span>}
       </div>
 
       {/* 工作区状态卡片 */}
       {init && (
         <Card style={{ padding: 16 }}>
-          <div style={{ fontSize: 12, fontWeight: 600, color: "var(--ix-text-muted)", marginBottom: 10 }}>
+          <div style={{ fontSize: 13, fontWeight: 600, color: "var(--ix-text-muted)", marginBottom: 10 }}>
             工作区状态（ix-init-cli status）
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12, fontSize: 13 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12, fontSize: 14 }}>
             <div>
-              <div style={{ color: "var(--ix-text-muted)", fontSize: 11 }}>版本</div>
+              <div style={{ color: "var(--ix-text-muted)", fontSize: 12 }}>版本</div>
               <div style={{ fontWeight: 600 }} className="ix-mono">{init.version}</div>
             </div>
             <div>
-              <div style={{ color: "var(--ix-text-muted)", fontSize: 11 }}>Git 模式</div>
+              <div style={{ color: "var(--ix-text-muted)", fontSize: 12 }}>Git 模式</div>
               <div style={{ fontWeight: 600 }}>
                 <Badge tone={init.gitMode === "uninitialized" ? "warning" : "primary"}>{init.gitMode}</Badge>
               </div>
             </div>
             <div>
-              <div style={{ color: "var(--ix-text-muted)", fontSize: 11 }}>昵称 / 称呼</div>
+              <div style={{ color: "var(--ix-text-muted)", fontSize: 12 }}>昵称 / 称呼</div>
               <div style={{ fontWeight: 600 }}>{init.nick} / {init.addr}</div>
             </div>
             <div>
-              <div style={{ color: "var(--ix-text-muted)", fontSize: 11 }}>Git</div>
+              <div style={{ color: "var(--ix-text-muted)", fontSize: 12 }}>Git</div>
               <div style={{ fontWeight: 600 }}>{init.gitInitialized ? "已初始化" : "未初始化"}</div>
             </div>
           </div>
@@ -133,10 +133,10 @@ export function IndexDashboard() {
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
             {/* CLI 列表 */}
             <Card style={{ padding: 16 }}>
-              <div style={{ fontSize: 12, fontWeight: 600, color: "var(--ix-text-muted)", marginBottom: 10 }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: "var(--ix-text-muted)", marginBottom: 10 }}>
                 发现的 CLI（{report.clis.length}）
               </div>
-              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
                 <thead>
                   <tr style={{ color: "var(--ix-text-muted)", textAlign: "left" }}>
                     <th style={{ padding: "4px 8px", borderBottom: "1px solid var(--ix-border)" }}>模块</th>
@@ -162,10 +162,10 @@ export function IndexDashboard() {
 
             {/* Agent 列表 */}
             <Card style={{ padding: 16 }}>
-              <div style={{ fontSize: 12, fontWeight: 600, color: "var(--ix-text-muted)", marginBottom: 10 }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: "var(--ix-text-muted)", marginBottom: 10 }}>
                 发现的 Agent（{report.agents.length}）
               </div>
-              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
                 <thead>
                   <tr style={{ color: "var(--ix-text-muted)", textAlign: "left" }}>
                     <th style={{ padding: "4px 8px", borderBottom: "1px solid var(--ix-border)" }}>应用</th>
@@ -192,11 +192,11 @@ export function IndexDashboard() {
 
           {/* 问题列表 */}
           <Card style={{ padding: 16 }}>
-            <div style={{ fontSize: 12, fontWeight: 600, color: "var(--ix-text-muted)", marginBottom: 10 }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: "var(--ix-text-muted)", marginBottom: 10 }}>
               审计问题（{report.issues.length}）
             </div>
             {report.issues.length === 0 ? (
-              <div style={{ color: "var(--ix-success)", fontSize: 13, padding: 8 }}>✓ 未发现索引漂移</div>
+              <div style={{ color: "var(--ix-success)", fontSize: 14, padding: 8 }}>✓ 未发现索引漂移</div>
             ) : (
               report.issues.map((i, idx) => <IssueRow key={idx} issue={i} />)
             )}

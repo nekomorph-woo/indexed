@@ -26,7 +26,7 @@ function FileViewer({ file }: { file: NonNullable<RunDetail["outputFiles"]>[numb
           padding: "8px 12px",
           background: "var(--ix-surface-alt)",
           borderRadius: "var(--ix-radius-sm) var(--ix-radius-sm) 0 0",
-          fontSize: 12,
+          fontSize: 13,
           fontWeight: 600,
         }}
       >
@@ -96,10 +96,10 @@ function RunDetailPanel({ agentName, runId }: { agentName: string; runId: string
             {detail.status}
           </Badge>
           <Badge tone="neutral">{detail.trigger}</Badge>
-          <span style={{ color: "var(--ix-text-muted)", fontSize: 12 }}>{fmtDate(detail.started_at)}</span>
+          <span style={{ color: "var(--ix-text-muted)", fontSize: 13 }}>{fmtDate(detail.started_at)}</span>
         </div>
         {detail.next_step && (
-          <div style={{ fontSize: 12, color: "var(--ix-danger)" }}>中断于 step: {detail.next_step}（可 resume）</div>
+          <div style={{ fontSize: 13, color: "var(--ix-danger)" }}>中断于 step: {detail.next_step}（可 resume）</div>
         )}
       </Card>
 
@@ -158,7 +158,7 @@ export function RunsView() {
   return (
     <div style={{ display: "grid", gridTemplateColumns: "200px 240px 1fr", gap: 12, height: "100%", minHeight: 0 }}>
       <Card style={{ padding: 8, overflowY: "auto" }}>
-        <div style={{ padding: "8px 10px", fontSize: 12, fontWeight: 600, color: "var(--ix-text-muted)" }}>Agent</div>
+        <div style={{ padding: "8px 10px", fontSize: 13, fontWeight: 600, color: "var(--ix-text-muted)" }}>Agent</div>
         {agents.map((a) => (
           <div
             key={a.name}
@@ -167,7 +167,7 @@ export function RunsView() {
               padding: "8px 12px",
               borderRadius: "var(--ix-radius-sm)",
               cursor: "pointer",
-              fontSize: 12,
+              fontSize: 13,
               fontWeight: 500,
               background: agent === a.name ? "color-mix(in srgb, var(--ix-primary) 14%, transparent)" : "transparent",
               color: agent === a.name ? "var(--ix-primary)" : "var(--ix-text)",
@@ -179,12 +179,12 @@ export function RunsView() {
       </Card>
 
       <Card style={{ padding: 8, overflowY: "auto" }}>
-        <div style={{ padding: "8px 10px", fontSize: 12, fontWeight: 600, color: "var(--ix-text-muted)" }}>Runs</div>
-        {!agent && <div style={{ padding: 12, fontSize: 12, color: "var(--ix-text-muted)" }}>← 先选 agent</div>}
+        <div style={{ padding: "8px 10px", fontSize: 13, fontWeight: 600, color: "var(--ix-text-muted)" }}>Runs</div>
+        {!agent && <div style={{ padding: 12, fontSize: 13, color: "var(--ix-text-muted)" }}>← 先选 agent</div>}
         {agent && !runs && <div style={{ padding: 12 }}><Spinner /></div>}
         {runs &&
           (runs.length === 0 ? (
-            <div style={{ padding: 12, fontSize: 12, color: "var(--ix-text-muted)" }}>该 agent 无历史 run</div>
+            <div style={{ padding: 12, fontSize: 13, color: "var(--ix-text-muted)" }}>该 agent 无历史 run</div>
           ) : (
             runs.map((r) => (
               <div
@@ -200,11 +200,11 @@ export function RunsView() {
               >
                 <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 2 }}>
                   <StatusDot status={r.status} />
-                  <span className="ix-mono" style={{ fontSize: 11, fontWeight: 600 }}>
+                  <span className="ix-mono" style={{ fontSize: 12, fontWeight: 600 }}>
                     {r.run_id}
                   </span>
                 </div>
-                <div style={{ fontSize: 11, color: "var(--ix-text-muted)" }}>
+                <div style={{ fontSize: 12, color: "var(--ix-text-muted)" }}>
                   {r.steps_completed.length}/{r.steps_total} steps · {fmtDate(r.started_at).slice(5, 16)}
                 </div>
               </div>

@@ -24,7 +24,7 @@ export const mockClis: CliInfo[] = [
     domain: "组合 agent 执行器",
     one_liner: "按 manifest 执行 tool + thinking（claude -p）流水线",
     status: "implemented",
-    subcommands: ["run", "schedule list", "schedule run"],
+    subcommands: ["run", "params", "stats", "new"],
     has_spec_yaml: true,
   },
   {
@@ -32,15 +32,15 @@ export const mockClis: CliInfo[] = [
     domain: "跨平台定时",
     one_liner: "schtasks/launchd 注册 + 触发 ix-agent",
     status: "implemented",
-    subcommands: ["register", "unregister", "list", "run"],
+    subcommands: ["register", "unregister", "list", "run", "status"],
     has_spec_yaml: true,
   },
   {
     name: "ix-workspace-index-cli",
     domain: "索引审计",
-    one_liner: "audit / list / sync（SPEC.yaml 与薄索引一致性）",
+    one_liner: "audit / search / list / sync（SPEC.yaml 与薄索引一致性 + 意图搜索）",
     status: "implemented",
-    subcommands: ["audit", "list", "sync"],
+    subcommands: ["audit", "search", "list", "sync"],
     has_spec_yaml: true,
   },
   {
@@ -216,18 +216,159 @@ export const mockCliSpecs: Record<string, CliSpec> = {
     domain: "组合 agent 执行器",
     one_liner: "按 manifest 执行 tool + thinking（claude -p）流水线",
     status: "implemented",
-    intents: ["执行 ix-*-agent", "manifest 编排", "tool+thinking 流水线"],
+    intents: [
+      "执行 ix-*-agent、manifest 编排、tool+thinking 流水线",
+      "查询 agent 执行历史、成功率、最近 run 状态",
+      "脚手架、新建 agent、scaffold、从模板创建 ix-*-agent",
+    ],
     commands: [
       {
         name: "run",
-        inputs: ["--agent ix-<business>-agent", "--set key=value", "--params-json '{...}'", "--resume --run-id <id>"],
-        outputs: "ix-agents/<agent>/runs/<run-id>/",
+        inputs: ["--agent ix-<business>-agent", "--set key=value", "--params-json '{...}'", "--resume --run-id <id>", "--trigger manual|scheduled"],
+        outputs: "ix-agents/<agent>/runs/<run-id>/（work/raw、work/thinking、output）+ last-run.json + failures.log",
         example: "python main.py run --agent ix-foo-agent",
+      },
+      {
+        name: "params",
+        inputs: ["--agent ix-<business>-agent", "--json"],
+        outputs: "stdout 表格或 JSON：每个参数的必填/默认/当前值",
+        example: "python main.py params --agent ix-foo-agent",
+      },
+      {
+        name: "stats",
+        inputs: ["--agent <name>（可选）", "--last N（默认 10）"],
+        outputs: "stdout：最近 N 次 run 的 agent/run_id/status/started/steps/failed_step + 成功率",
+        example: "python main.py stats --last 20",
+      },
+      {
+        name: "new",
+        inputs: ["--business <kebab-case-name>"],
+        outputs: "ix-agents/ix-<business>-agent/（manifest + SPEC + config + paths.py + OVERVIEW.md）",
+        example: "python main.py new --business weekly-metrics",
       },
     ],
     credentials: [],
     depends_on: [],
-    notes: "thinking step 调用 Claude Code CLI（claude -p --dangerously-skip-permissions）",
+    notes: "thinking step 调用 Claude Code CLI（claude -p --dangerously-skip-permissions）。定时功能已移至 ix-schedule-cli。",
+  },
+  "ix-schedule-cli": {
+    name: "ix-schedule-cli",
+    domain: "跨平台定时",
+    one_liner: "schtasks（Windows）/ launchd（macOS）注册 + 触发 ix-agent",
+    status: "implemented",
+    intents: [
+      "定时跑 agent、schedule、cron、schtasks、launchd、计划任务",
+      "查看定时作业清单、注册状态",
+    ],
+    commands: [
+      {
+        name: "register",
+        inputs: ["--agent ix-<business>-agent", "--schedule <cron-or-preset>", "--llm-executor claude-p"],
+        outputs: "系统调度器注册一条作业（写入 ix-schedule-cli/jobs.log）",
+        example: "python main.py register --agent ix-foo-agent --schedule daily-09:00",
+      },
+      {
+        name: "unregister",
+        inputs: ["--id <job-id> 或 --agent ix-<business>-agent"],
+        outputs: "从系统调度器移除作业",
+        example: "python main.py unregister --id <job-id>",
+      },
+      {
+        name: "list",
+        inputs: [],
+        outputs: "stdout：所有已注册作业（id/agent/schedule/last_run/next_run）",
+        example: "python main.py list",
+      },
+      {
+        name: "run",
+        inputs: ["--id <job-id>"],
+        outputs: "立即触发指定作业（不等待 schedule）",
+        example: "python main.py run --id <job-id>",
+      },
+      {
+        name: "status",
+        inputs: ["--agent <name>（可选）"],
+        outputs: "stdout：调度器后端 + 已注册作业数 + 上次触发结果",
+        example: "python main.py status",
+      },
+    ],
+    credentials: [],
+    depends_on: ["ix-agent-run-cli"],
+    notes: "跨平台调度：Windows 用 schtasks，macOS 用 launchd，Linux 用 cron。",
+  },
+  "ix-workspace-index-cli": {
+    name: "ix-workspace-index-cli",
+    domain: "索引审计",
+    one_liner: "audit / search / list / sync（SPEC.yaml 与薄索引一致性 + 意图搜索）",
+    status: "implemented",
+    intents: [
+      "审计工作区、查找索引漂移、SPEC 一致性检查",
+      "按意图搜索 cli/agent 能力、能力发现",
+      "同步 SPEC.yaml 到 capabilities.md/registry.md 薄索引",
+    ],
+    commands: [
+      {
+        name: "audit",
+        inputs: ["--json", "--check"],
+        outputs: "stdout：clis/agents/issues（or JSON）",
+        example: "python main.py audit --json",
+      },
+      {
+        name: "search",
+        inputs: ["<意图关键词>"],
+        outputs: "stdout：匹配的 cli/agent 名称 + 一句话 + SPEC 路径",
+        example: "python main.py search \"发邮件\"",
+      },
+      {
+        name: "list",
+        inputs: ["--type cli|agent|all"],
+        outputs: "stdout：所有 cli/agent 名称清单",
+        example: "python main.py list --type all",
+      },
+      {
+        name: "sync",
+        inputs: [],
+        outputs: "把 SPEC.yaml 同步到 capabilities.md / registry.md 的 IX_USER_* 标记区",
+        example: "python main.py sync",
+      },
+    ],
+    credentials: [],
+    depends_on: [],
+    notes: "search 用 SPEC.yaml 的 intents 字段做意图匹配（Jaccard 相似度 + 子集检测）。",
+  },
+  "ix-init-cli": {
+    name: "ix-init-cli",
+    domain: "工作区初始化",
+    one_liner: "init / update / status（git 模式 + persona）",
+    status: "implemented",
+    intents: [
+      "初始化工作区、git init、设置 git 模式",
+      "更新 persona（助手昵称、对用户称呼）",
+      "查询工作区状态、版本、git 模式",
+    ],
+    commands: [
+      {
+        name: "init",
+        inputs: ["--mode local|remote", "--nick <name>", "--addr <pronoun>"],
+        outputs: "写 .indexed-init.marker + 改写 .claude/rules/git-workflow.md 的 GIT_MODE 标记区",
+        example: "python main.py init --mode remote --nick Xi酱 --addr 您",
+      },
+      {
+        name: "update",
+        inputs: ["--mode local|remote（可选）", "--nick <name>（可选）", "--addr <pronoun>（可选）"],
+        outputs: "更新 GIT_MODE 标记区 / persona 行",
+        example: "python main.py update --nick Xi酱",
+      },
+      {
+        name: "status",
+        inputs: [],
+        outputs: "stdout：版本 / Git 模式 / 昵称 / 称呼 / git init 状态 / 远端",
+        example: "python main.py status",
+      },
+    ],
+    credentials: [],
+    depends_on: [],
+    notes: "persona 默认「Xi酱」「您」；git 模式默认 remote。",
   },
 };
 
@@ -328,20 +469,8 @@ export const mockAudit: AuditReport = {
     subcommands: c.subcommands,
     has_spec_yaml: c.has_spec_yaml,
   })),
-  agents: mockAgents.map((a) => ({
-    name: a.name,
-    has_thinking: a.has_thinking,
-    steps_summary: a.stepsSummary,
-    required_params: a.requiredParams,
-  })),
-  issues: [
-    {
-      level: "warn",
-      code: "STALE_INDEX",
-      message: "ix-weekly-report-agent 存在于磁盘但未在 registry.md 用户区登记",
-      target: "ix-agents/registry.md",
-    },
-  ],
+  agents: [],
+  issues: [],
 };
 
 export const mockSync: SyncResult = {
@@ -358,7 +487,7 @@ export const mockInit: InitStatus = {
   nick: "Xi酱",
   addr: "您",
   gitInitialized: true,
-  remote: "origin\tgit@github.com:user/indexed.git (fetch)",
+  remote: "origin\thttps://github.com/nekomorph-woo/indexed.git (fetch)",
 };
 
 // ── 资产树 ──
@@ -400,6 +529,15 @@ export const mockTree: TreeNode = {
           path: "artifacts/ix-workspace-index-cli",
           kind: "dir",
           children: [{ name: "main.py", path: "artifacts/ix-workspace-index-cli/main.py", kind: "file" }],
+        },
+        {
+          name: "ix-schedule-cli",
+          path: "artifacts/ix-schedule-cli",
+          kind: "dir",
+          children: [
+            { name: "main.py", path: "artifacts/ix-schedule-cli/main.py", kind: "file" },
+            { name: "SPEC.yaml", path: "artifacts/ix-schedule-cli/SPEC.yaml", kind: "file" },
+          ],
         },
       ],
     },
@@ -468,6 +606,18 @@ export const mockTree: TreeNode = {
           path: "_shared/templates",
           kind: "dir",
           children: [{ name: "ix-agents", path: "_shared/templates/ix-agents", kind: "dir" }],
+        },
+        {
+          name: "design-references",
+          path: "_shared/design-references",
+          kind: "dir",
+          children: [],
+        },
+        {
+          name: "repos",
+          path: "_shared/repos",
+          kind: "dir",
+          children: [],
         },
       ],
     },

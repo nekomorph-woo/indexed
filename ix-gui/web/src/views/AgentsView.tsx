@@ -68,15 +68,15 @@ function AgentRunForm({ agent, manifest }: { agent: AgentInfo; manifest: Manifes
       {/* 阶段 A：需求表单 */}
       <Card style={{ padding: 18 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
-          <h3 style={{ margin: 0, fontSize: 16 }}>{agent.name}</h3>
+          <h3 style={{ margin: 0, fontSize: 17 }}>{agent.name}</h3>
           <Badge tone="primary">{agent.domain}</Badge>
           {agent.has_thinking && <Badge tone="neutral">含 thinking</Badge>}
         </div>
-        <p style={{ margin: "4px 0 16px", color: "var(--ix-text-muted)", fontSize: 13 }}>
+        <p style={{ margin: "4px 0 16px", color: "var(--ix-text-muted)", fontSize: 14 }}>
           {agent.one_liner} · {agent.stepsSummary}
         </p>
 
-        <div style={{ fontSize: 12, color: "var(--ix-text-muted)", marginBottom: 10, fontWeight: 600 }}>
+        <div style={{ fontSize: 13, color: "var(--ix-text-muted)", marginBottom: 10, fontWeight: 600 }}>
           执行参数（阶段 A：确认输入后执行）
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
@@ -106,12 +106,12 @@ function AgentRunForm({ agent, manifest }: { agent: AgentInfo; manifest: Manifes
             {running ? <Spinner size={14} /> : "▶"} 执行
           </Button>
           {missing.length > 0 && (
-            <span style={{ fontSize: 12, color: "var(--ix-danger)" }}>
+            <span style={{ fontSize: 13, color: "var(--ix-danger)" }}>
               缺少必填项：{missing.map((m) => m.name).join(", ")}
             </span>
           )}
           {!running && finalStatus && (
-            <span style={{ fontSize: 13, color: finalStatus === "completed" ? "var(--ix-success)" : "var(--ix-danger)" }}>
+            <span style={{ fontSize: 14, color: finalStatus === "completed" ? "var(--ix-success)" : "var(--ix-danger)" }}>
               {finalStatus === "completed" ? "✓ 完成" : finalStatus}
             </span>
           )}
@@ -120,14 +120,14 @@ function AgentRunForm({ agent, manifest }: { agent: AgentInfo; manifest: Manifes
 
       {/* step 进度 */}
       <Card style={{ padding: 18 }}>
-        <div style={{ fontSize: 12, fontWeight: 600, color: "var(--ix-text-muted)", marginBottom: 12 }}>
+        <div style={{ fontSize: 13, fontWeight: 600, color: "var(--ix-text-muted)", marginBottom: 12 }}>
           步骤流水线
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           {manifest.steps.map((s, i) => {
             const st = stepStates[s.id];
             return (
-              <div key={s.id} style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 13 }}>
+              <div key={s.id} style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 14 }}>
                 <span
                   style={{
                     width: 22,
@@ -136,7 +136,7 @@ function AgentRunForm({ agent, manifest }: { agent: AgentInfo; manifest: Manifes
                     display: "inline-flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    fontSize: 11,
+                    fontSize: 12,
                     background: st === "done" ? "var(--ix-success)" : st === "failed" ? "var(--ix-danger)" : "var(--ix-surface-alt)",
                     color: st === "done" || st === "failed" ? "#fff" : "var(--ix-text-muted)",
                   }}
@@ -156,7 +156,7 @@ function AgentRunForm({ agent, manifest }: { agent: AgentInfo; manifest: Manifes
       {/* 流式日志 */}
       {events.length > 0 && (
         <Card style={{ padding: 0, overflow: "hidden" }}>
-          <div style={{ padding: "10px 14px", borderBottom: "1px solid var(--ix-border)", fontSize: 12, fontWeight: 600, color: "var(--ix-text-muted)" }}>
+          <div style={{ padding: "10px 14px", borderBottom: "1px solid var(--ix-border)", fontSize: 13, fontWeight: 600, color: "var(--ix-text-muted)" }}>
             执行日志（run-cli stdout）
           </div>
           <div
@@ -240,7 +240,7 @@ export function AgentsView() {
     <div style={{ display: "grid", gridTemplateColumns: "300px 1fr", gap: 16, height: "100%", minHeight: 0 }}>
       {/* agent 列表 */}
       <Card style={{ padding: 8, overflowY: "auto" }}>
-        <div style={{ padding: "8px 10px", fontSize: 12, fontWeight: 600, color: "var(--ix-text-muted)" }}>
+        <div style={{ padding: "8px 10px", fontSize: 13, fontWeight: 600, color: "var(--ix-text-muted)" }}>
           自定义 Agents
         </div>
         {agents.map((a) => (
@@ -257,14 +257,14 @@ export function AgentsView() {
             }}
           >
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-              <span style={{ fontSize: 13, fontWeight: 600, color: selected === a.name ? "var(--ix-primary)" : "var(--ix-text)" }}>
+              <span style={{ fontSize: 14, fontWeight: 600, color: selected === a.name ? "var(--ix-primary)" : "var(--ix-text)" }}>
                 {a.name}
               </span>
               {a.recentRunCount > 0 && (
-                <span style={{ fontSize: 11, color: "var(--ix-text-muted)" }}>· {a.recentRunCount} runs</span>
+                <span style={{ fontSize: 12, color: "var(--ix-text-muted)" }}>· {a.recentRunCount} runs</span>
               )}
             </div>
-            <div style={{ fontSize: 12, color: "var(--ix-text-muted)" }}>{a.one_liner}</div>
+            <div style={{ fontSize: 13, color: "var(--ix-text-muted)" }}>{a.one_liner}</div>
           </div>
         ))}
       </Card>

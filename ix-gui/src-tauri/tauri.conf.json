@@ -7,7 +7,7 @@
     "frontendDist": "../web/dist",
     "devUrl": "http://localhost:5173",
     "beforeDevCommand": "npm run dev",
-    "beforeBuildCommand": "npm run build"
+    "beforeBuildCommand": "npm run build && python ../../artifacts/ix-bundle-cli/main.py app-bundle --output ../src-tauri/baseline/"
   },
   "app": {
     "windows": [
@@ -35,6 +35,9 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
+    "resources": {
+      "baseline/": "baseline/"
+    },
     "macOS": {
       "minimumSystemVersion": "11.0"
     }

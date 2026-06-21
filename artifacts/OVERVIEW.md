@@ -60,7 +60,9 @@ artifacts/ix-<domain>-cli/
 ## 工具索引 — 用户自建
 
 <!-- IX_USER_CLI_INDEX_BEGIN -->
-<!-- 用户自建 cli 的索引行由 sync 自动维护 -->
+| 用户意图或关键词 | 模块 | 一句话 | 详情 |
+|------------------|------|--------|------|
+| 打包 indexed、生成 tar.gz、app 内嵌基线、分发、release | `ix-bundle-cli` | 生成 CLI-only tar.gz 和 .app 内嵌基线快照 | [`SPEC.yaml`](ix-bundle-cli/SPEC.yaml) |
 <!-- IX_USER_CLI_INDEX_END -->
 
 ---

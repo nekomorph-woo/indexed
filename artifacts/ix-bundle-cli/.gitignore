@@ -1,0 +1,6 @@
+# ix-bundle-cli 自身产物
+output/
+dist/
+__pycache__/
+*.pyc
+.env

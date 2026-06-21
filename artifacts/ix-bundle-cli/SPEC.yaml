@@ -1,0 +1,28 @@
+name: ix-bundle-cli
+domain: 打包分发
+one_liner: 生成 CLI-only tar.gz 和 .app 内嵌基线快照
+status: implemented
+intents:
+  - "打包 indexed、生成 tar.gz、app 内嵌基线、分发、release"
+commands:
+  - name: cli-bundle
+    inputs:
+      - "--output <dir>  # 默认 dist/"
+    outputs: "dist/indexed-cli-<ver>.tar.gz（CLI-only 用户解压 + init 即用）"
+    example: "python main.py cli-bundle --output dist/"
+  - name: app-bundle
+    inputs:
+      - "--output <dir>  # 默认 ix-gui/src-tauri/baseline/"
+    outputs: "目录形式基线快照（被 tauri.conf.json bundle.resources 引用，打进 .app/Contents/Resources/baseline/）"
+    example: "python main.py app-bundle"
+credentials: []
+depends_on: []
+notes: |
+  打包前自动跑 sync + audit --check，确保索引一致；失败则中止。
+  基线白名单（config.py BASELINE_FILES）：CLAUDE.md/VERSION/.gitignore +
+  .claude/ + _shared/specs+templates+design-languages + 基线 5 cli（含自身）
+  + 桶级 OVERVIEW.md。app-bundle 额外含 ix-gui/OVERVIEW.md + SPEC.yaml。
+  复制时按 SKIP_DIRS/FILES 过滤（__pycache__/node_modules/target/dist/
+  .git/runs/output/.env/.DS_Store 等）。
+  打包后清空所有 IX_USER_* 标记区内容（确保不打包用户内容），保留
+  BEGIN/END 注释。

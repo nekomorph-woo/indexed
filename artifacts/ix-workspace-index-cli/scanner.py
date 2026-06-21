@@ -373,7 +373,13 @@ def _check_shared_paths(issues: list[IndexIssue]) -> None:
 # ---------------------------------------------------------------------------
 
 # 根目录白名单（CLAUDE.md §6 + §2.ix-gui）
-_ROOT_WHITELIST_DIRS = {"_shared", "reports", "research", "artifacts", "ix-agents", "ix-gui", ".claude", ".git"}
+# IX_GUI_ENABLED 控制是否把 ix-gui 当作合法根目录桶：
+#   True（默认，开发仓库 + .app baseline）：CLI/GUI 用户都装了 GUI 框架设施
+#   False（CLI-only 包打包时 sed 改）：CLI 用户工作区不含 ix-gui/
+IX_GUI_ENABLED = True
+
+_BASE_ROOT_DIRS = {"_shared", "reports", "research", "artifacts", "ix-agents", ".claude", ".git"}
+_ROOT_WHITELIST_DIRS = _BASE_ROOT_DIRS | ({"ix-gui"} if IX_GUI_ENABLED else set())
 _ROOT_WHITELIST_FILES = {"CLAUDE.md", "VERSION", ".gitignore", ".gitkeep", "README.md", "README-cli.md", "_findings.md", ".DS_Store", ".indexed-initialized"}
 
 # kebab-case：[a-z0-9]+(-[a-z0-9]+)*
@@ -392,9 +398,13 @@ _BUILD_ARTIFACT_EXTS = {".jar", ".war", ".class", ".pyc", ".pyo"}
 
 
 def _check_root_whitelist(issues: list[IndexIssue]) -> None:
-    """根目录仅允许 5 桶 + ix-gui + .claude + .git + 元文件 + 临时 _findings.md。"""
+    """根目录仅允许 5 桶 + (ix-gui?) + .claude + .git + 元文件 + 临时 _findings.md。
+
+    IX_GUI_ENABLED=True 时 ix-gui 算合法桶；False 时（CLI-only 包）不算。
+    """
     if not WORKSPACE_ROOT.is_dir():
         return
+    allowed_hint = "5 桶 + ix-gui + .claude + .git" if IX_GUI_ENABLED else "5 桶 + .claude + .git"
     for entry in sorted(WORKSPACE_ROOT.iterdir()):
         name = entry.name
         if entry.is_dir():
@@ -403,7 +413,7 @@ def _check_root_whitelist(issues: list[IndexIssue]) -> None:
                     IndexIssue(
                         "error",
                         "governance_root_illegal_dir",
-                        f"根目录出现非白名单目录: {name}/（仅允许 5 桶 + ix-gui + .claude + .git）",
+                        f"根目录出现非白名单目录: {name}/（仅允许 {allowed_hint}）",
                         name,
                     )
                 )
@@ -453,14 +463,15 @@ def _check_kebab_case(issues: list[IndexIssue]) -> None:
 
 
 def _check_chinese_names(issues: list[IndexIssue]) -> None:
-    """目录/文件名不得含 CJK 字符（CLAUDE.md §3.1）。扫描 5 桶 + ix-gui，跳过 .git/.claude/_shared/repos。"""
+    """目录/文件名不得含 CJK 字符（CLAUDE.md §3.1）。扫描 5 桶 + (ix-gui?)，跳过 .git/.claude/_shared/repos。"""
     scan_roots = [
         WORKSPACE_ROOT / "reports",
         WORKSPACE_ROOT / "research",
         WORKSPACE_ROOT / "artifacts",
         WORKSPACE_ROOT / "ix-agents",
-        WORKSPACE_ROOT / "ix-gui",
     ]
+    if IX_GUI_ENABLED:
+        scan_roots.append(WORKSPACE_ROOT / "ix-gui")
     skip_dirs = {".git", ".claude", "node_modules", "target", "build", "dist", "__pycache__", ".venv", "venv"}
     for root in scan_roots:
         if not root.is_dir():

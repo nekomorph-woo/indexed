@@ -11,7 +11,9 @@
 | 原则 | 说明 |
 |------|------|
 | **结构先于文件** | 先确认路径合法，再创建文件 |
+<!-- IX_GUI_SECTION_BEGIN -->
 | **不发明顶层** | 根目录只允许 `_shared/`、`reports/`、`research/`、`artifacts/`、`ix-agents/` 五个工作桶 + 框架设施 `ix-gui/` + 元文件 |
+<!-- IX_GUI_SECTION_END -->
 | **英文 kebab-case** | 目录与文件名默认英文；中文仅出现在 Markdown 正文标题或交付物内容 |
 | **引用本规范** | 新建周期/专题前，对照 CLAUDE.md 第 3、4 节清单 |
 | **仓库最小占用** | clone/fetch 浅克隆；禁止构建；禁止产生编译/打包产物（见 `shared-repos.md`；硬约束已写入 `.claude/settings.json`） |
@@ -28,7 +30,9 @@
 根目录**仅允许**以下条目：
 
 - 五个工作桶：`_shared/`、`reports/`、`research/`、`artifacts/`、`ix-agents/`
+<!-- IX_GUI_SECTION_BEGIN -->
 - 框架设施：`ix-gui/`（GUI 应用，与 `.claude/` 同性质，非业务桶；详见 CLAUDE.md §2.ix-gui）
+<!-- IX_GUI_SECTION_END -->
 - 元文件：`CLAUDE.md`、`VERSION`、`.gitignore`、`README.md`（GitHub 项目入口，不参与框架治理）
 - 工作区配置目录：`.claude/`（见 `git-workflow.md`）
 

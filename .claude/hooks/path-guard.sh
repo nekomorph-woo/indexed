@@ -5,6 +5,10 @@
 
 set -uo pipefail
 
+# IX_GUI_ENABLED=1：开发仓库 + .app baseline（CLI/GUI 用户都装了 GUI 框架设施）
+# IX_GUI_ENABLED=0：CLI-only 包打包时 sed 改（CLI 用户工作区不含 ix-gui/）
+IX_GUI_ENABLED=1
+
 INPUT="$(cat)"
 FILE_PATH="$(printf '%s' "$INPUT" | jq -r '.tool_input.file_path // empty')"
 
@@ -43,7 +47,7 @@ case "$FILE_PATH" in
   *) deny "禁止越界写入（不在工作区 $PROJECT_ROOT 内）" ;;
 esac
 
-# 3. 根目录白名单：直接子项仅允许 5 桶 + ix-gui/ + .claude/ + 元文件 + 临时 _findings.md
+# 3. 根目录白名单：直接子项仅允许 5 桶 + (ix-gui/?) + .claude/ + 元文件 + 临时 _findings.md
 REL="${FILE_PATH#$PROJECT_ROOT}"
 # 去掉前导 /
 REL="${REL#/}"
@@ -52,15 +56,22 @@ REL="${REL#/}"
 if [ "${REL}" = "${REL%%/*}" ]; then
   case "${REL}" in
     CLAUDE.md|VERSION|.gitignore|_findings.md|.indexed-initialized|README-cli.md) ;;
-    *) deny "禁止在根目录新建文件: ${REL} (白名单: CLAUDE.md/VERSION/.gitignore + .claude/ + 5 桶 + ix-gui/)" ;;
+    *) deny "禁止在根目录新建文件: ${REL} (白名单: CLAUDE.md/VERSION/.gitignore + .claude/ + 5 桶)" ;;
   esac
 else
-  # 取一级子目录
+  # 取一级子目录，根据 IX_GUI_ENABLED 决定 ix-gui 是否算合法桶
   TOP="${REL%%/*}"
-  case "${TOP}" in
-    _shared|reports|research|artifacts|ix-agents|ix-gui|.claude|.git) ;;
-    *) deny "禁止在根目录新建桶: ${TOP}/ (仅允许 _shared/reports/research/artifacts/ix-agents/ix-gui/.claude/)" ;;
-  esac
+  if [ "$IX_GUI_ENABLED" = "1" ]; then
+    case "${TOP}" in
+      _shared|reports|research|artifacts|ix-agents|ix-gui|.claude|.git) ;;
+      *) deny "禁止在根目录新建桶: ${TOP}/ (仅允许 _shared/reports/research/artifacts/ix-agents/ix-gui/.claude/)" ;;
+    esac
+  else
+    case "${TOP}" in
+      _shared|reports|research|artifacts|ix-agents|.claude|.git) ;;
+      *) deny "禁止在根目录新建桶: ${TOP}/ (仅允许 _shared/reports/research/artifacts/ix-agents/.claude/)" ;;
+    esac
+  fi
 fi
 
 exit 0

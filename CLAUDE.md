@@ -48,7 +48,9 @@
 | 原则 | 说明 |
 |------|------|
 | **结构先于文件** | 先确认路径合法，再创建文件 |
+<!-- IX_GUI_SECTION_BEGIN -->
 | **不发明顶层** | 根目录允许 `_shared/`、`reports/`、`research/`、`artifacts/`、`ix-agents/` 五个工作桶 + 框架设施 `ix-gui/`（见 §ix-gui）+ 元文件 |
+<!-- IX_GUI_SECTION_END -->
 | **英文 kebab-case** | 目录与文件名默认英文；中文仅出现在 Markdown 正文标题或交付物内容 |
 | **引用本规范** | 新建周期/专题前，对照第 3、4 节清单 |
 | **仓库最小占用** | clone/fetch 浅克隆；禁止构建；禁止产生编译/打包产物（见 §5.4；硬约束已写入 `.claude/settings.json`） |
@@ -118,13 +120,16 @@ indexed/
                 ├── work/thinking/
                 └── output/
 │
+<!-- IX_GUI_SECTION_BEGIN -->
 └── ix-gui/                     # 框架设施：indexed 的 GUI 应用（Tauri+React）
     ├── OVERVIEW.md             # 定位 + 「零侵入铁律 + 三边界」
     ├── SPEC.yaml               # GUI 自身能力声明（不纳入业务索引）
     ├── web/                    # 纯 Web 工程阶段（UI + 交互 + mock 契约）
     └── src-tauri/              # Tauri+Rust 阶段（PtyBridge/CliRunner/WorkspaceIo）
+<!-- IX_GUI_SECTION_END -->
 ```
 
+<!-- IX_GUI_SECTION_BEGIN -->
 ### 2.ix-gui `ix-gui/` — GUI 应用（框架设施，非桶）
 
 > **定位**：indexed 的图形操作面板，与 `.claude/` 同性质，**不是**业务资产。详见 [`ix-gui/OVERVIEW.md`](ix-gui/OVERVIEW.md)。
@@ -136,6 +141,8 @@ indexed/
 | **创建资产** | GUI 绝不直接写 manifest/SPEC；创建一律走「可见终端里的 claude」（单一写入源）。GUI 的「新建」只能是 prompt 生成器 |
 | **§5.4 豁免** | `ix-gui/` 作为自有应用设施，**不受** §5.4 构建禁令约束，可在其目录内执行 `cargo build`/`npm install`/`tauri dev` |
 | **并存保证** | GUI 方式与纯 claude code 方式读写同一工作区，产物 100% 互通，两种方式可随时切换 |
+
+<!-- IX_GUI_SECTION_END -->
 
 ### 2.1 禁止项（硬约束）
 
@@ -412,9 +419,11 @@ git checkout <branch>
 
 #### 5.4.4 禁止的构建与产物（硬约束）
 
+<!-- IX_GUI_SECTION_BEGIN -->
 > **适用范围**：本小节针对 `_shared/repos/` 内的 clone 仓库。`ix-gui/` 作为 indexed **自有应用设施**，**不受本小节约束**——可在其目录内执行 `cargo build`/`npm install`/`tauri dev` 等（见 §2.ix-gui）。
 >
 > **机器层实现**：构建禁令通过 `.claude/hooks/bash-build-guard.sh`（PreToolUse hook）实现——`ix-gui/` 子树下放行所有命令；其它路径拦截全生态构建命令（npm/pnpm/yarn/bun/mvn/gradle/cargo/pip/poetry/uv/go/tauri/flutter/docker/make/cmake/composer/bundle/gem/mix/rebar3/deno/swc/esbuild/webpack/rollup/vite/parcel 等）。完整清单见脚本本身。
+<!-- IX_GUI_SECTION_END -->
 
 **不得执行**（含但不限于；已写入 `.claude/settings.json` 的 deny 权限；仅约束 `_shared/repos/`）：
 
@@ -524,7 +533,9 @@ git checkout <branch>
 | `artifacts/capabilities.md` | **Agent 原子能力索引**（意图/关键词 → ix-*-cli） |
 | `ix-agents/OVERVIEW.md` | 组合应用桶说明 |
 | `ix-agents/registry.md` | **Agent 组合应用索引**（意图 → ix-*-agent） |
+<!-- IX_GUI_SECTION_BEGIN -->
 | `ix-gui/OVERVIEW.md` | 框架设施说明（GUI 应用定位 + 零侵入铁律） |
+<!-- IX_GUI_SECTION_END -->
 | `_shared/design-languages/OVERVIEW.md` | 设计语言 prompt 索引 |
 
 ### 可执行实现

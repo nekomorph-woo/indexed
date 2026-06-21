@@ -137,6 +137,56 @@ def clear_user_zones(target_dir: Path) -> None:
         )
 
 
+# IX_GUI_SECTION 标记区正则（非贪婪匹配 BEGIN...END）
+import re
+
+GUI_SECTION_PATTERN = re.compile(
+    r"<!--\s*IX_GUI_SECTION_BEGIN\s*-->.*?<!--\s*IX_GUI_SECTION_END\s*-->",
+    re.DOTALL,
+)
+
+
+def strip_gui_sections(target_dir: Path) -> None:
+    """删除所有 .md 文件的 IX_GUI_SECTION 标记区（仅 CLI 包用）。
+
+    标记区格式：<!-- IX_GUI_SECTION_BEGIN --> ... <!-- IX_GUI_SECTION_END -->
+    删除 = 整段（含 BEGIN/END 注释）移除。
+
+    .app baseline 不调用本函数（保留 GUI 章节给 GUI 用户）。
+    """
+    for md_file in target_dir.rglob("*.md"):
+        try:
+            text = md_file.read_text(encoding="utf-8")
+        except (OSError, UnicodeDecodeError):
+            continue
+        new_text = GUI_SECTION_PATTERN.sub("", text)
+        if new_text != text:
+            md_file.write_text(new_text, encoding="utf-8")
+
+
+def disable_gui_in_scanner(target_dir: Path) -> None:
+    """把 scanner.py / path-guard.sh / bash-build-guard.sh 的 IX_GUI_ENABLED
+    改为 False / 0（仅 CLI 包用）。
+
+    让 CLI 用户工作区的 scanner 不要求 ix-gui 在白名单；
+    hooks 不放行 ix-gui（CLI 工作区无 ix-gui）。
+    """
+    # scanner.py（Python）
+    scanner_py = target_dir / "artifacts" / "ix-workspace-index-cli" / "scanner.py"
+    if scanner_py.is_file():
+        content = scanner_py.read_text(encoding="utf-8")
+        content = content.replace("IX_GUI_ENABLED = True", "IX_GUI_ENABLED = False")
+        scanner_py.write_text(content, encoding="utf-8")
+
+    # path-guard.sh + bash-build-guard.sh（bash）
+    for hook in ("path-guard.sh", "bash-build-guard.sh"):
+        hook_path = target_dir / ".claude" / "hooks" / hook
+        if hook_path.is_file():
+            content = hook_path.read_text(encoding="utf-8")
+            content = content.replace("IX_GUI_ENABLED=1", "IX_GUI_ENABLED=0")
+            hook_path.write_text(content, encoding="utf-8")
+
+
 def make_tarball(src_dir: Path, output_file: Path) -> None:
     """打包 src_dir 为 tar.gz（src_dir 内容直接放在 indexed/ 子目录下）。"""
     output_file.parent.mkdir(parents=True, exist_ok=True)
@@ -162,6 +212,12 @@ def cmd_cli_bundle(args: argparse.Namespace) -> int:
         copy_baseline_to(tmp_root, include_app_extras=False)
         write_readme_cli(tmp_root)
         clear_user_zones(tmp_root)
+
+        # CLI 包额外裁剪：删 GUI 章节 + 禁用 scanner/hooks 的 IX_GUI_ENABLED
+        # （CLI 用户工作区不含 ix-gui，CLAUDE.md/scanner/path-guard 不该提 ix-gui）
+        print("[cli-bundle] 裁剪 GUI 章节 + 禁用 IX_GUI_ENABLED…")
+        strip_gui_sections(tmp_root)
+        disable_gui_in_scanner(tmp_root)
 
         output_file = output_dir / f"indexed-cli-{version}.tar.gz"
         print(f"[cli-bundle] 打包 → {output_file}")

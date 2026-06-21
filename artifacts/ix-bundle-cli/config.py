@@ -13,6 +13,10 @@ VERSION_FILE = INDEXED_ROOT / "VERSION"
 # 基线必含清单（CLI-only 用户拿到这些就能跑起来）。
 # 用「白名单」而非「黑名单」：复制时只 copy 这些路径，其他一律跳过。
 # 路径相对 INDEXED_ROOT；目录用尾部 / 标识（实际写 'dir/'）。
+#
+# 注意：artifacts/ix-bundle-cli 是「开发期工具」（生成 tar.gz / baseline），
+# 不进任何分发产物——用户拿到基线后不需要打包能力。仍存在于源仓库
+# indexed/artifacts/ix-bundle-cli/ 供开发期使用。
 BASELINE_FILES = [
     # 根元文件
     "CLAUDE.md",
@@ -24,16 +28,17 @@ BASELINE_FILES = [
     ".claude/hooks",
     ".claude/skills",
     ".claude/plugins",
-    # _shared 规范/模板/设计语言
+    # _shared 规范/模板/设计语言/参考资料骨架
     "_shared/specs",
     "_shared/templates",
     "_shared/design-languages",
-    # 基线 5 个 CLI（含自身）
+    "_shared/design-references",  # 空骨架（.gitkeep）
+    "_shared/docs",
+    # 基线 4 个 CLI（ix-bundle-cli 是开发期工具，不打包）
     "artifacts/ix-agent-run-cli",
     "artifacts/ix-workspace-index-cli",
     "artifacts/ix-init-cli",
     "artifacts/ix-schedule-cli",
-    "artifacts/ix-bundle-cli",
     # artifacts 桶级元文件
     "artifacts/OVERVIEW.md",
     "artifacts/capabilities.md",

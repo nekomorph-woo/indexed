@@ -8,12 +8,13 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 from pathlib import Path
 
 import yaml
 
-from config import IX_AGENTS_ROOT
+from config import INDEXED_ROOT, IX_AGENTS_ROOT
 from runner import execute, load_manifest, load_defaults
 
 
@@ -195,6 +196,68 @@ def cmd_stats(args: argparse.Namespace) -> int:
     return 0
 
 
+# 模板文件 → 目标文件 映射（脚手架用）
+_AGENT_TEMPLATE_MAP = {
+    "manifest.template.yaml": "manifest.yaml",
+    "SPEC.template.yaml": "SPEC.yaml",
+    "defaults.template.yaml": "config/defaults.yaml",
+    "gitignore.template": ".gitignore",
+    "paths.template.py": "paths.py",
+    "OVERVIEW.md": "OVERVIEW.md",  # 直接复制
+}
+# run-yaml.example.yaml 是 run.yaml 结构说明文档，由 run-cli 执行时创建真实 run.yaml，不复制
+
+_KEBAB_BUSINESS_RE = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
+
+
+def cmd_new(args: argparse.Namespace) -> int:
+    """脚手架：从 _shared/templates/ix-agents/ 复制并替换 <business> 占位符。"""
+    business = args.business
+    if not _KEBAB_BUSINESS_RE.match(business):
+        print(f"[error] --business 必须是 kebab-case（[a-z0-9]+(-[a-z0-9]+)*）: {business}", file=sys.stderr)
+        return 1
+
+    agent_name = f"ix-{business}-agent"
+    agent_dir = IX_AGENTS_ROOT / agent_name
+    if agent_dir.exists():
+        print(f"[error] agent 已存在: {agent_dir}", file=sys.stderr)
+        return 1
+
+    template_dir = INDEXED_ROOT / "_shared" / "templates" / "ix-agents"
+    if not template_dir.is_dir():
+        print(f"[error] 模板目录不存在: {template_dir}", file=sys.stderr)
+        return 1
+
+    # 创建目录结构
+    agent_dir.mkdir(parents=True)
+    (agent_dir / "config").mkdir(exist_ok=True)
+    (agent_dir / "runs").mkdir(exist_ok=True)
+
+    # 复制 + 替换占位符
+    for src_name, dst_name in _AGENT_TEMPLATE_MAP.items():
+        src = template_dir / src_name
+        if not src.is_file():
+            continue
+        content = src.read_text(encoding="utf-8")
+        content = content.replace("<business>", business)
+        dst = agent_dir / dst_name
+        dst.parent.mkdir(parents=True, exist_ok=True)
+        dst.write_text(content, encoding="utf-8")
+
+    print(f"✅ 已创建 {agent_name}")
+    print(f"   目录: {agent_dir.relative_to(INDEXED_ROOT)}")
+    print()
+    print("下一步:")
+    print(f"  1. 跑 search 确认无重复能力:")
+    print(f"     python artifacts/ix-workspace-index-cli/main.py search \"<意图关键词>\"")
+    print(f"  2. 编辑 manifest.yaml 填 params/steps")
+    print(f"  3. 编辑 SPEC.yaml 填 intents/one_liner/domain")
+    print(f"  4. 跑 sync 同步索引（PostToolUse hook 会自动触发；或手动跑）")
+    print(f"  5. 跑 params 展示输入清单（两阶段 A）:")
+    print(f"     python artifacts/ix-agent-run-cli/main.py params --agent {agent_name}")
+    return 0
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(
         description="按 ix-*-agent/manifest.yaml 执行 steps（tool 子进程；thinking 调 claude -p）",
@@ -235,6 +298,10 @@ def main() -> int:
     pstats.add_argument("--last", type=int, default=10, help="显示最近 N 次（默认 10；--agent 指定时扫描全量）")
     pstats.set_defaults(func="stats")
 
+    pnew = sub.add_parser("new", help="脚手架：从模板创建新 ix-*-agent 目录")
+    pnew.add_argument("--business", required=True, help="业务名（kebab-case），如 foo → ix-foo-agent")
+    pnew.set_defaults(func="new")
+
     args = parser.parse_args()
 
     if args.func == "params":
@@ -242,6 +309,9 @@ def main() -> int:
 
     if args.func == "stats":
         return cmd_stats(args)
+
+    if args.func == "new":
+        return cmd_new(args)
 
     # run 命令
     agent = args.agent

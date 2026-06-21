@@ -5,6 +5,7 @@ status: implemented
 intents:
   - "执行 ix-*-agent、manifest 编排、tool+thinking 流水线"
   - "查询 agent 执行历史、成功率、最近 run 状态"
+  - "脚手架、新建 agent、scaffold、从模板创建 ix-*-agent"
 commands:
   - name: run
     inputs:
@@ -27,6 +28,11 @@ commands:
       - "--last N（默认 10）"
     outputs: "stdout：最近 N 次 run 的 agent/run_id/status/started/steps/failed_step + 成功率"
     example: "python main.py stats --last 20"
+  - name: new
+    inputs:
+      - "--business <kebab-case-name>（必填，如 foo → ix-foo-agent）"
+    outputs: "ix-agents/ix-<business>-agent/（manifest.yaml + SPEC.yaml + config/defaults.yaml + .gitignore + paths.py + OVERVIEW.md + config/ + runs/）"
+    example: "python main.py new --business weekly-metrics"
 credentials: []
 depends_on: []
 notes: |

@@ -374,7 +374,7 @@ def _check_shared_paths(issues: list[IndexIssue]) -> None:
 
 # 根目录白名单（CLAUDE.md §6 + §2.ix-gui）
 _ROOT_WHITELIST_DIRS = {"_shared", "reports", "research", "artifacts", "ix-agents", "ix-gui", ".claude", ".git"}
-_ROOT_WHITELIST_FILES = {"CLAUDE.md", "VERSION", ".gitignore", ".gitkeep", "_findings.md", ".DS_Store"}
+_ROOT_WHITELIST_FILES = {"CLAUDE.md", "VERSION", ".gitignore", ".gitkeep", "README.md", "_findings.md", ".DS_Store"}
 
 # kebab-case：[a-z0-9]+(-[a-z0-9]+)*
 _KEBAB_RE = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")

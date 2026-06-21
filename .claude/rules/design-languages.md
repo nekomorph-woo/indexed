@@ -40,3 +40,13 @@
 ## 导入新语言
 
 粘贴外部 prompt → 见导入规范 `_shared/specs/ui-design/design-language-import.spec.md` + 填写母版 → 分析并新建 `<id>/{meta.md, prompt.md, preview.html}`。
+
+## 公共设计参考资料 `_shared/design-references/`
+
+- **用途**：存放用户日常提供的公共设计参考资料（设计稿截图、品牌规范 PDF、第三方 UI kit 说明等原始素材）
+- **与 `_shared/design-languages/` 的区别**：
+  - `design-languages/` 是「**可复用的设计语言 prompt 库**」（系统化、有 meta.md + preview.html + prompt.md，按 id 检索）
+  - `design-references/` 是「**原始参考资料**」（碎片化、无 preview、按来源/主题组织）
+- **使用**：LLM 写 HTML 时若用户提供了参考资料路径，可直接 Read 作为风格依据；不需要 sync / audit / indexed
+- **目录命名**：参考资料的子目录建议用 kebab-case 描述来源（如 `brand-foo/`、`ui-kit-bar/`、`paper-baz/`）
+- **不约束**：本目录是用户素材区，不强制 SPEC.yaml / OVERVIEW.md / 命名规范之外的任何结构

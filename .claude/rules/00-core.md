@@ -29,7 +29,7 @@
 
 - 五个工作桶：`_shared/`、`reports/`、`research/`、`artifacts/`、`ix-agents/`
 - 框架设施：`ix-gui/`（GUI 应用，与 `.claude/` 同性质，非业务桶；详见 CLAUDE.md §2.ix-gui）
-- 元文件：`CLAUDE.md`、`VERSION`、`.gitignore`
+- 元文件：`CLAUDE.md`、`VERSION`、`.gitignore`、`README.md`（GitHub 项目入口，不参与框架治理）
 - 工作区配置目录：`.claude/`（见 `git-workflow.md`）
 
 完整拓扑图见 [`CLAUDE.md`](../../CLAUDE.md) §2。

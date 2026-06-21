@@ -14,6 +14,14 @@
 > Claude Code 自动加载全部 rules；ZCode 等不支持自动加载的环境，按此表**按需 Read**。
 > 拿不准时先 Read `.claude/rules/OVERVIEW.md` 总览。
 
+> **路由原则**：触发词是「**应读信号**」，不是「排他选择」。
+>
+> - 命中**单行** → Read 对应 rule
+> - 命中**多行** → **全部 Read** 命中的 rules，不要二选一
+> - 例：「新建 research 专题」同时命中 00-core + naming + research → 三份都读
+>
+> Claude Code 自动加载全部 rules 时无需人工 Read；本表主要给不支持自动加载的环境（如 ZCode）按需 Read。
+
 | 场景 / 触发词 | 回答什么问题 | Read |
 |---------------|-------------|------|
 | **新建/移动文件、路径是否合法**——"放哪""能建这个目录吗""根目录能放什么" | 五桶拓扑、根目录白名单、禁止项（禁止中文目录名/桶内 clone/tmp- 前缀）、与用户协作的边界 | `.claude/rules/00-core.md` |
@@ -65,8 +73,9 @@ indexed/
 │   │   └── <repo-kebab>/ # 例：ai-agent-service
 │   ├── specs/            # Agent 执行规范（*.spec.md，只读）
 │   ├── templates/        # 跨任务文档母版（只读，勿直接改）
-│   └── design-languages/  # HTML 设计语言 prompt 库（按需 Read）
-│       └── <id>/          # 例：material-you/{meta.md,prompt.md}
+│   ├── design-languages/  # HTML 设计语言 prompt 库（按需 Read）
+│   │   └── <id>/          # 例：material-you/{meta.md,prompt.md}
+│   └── design-references/ # 用户日常提供的公共设计参考资料（图片/规范/PDF 等，按需 Read）
 │
 ├── reports/
 │   └── <report-type>/     # 例：team-usage
@@ -77,11 +86,11 @@ indexed/
 │           └── <final>.md
 │
 ├── research/
-    ├── OVERVIEW.md
-    └── <topic>/           # 专题，例：passkey
-        ├── docs/
-        ├── design/
-        └── assets/
+│   ├── OVERVIEW.md
+│   └── <topic>/           # 专题，例：passkey
+│       ├── docs/
+│       ├── design/
+│       └── assets/
 │
 ├── artifacts/
 │   ├── OVERVIEW.md
@@ -169,7 +178,7 @@ indexed/
 - `artifacts/<artifact-name>/`（工具根 `SPEC.yaml` **必须**，见 `.claude/rules/artifacts.md`）
 - `ix-agents/<agent-name>/`（应用根 `SPEC.yaml` **必须**，见 `.claude/rules/ix-agents.md`）
 - `_shared/repos/<repo-kebab>/`（Git clone，属上游仓库文档）
-- `_shared/specs/<category>/`、`_shared/templates/<category>/` 子目录（**非强制**）
+- `_shared/specs/<category>/`、`_shared/templates/<category>/` 子目录（**可选**）
 
 新建桶或 `reports/<type>` 时：Agent **必须**创建或更新对应桶级 `OVERVIEW.md`；**禁止**仅为满足规范而在每个子文件夹批量创建。
 | 排序/共用前缀 | 单下划线 `_` | `_shared`, `_internal` |
@@ -243,7 +252,7 @@ indexed/
 | UI 设计语言导入 | `ui-design/design-language-import.spec.md` | 粘贴 prompt → 新建 `design-languages/<id>/` |
 
 - spec 目录 **只放规范**；禁止在 spec 上直接填写某次评审的业务结论
-- 新 spec 类别：`_shared/specs/<category>/`，文件名 `*.spec.md`；**更新** `_shared/specs/OVERVIEW.md` 索引行，**不强制**该子目录单独 `OVERVIEW.md`（见 §3.2）
+- 新 spec 类别：`_shared/specs/<category>/`，文件名 `*.spec.md`；**更新** `_shared/specs/OVERVIEW.md` 索引行，**可选**该子目录单独 `OVERVIEW.md`（见 §3.2）
 - 触发：用户提及相关领域时按本文件 §5 流程执行
 
 ### 3.7 文档模板 `_shared/templates/`
@@ -253,7 +262,7 @@ indexed/
 | 设计语言导入 | `design-languages/design-language-intake.template.md` | 粘贴外部 prompt；见 import spec |
 | 设计语言元数据 | `design-languages/meta.template.md` | 导入产出 `meta.md` 结构参考 |
 | ix-*-agent 母版 | `ix-agents/manifest.template.yaml` 等 | 新建 `ix-agents/ix-<business>-agent/` |
-- 新模板类别：`_shared/templates/<category>/`，文件名 `*.template.md`；**更新** `_shared/templates/OVERVIEW.md` 索引行，**不强制**该子目录单独 `OVERVIEW.md`（见 §3.2）
+- 新模板类别：`_shared/templates/<category>/`，文件名 `*.template.md`；**更新** `_shared/templates/OVERVIEW.md` 索引行，**可选**该子目录单独 `OVERVIEW.md`（见 §3.2）
 - 图示：架构/流程/交互用 **`###`/`####` 分节 + fenced code block ASCII 线框图**；禁止「图」列表格（见 `.claude/rules/dialogue-style.md`）
 
 ### 3.8 设计语言库 `_shared/design-languages/`
@@ -284,9 +293,6 @@ indexed/
 用户任务
 │
 ├─ 周期性交付 / 流水线
-│   └─ reports/<type>/<start>_<end>/
-│
-├─ 其它周期性交付 / 流水线
 │   └─ reports/<type>/<start>_<end>/
 │
 ├─ 其它专题调研、方案、设计素材
@@ -331,8 +337,9 @@ indexed/
 **触发**：用户开始新调研/方案主题。
 
 1. 确认 `research/<topic>/` 不存在；`<topic>` 为 kebab-case
-2. 至少创建 `docs/`；有设计稿或图片时再建 `design/`、`assets/`（轻量专题不强制后两者）
+2. 至少创建 `docs/`；有设计稿或图片时再建 `design/`、`assets/`（轻量专题可选后两者）
 3. 文档按 3.3 落入对应子目录；**禁止**在 `research/<topic>/` 根堆文件
+4. 跑 `python artifacts/ix-workspace-index-cli/main.py sync`（自动同步专题到 `research/OVERVIEW.md` 的 IX_USER_TOPICS 标记区）；PostToolUse hook 会在专题目录变动时自动触发，但首次新建后建议显式确认一次
 
 ### 5.2 新建 `artifacts/ix-<domain>-cli`
 
@@ -474,7 +481,8 @@ git checkout <branch>
 | 需要新 `artifacts/ix-<domain>-cli` | 按 `.claude/rules/artifacts.md` 创建；更新 `artifacts/OVERVIEW.md` 与 `capabilities.md` |
 | 需要新 `reports/<type>` | 先给出拟议目录树，用户同意后再创建 `reports/<type>/OVERVIEW.md`，并更新本文件 §2、§4 |
 | 删除或重命名已有周期/专题 | 先列出影响（链接、system 路径），再执行 |
-| 在根目录新增文件 | 仅允许：`CLAUDE.md`、`VERSION`、`.gitignore`、`.claude/` |
+| 在根目录新增文件 | 仅允许：`CLAUDE.md`、`VERSION`、`.gitignore`、`README.md`、`.claude/` |
+| 修改根目录 `README.md` | **允许**（GitHub 项目入口，人类可读引导）；但 LLM 不得在 README.md 写框架治理规则（治理规则只属于 CLAUDE.md / `.claude/rules/`） |
 | commit / zap 收尾 | 按 git-workflow.md 当前模式处理（local 不提示 push；remote 可 push） |
 
 ---
@@ -539,3 +547,4 @@ git checkout <branch>
 | 2026-06-16 | **建立 Claude Code 单平台底座**：`CLAUDE.md` 成为唯一权威；细化规则提取为 `.claude/rules/<domain>.md`，CLAUDE.md 用场景路由表按需加载；硬约束写入 `.claude/settings.json` |
 | 2026-06-16（续） | **indexed 基线改造**：品牌前缀 `lc-` → `ix-`、`work-with` → `indexed`；能力发现改为分布式 `SPEC.yaml` + 薄索引；失效登记清除；`README.md` → `SPEC.md` 体系；引入 `VERSION` 版本号 |
 | 2026-06-20 | **新增 `ix-gui/` 框架设施**：indexed 的 GUI 应用（Tauri+React）。根目录白名单 + §2 拓扑 + §2.ix-gui 定位 + §5.4.4 豁免；确立「零侵入铁律 + 三边界」，保证 GUI 方式与纯 claude code 方式并存互通。详见 [`ix-gui/OVERVIEW.md`](ix-gui/OVERVIEW.md) |
+| 2026-06-21 | **P5 漂移修复**：README.md 重新定位为「GitHub 项目入口，人类可读引导，不参与框架治理」；`_shared/design-references/` 纳入规范；场景路由原则明确（命中多行全部 Read）；§4 决策树删重复分支；§5.1 加 sync 步骤；§2 research 拓扑树改标准 ASCII；OVERVIEW.md 删 workspace-readmes 旧标签；ix-agent-run-cli 加 `new` 子命令脚手架 |

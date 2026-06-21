@@ -38,7 +38,7 @@
 - `artifacts/<artifact-name>/`（工具根 `SPEC.yaml` **必须**，见 `artifacts.md`）
 - `ix-agents/<agent-name>/`（应用根 `SPEC.yaml` **必须**，见 `ix-agents.md`）
 - `_shared/repos/<repo-kebab>/`（Git clone，属上游仓库文档）
-- `_shared/specs/<category>/`、`_shared/templates/<category>/` 子目录（**非强制**）
+- `_shared/specs/<category>/`、`_shared/templates/<category>/` 子目录（**可选**）
 
 新建桶或 `reports/<type>` 时：Agent **必须**创建或更新对应桶级 `OVERVIEW.md`；**禁止**仅为满足规范而在每个子文件夹批量创建。
 

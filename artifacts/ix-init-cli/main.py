@@ -681,6 +681,139 @@ def cmd_check_update(args: argparse.Namespace) -> int:
     return 0
 
 
+# ---------------------------------------------------------------------------
+# new-migration（M12）：生成 migration 脚本模板（维护者发新版时用）
+# ---------------------------------------------------------------------------
+
+_MIGRATION_TEMPLATE = '''"""{vf} → {vt} 迁移：TODO 一句话描述
+
+变更摘要（维护者填）：
+- TODO: 列出 breaking changes（字段重命名/文件结构变/规则变更等）
+- TODO: ...
+"""
+
+from __future__ import annotations
+
+from pathlib import Path
+
+VERSION_FROM = "{vf}"
+VERSION_TO = "{vt}"
+
+
+def describe() -> str:
+    """返回 changelog 说明（用户看到的破坏性变更）。"""
+    return """{vf} → {vt}：TODO 描述变更（维护者填）
+
+- TODO: 具体变更点 1
+- TODO: 具体变更点 2"""
+
+
+def check(workspace_root: Path) -> list[str]:
+    """前置检查（dry-run）。返回受影响用户文件清单（相对工作区根的路径）。"""
+    affected: list[str] = []
+    # TODO: 扫描受影响文件（如 manifest.yaml / SPEC.yaml / reports/ / research/）
+    # 示例：
+    # for manifest in workspace_root.glob("ix-agents/*/manifest.yaml"):
+    #     data = yaml.safe_load(manifest.read_text())
+    #     if needs_migrate(data):
+    #         affected.append(str(manifest.relative_to(workspace_root)))
+    return affected
+
+
+def migrate(workspace_root: Path) -> list[str]:
+    """执行迁移。返回变更说明列表（写入 .indexed-migrations.log）。"""
+    changes: list[str] = []
+    # TODO: 实际迁移逻辑
+    # 示例：
+    # for manifest in workspace_root.glob("ix-agents/*/manifest.yaml"):
+    #     ...
+    #     changes.append(f"{{manifest.parent.name}}: 字段 X 改为 Y")
+    return changes
+
+
+def verify(workspace_root: Path) -> list[str]:
+    """自验证。返回问题清单（空 list = 通过；非空 = 中止 update）。"""
+    problems: list[str] = []
+    # TODO: 验证迁移结果
+    # 示例：
+    # for manifest in workspace_root.glob("ix-agents/*/manifest.yaml"):
+    #     if not verify_change(manifest):
+    #         problems.append(f"{{manifest.parent.name}}: 验证失败")
+    return problems
+'''
+
+
+def cmd_new_migration(args: argparse.Namespace) -> int:
+    """生成 migration 脚本模板。
+
+    校验：
+    - --from 必须是已有 migration 链的末端 VERSION_TO（或当前 VERSION）
+    - --to 必须严格新于 --from（semver）
+    - 目标文件不能已存在（防覆盖）
+    """
+    vf = args.version_from.strip()
+    vt = args.version_to.strip()
+
+    # 1. semver 合法性
+    if not _parse_version(vf):
+        print(f"[error] --from 不是合法 semver: {vf}", file=sys.stderr)
+        return 1
+    if not _parse_version(vt):
+        print(f"[error] --to 不是合法 semver: {vt}", file=sys.stderr)
+        return 1
+
+    # 2. --to 必须新于 --from
+    if not _is_newer(vt, vf):
+        print(
+            f"[error] --to ({vt}) 必须严格新于 --from ({vf})",
+            file=sys.stderr,
+        )
+        return 1
+
+    # 3. --from 必须是已有 migration 链的末端 VERSION_TO，或当前 VERSION
+    migrations = _load_migrations()
+    current_version = (
+        VERSION_FILE.read_text(encoding="utf-8").strip()
+        if VERSION_FILE.is_file() else "?"
+    )
+
+    # 已有链的末端：所有 migration VERSION_TO 的最大值
+    chain_ends: set[str] = {m.VERSION_TO for m in migrations.values()}  # type: ignore[attr-defined]
+    valid_from = vf == current_version or vf in chain_ends
+    if not valid_from:
+        print(
+            f"[error] --from ({vf}) 必须是当前 VERSION ({current_version}) 或已有 migration 链的末端",
+            file=sys.stderr,
+        )
+        print(
+            f"       已有 migration 末端: {sorted(chain_ends) or '(无)'}",
+            file=sys.stderr,
+        )
+        return 1
+
+    # 4. 防覆盖
+    mig_dir = INDEXED_ROOT / "artifacts" / "ix-init-cli" / "migrations"
+    target = mig_dir / f"{vf}_to_{vt}.py"
+    if target.is_file():
+        print(f"[error] migration 已存在: {target.name}", file=sys.stderr)
+        print("       （如需重写请先手动删除）", file=sys.stderr)
+        return 1
+
+    # 5. 生成模板
+    mig_dir.mkdir(parents=True, exist_ok=True)
+    content = _MIGRATION_TEMPLATE.format(vf=vf, vt=vt)
+    target.write_text(content, encoding="utf-8")
+
+    print(f"✓ 已生成 {target.relative_to(INDEXED_ROOT)}")
+    print()
+    print("下一步：")
+    print(f"  1. 编辑 {target.name}：填 describe/check/migrate/verify")
+    print(f"  2. bump VERSION 为 {vt}（commit + tag v{vt}）")
+    print(f"  3. 跑 ix-bundle-cli cli-bundle / app-bundle 打包含新 migration 的包")
+    print(f"  4. 发布 GitHub Release v{vt}（含 tar.gz + .dmg）")
+    return 0
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="indexed 工作区初始化与基线更新")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -704,6 +837,14 @@ def main() -> int:
     pc.add_argument("--force", action="store_true", help="跳过缓存，强制查 GitHub")
     pc.add_argument("--json", action="store_true", help="输出 JSON（供 GUI / 脚本消费）")
     pc.set_defaults(func=cmd_check_update)
+
+    pn = sub.add_parser(
+        "new-migration",
+        help="生成 migration 脚本模板（维护者发新版时用）",
+    )
+    pn.add_argument("--from", dest="version_from", required=True, help="源版本（如 0.2.0）")
+    pn.add_argument("--to", dest="version_to", required=True, help="目标版本（如 0.3.0，必须新于 --from）")
+    pn.set_defaults(func=cmd_new_migration)
 
     args = parser.parse_args()
     return args.func(args)

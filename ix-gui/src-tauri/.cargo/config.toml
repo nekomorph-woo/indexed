@@ -1,0 +1,13 @@
+# ix-gui/src-tauri 本地 cargo 配置。
+#
+# 用户的 PATH 中 ~/.local/bin/cc 是非标准 cc 包装器，会拦截 Rust 编译器
+# 找 linker 的调用。这里强制用系统 clang（macOS /usr/bin/cc）作为 linker。
+#
+# 同时设置 CC/CXX 环境变量给 build script（serde_core / proc-macro2 等用到）。
+
+[target.aarch64-apple-darwin]
+rustflags = ["-C", "linker=/usr/bin/cc"]
+
+[env]
+CC = "/usr/bin/cc"
+CXX = "/usr/bin/c++"

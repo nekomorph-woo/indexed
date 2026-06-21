@@ -37,6 +37,6 @@
 
 ## 维护
 
-新建/变更后：在 agent 目录建/改 `SPEC.yaml` → 在本文件「意图速查」补一行 → 更新 [`README.md`](README.md)。
-运行 `python artifacts/ix-workspace-index-cli/main.py audit --check` 校验一致性。
+新建/变更后：在 agent 目录建/改 `SPEC.yaml` → 跑 `python artifacts/ix-workspace-index-cli/main.py sync`（自动同步到本文件「意图速查」与 [`OVERVIEW.md`](OVERVIEW.md) 的 IX_USER_AGENT_INDEX 标记区）。
+跑 `python artifacts/ix-workspace-index-cli/main.py audit --check` 校验一致性。
 **定时**：见 [`ix-schedule-cli`](../artifacts/ix-schedule-cli/)（跨平台定时执行器）。

@@ -30,9 +30,9 @@
 | P3-5 | 🟡 medium | 「用户明确要求才做 X」无判定标准 | ✅ |
 | P3-6 | 🟡 medium | skill「待迁移」状态模糊 | ✅ |
 | P4-1 | 🟠 medium | 业务样本为零（0 user cli、0 agent） | ⬜ |
-| P4-2 | 🟡 medium | §7 文件索引漏列严重 | ⬜ |
-| P4-3 | 🟠 high | §3.7 spec 类别登记滞后（capability/、overview/） | ⬜ |
-| P4-4 | 🟢 low | registry.md L40 仍写「README.md」 | ⬜ |
+| P4-2 | 🟡 medium | §7 文件索引漏列严重 | ✅ |
+| P4-3 | 🟠 high | §3.7 spec 类别登记滞后（capability/、overview/） | ✅ |
+| P4-4 | 🟢 low | registry.md L40 仍写「README.md」 | ✅ |
 | P5-1 | 🟡 medium | 根目录 README.md 仍存在但 §8 说已迁移 | ⬜ |
 | P5-2 | 🟡 medium | _shared/design-references/ 零规则提及 | ⬜ |
 | P5-3 | 🟡 medium | templates/ix-agents/OVERVIEW.md 与 §3.1.1 矛盾 | ⬜ |
@@ -145,14 +145,14 @@ ix-agents.md 禁主动归档，但"明确要求"的阈值未定义
 - ix-agents/ 下**零个业务 agent 目录**，`audit` 显示「0 agent」
 - 两阶段交互、thinking 产出校验、sync 首次写入都未走过实战
 
-### ☐ P4-2 §7 文件索引自称「只列实际存在的文件」但漏列严重
+### ✅ P4-2 §7 文件索引自称「只列实际存在的文件」但漏列严重
 - 漏列 `_shared/specs/capability/`、`_shared/specs/overview/`（已存在）
 - 漏列 `ix-gui/`、`ix-init-cli`、`ix-schedule-cli`
 
-### ☐ P4-3 §3.7 spec 类别登记滞后于磁盘
+### ✅ P4-3 §3.7 spec 类别登记滞后于磁盘
 只登记 ui-design，实际有 capability/、overview/ 两个类别 4 个 spec 文件未登记
 
-### ☐ P4-4 registry.md L40 仍写「更新 README.md」（应为 OVERVIEW.md）
+### ✅ P4-4 registry.md L40 仍写「更新 README.md」（应为 OVERVIEW.md）
 SPEC vs README 迁移本身干净，但 registry 残留旧术语
 
 ---

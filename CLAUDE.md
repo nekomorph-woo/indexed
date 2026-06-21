@@ -235,6 +235,10 @@ indexed/
 
 | 类型 | 文件 | 说明 |
 |------|------|------|
+| 能力声明（SPEC.yaml） | `capability/capability-spec.spec.md` | ix-*-cli / ix-*-agent 的 SPEC.yaml 字段规范；scanner 真相源 |
+| OVERVIEW 共性 | `overview/overview-common.spec.md` | 所有 OVERVIEW.md 的必选/可选段落 |
+| OVERVIEW 桶级 | `overview/overview-bucket.spec.md` | 桶级 OVERVIEW（artifacts/ix-agents/research/reports）额外要求 |
+| OVERVIEW 索引级 | `overview/overview-index.spec.md` | 索引级 OVERVIEW（specs/templates/design-languages/rules）额外要求 |
 | UI 设计语言路由 | `ui-design/design-language-routing.spec.md` | HTML 选型；prompt 在 `_shared/design-languages/` |
 | UI 设计语言导入 | `ui-design/design-language-import.spec.md` | 粘贴 prompt → 新建 `design-languages/<id>/` |
 
@@ -484,14 +488,19 @@ git checkout <branch>
 | 文件 | 用途 |
 |------|------|
 | `.claude/rules/*.md` | 各领域细化规则（import 进本文件记忆），见 `.claude/rules/OVERVIEW.md` 索引 |
-| `.claude/settings.json` | 机器可执行硬约束（禁止构建） |
-| `.gitignore` | 忽略 `.DS_Store`、产物目录、`.env`、`__pycache__/` |
+| `.claude/settings.json` | permissions（deny/ask）+ PreToolUse/PostToolUse hooks 注册 |
+| `.claude/hooks/*.sh` | PreToolUse/PostToolUse 守卫（bash-build/path-guard/sync-trigger/version-reminder/search-reminder） |
+| `.gitignore` | 忽略 `.DS_Store`、产物目录、`.env`、`__pycache__/`、`ix-agents/*/runs/` |
 
 ### 规范与模板
 
 | 文件 | 用途 |
 |------|------|
 | `_shared/specs/OVERVIEW.md` | Agent 规范索引 |
+| `_shared/specs/capability/capability-spec.spec.md` | SPEC.yaml 字段规范（真相源） |
+| `_shared/specs/overview/overview-common.spec.md` | OVERVIEW.md 共性段落 |
+| `_shared/specs/overview/overview-bucket.spec.md` | 桶级 OVERVIEW 额外要求 |
+| `_shared/specs/overview/overview-index.spec.md` | 索引级 OVERVIEW 额外要求 |
 | `_shared/specs/ui-design/design-language-routing.spec.md` | HTML 设计语言选型 |
 | `_shared/specs/ui-design/design-language-import.spec.md` | 粘贴 prompt 导入新语言 |
 | `_shared/templates/OVERVIEW.md` | 模板索引 |
@@ -507,7 +516,7 @@ git checkout <branch>
 | `artifacts/capabilities.md` | **Agent 原子能力索引**（意图/关键词 → ix-*-cli） |
 | `ix-agents/OVERVIEW.md` | 组合应用桶说明 |
 | `ix-agents/registry.md` | **Agent 组合应用索引**（意图 → ix-*-agent） |
-
+| `ix-gui/OVERVIEW.md` | 框架设施说明（GUI 应用定位 + 零侵入铁律） |
 | `_shared/design-languages/OVERVIEW.md` | 设计语言 prompt 索引 |
 
 ### 可执行实现
@@ -515,7 +524,9 @@ git checkout <branch>
 | 文件 | 用途 |
 |------|------|
 | `artifacts/ix-agent-run-cli/` | 统一执行 manifest（tool + `claude -p` thinking） |
-| `artifacts/ix-workspace-index-cli/` | 索引审计：capabilities/registry 与磁盘一致性 |
+| `artifacts/ix-workspace-index-cli/` | 索引审计：capabilities/registry 与磁盘一致性；能力发现 search |
+| `artifacts/ix-init-cli/` | 工作区初始化（git init / GIT_MODE / persona） |
+| `artifacts/ix-schedule-cli/` | 跨平台定时执行器（macOS launchd / Windows schtasks） |
 
 ---
 

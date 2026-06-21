@@ -126,7 +126,7 @@ GUI 的「新建 agent/cli」**只做 prompt 生成器**，绝不直接写 manif
 ix-gui/
 ├── OVERVIEW.md              # 本文件
 ├── SPEC.yaml                # GUI 自身能力声明
-├── web/                     # 阶段 1 纯 Web 工程（当前）
+├── web/                     # React 前端（Tauri webview 渲染，由 src-tauri 加载）
 │   ├── package.json
 │   ├── vite.config.ts
 │   ├── index.html

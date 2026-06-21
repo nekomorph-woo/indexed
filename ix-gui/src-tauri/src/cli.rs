@@ -180,16 +180,26 @@ async fn run_text_cli(
 // ─────────────────────────────────────────────────────
 
 fn parse_sync_count(out: &str) -> Vec<crate::models::SyncedFile> {
-    // 当前 ix-workspace-index-cli sync 输出不含详细 file 清单
-    // 简化：无变更 → 空；有变更 → 至少一项占位（changed=true 已表明语义）
-    if out.contains("无变更") {
-        vec![]
-    } else {
-        vec![crate::models::SyncedFile {
-            file: "artifacts/capabilities.md".to_string(),
-            count: 0,
-        }]
-    }
+    // ix-workspace-index-cli sync 输出格式：
+    //   [sync] 无变更（用户区已是最新）
+    // 或：
+    //   [sync] 已同步 N 个文件的 IX_USER_* 标记区:
+    //     ✓ capabilities.md（3 个用户条目）
+    //     ✓ registry.md（1 个用户条目）
+    //
+    // 解析每个 "✓ <file>（<count> 个用户条目）" 行为 SyncedFile。
+    use regex::Regex;
+    let re = match Regex::new(r"✓\s+(\S+?)（(\d+)\s*个用户条目）") {
+        Ok(r) => r,
+        Err(_) => return vec![],
+    };
+    re.captures_iter(out)
+        .filter_map(|cap| {
+            let file = cap.get(1)?.as_str().to_string();
+            let count: i64 = cap.get(2)?.as_str().parse().ok()?;
+            Some(crate::models::SyncedFile { file, count })
+        })
+        .collect()
 }
 
 fn parse_init_status(out: &str) -> Result<InitStatus> {

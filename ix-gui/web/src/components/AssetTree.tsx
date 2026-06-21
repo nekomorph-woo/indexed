@@ -1,6 +1,6 @@
 /**
  * 资产树 —— 只读展示 indexed 五桶结构（零侵入铁律：纯读，不写）。
- * web 阶段读 mock tree；Tauri 阶段读真实文件系统（WorkspaceIo.readWorkspaceTree）。
+ * 通过 backend.workspace.readWorkspaceTree() 调 Rust WorkspaceIo 扫描真实磁盘。
  */
 import { useEffect, useState } from "react";
 import { backend } from "@/api/backend";

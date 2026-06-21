@@ -4,8 +4,9 @@
  * 每个设计语言的 meta.md 都有「Token 摘要」表（主色/背景/表面/字体/形状/动效）。
  * 这里是 GUI 内置的 6 种皮肤，token 被注入为 CSS 变量（见 tokens.css 与 themeStore）。
  *
- * 真相源仍是 _shared/design-languages/；Tauri 阶段会改为运行时读 meta.md/prompt.md 动态解析，
- * 但 web 阶段用这套固化值足够展示主题切换能力。
+ * 真相源仍是 _shared/design-languages/<id>/meta.md；当前用编译期固化值
+ * （对齐 meta.md token 摘要），运行时不动态解析。后续若需 hot-reload
+ * 设计语言，可改为读 .app baseline/_shared/design-languages/<id>/meta.md。
  */
 export interface DesignLanguage {
   id: string;

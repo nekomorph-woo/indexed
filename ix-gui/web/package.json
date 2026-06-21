@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "indexed GUI — 纯 Web 阶段（UI + 交互 + mock 契约）",
+  "description": "indexed GUI — React 前端（Tauri webview 渲染，由 src-tauri 加载）",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",

@@ -21,7 +21,7 @@
 
 ## 平台底座
 
-本工作区以 **Claude Code** 为唯一底座（`CLAUDE.md` + `.claude/`）。`.claude/skills/` 待后续迁移；各工作流的两阶段流程以 CLAUDE.md §4、§5 为准。
+本工作区以 **Claude Code** 为唯一底座（`CLAUDE.md` + `.claude/`）。各工作流的两阶段流程以 CLAUDE.md §4、§5 为准。
 
 ## 目录拓扑（根目录白名单）
 

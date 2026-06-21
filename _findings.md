@@ -23,12 +23,12 @@
 | P2-2 | 🟡 medium | audit 只查 4 项静态治理 | ✅ |
 | P2-3 | 🟡 medium | runs 产出零反哺、零可观测性 | ✅ |
 | P2-4 | 🟡 medium | sync/audit/VERSION 全是被动 invoked | ✅ |
-| P3-1 | 🟠 high | 两阶段流程的「停止」无机器兜底 | ⬜ |
-| P3-2 | 🟠 high | §6 vs §5.4 协作边界自相矛盾 | ⬜ |
-| P3-3 | 🟠 high | search 必须先跑——反 LLM 默认 | ⬜ |
-| P3-4 | 🟡 medium | 禁自动选用设计语言——反 LLM 默认 | ⬜ |
-| P3-5 | 🟡 medium | 「用户明确要求才做 X」无判定标准 | ⬜ |
-| P3-6 | 🟡 medium | skill「待迁移」状态模糊 | ⬜ |
+| P3-1 | 🟠 high | 两阶段流程的「停止」无机器兜底 | ✅ |
+| P3-2 | 🟠 high | §6 vs §5.4 协作边界自相矛盾 | ✅ |
+| P3-3 | 🟠 high | search 必须先跑——反 LLM 默认 | ✅ |
+| P3-4 | 🟡 medium | 禁自动选用设计语言——反 LLM 默认 | ✅ |
+| P3-5 | 🟡 medium | 「用户明确要求才做 X」无判定标准 | ✅ |
+| P3-6 | 🟡 medium | skill「待迁移」状态模糊 | ✅ |
 | P4-1 | 🟠 medium | 业务样本为零（0 user cli、0 agent） | ⬜ |
 | P4-2 | 🟡 medium | §7 文件索引漏列严重 | ⬜ |
 | P4-3 | 🟠 high | §3.7 spec 类别登记滞后（capability/、overview/） | ⬜ |
@@ -113,26 +113,26 @@ LLM 在分类判断时无依据，是 P1-1 的根因
 
 ## P3 · LLM 执行断裂点（规则 vs LLM 默认行为）
 
-### ☐ P3-1 两阶段流程的「停止」无机器兜底
+### ✅ P3-1 两阶段流程的「停止」无机器兜底
 **命中 2 次**（维度 2 high + 维度 4 high 零 hooks 根因）
 - §5.4 阶段 A 要求"展示需求→**停止**"，但 LLM 默认倾向是"完成任务"
 - 没有任何 hook 在展示 params 后阻止 LLM 直接 --set 跑掉
 
-### ☐ P3-2 §6 vs §5.4 协作边界自相矛盾
+### ✅ P3-2 §6 vs §5.4 协作边界自相矛盾
 - §6 表格：「Shell run --agent...；收集缺失 params」← 倾向直接跑+遇错补参
 - §5.4：「执行前必读两阶段，先停」← 倾向先停问
 
-### ☐ P3-3 search 必须先跑——反 LLM 默认
+### ✅ P3-3 search 必须先跑——反 LLM 默认
 - LLM 默认倾向 `ls artifacts/` 或 `grep capabilities.md`，**不会主动跑 Python CLI 做意图搜索**
 - 且"找不到该新建"的相似度阈值未定义
 
-### ☐ P3-4 禁自动选用设计语言——反 LLM 默认
+### ✅ P3-4 禁自动选用设计语言——反 LLM 默认
 LLM 写 HTML 时默认会"挑一个合适的"，规则要求"罗列库+邀请预览+等用户确认"是强反默认，无机器兜底
 
-### ☐ P3-5 「用户明确要求才做 X」无判定标准
+### ✅ P3-5 「用户明确要求才做 X」无判定标准
 ix-agents.md 禁主动归档，但"明确要求"的阈值未定义
 
-### ☐ P3-6 skill「待迁移」状态模糊
+### ✅ P3-6 skill「待迁移」状态模糊
 规则多处说"skill 尚未迁移为 .claude/skills/"，但 §5.11 又讲 skill 两阶段，场景路由表也指 specs-templates.md。LLM 不知道当前 skill 到底存不存在
 
 ---

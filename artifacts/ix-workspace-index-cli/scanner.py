@@ -543,6 +543,81 @@ def _check_build_artifacts(issues: list[IndexIssue]) -> None:
                 )
 
 
+# 简单分词：按非字母数字下划线中划线星号分割，小写化，过滤长度 < 2
+# 保留 `*` 在 token 内（如 ix-*-agent 视为整体 token，避免被切碎）
+_TOKEN_SPLIT_RE = re.compile(r"[^a-zA-Z0-9_*-]+")
+
+
+def _tokenize_intent(text: str) -> set[str]:
+    return {t.lower() for t in _TOKEN_SPLIT_RE.split(text) if len(t) >= 2}
+
+
+def _collect_intent_tokens() -> list[tuple[str, set[str]]]:
+    """收集所有 cli/agent 的 (name, intent_tokens)。"""
+    items: list[tuple[str, set[str]]] = []
+    for c in discover_clis():
+        if not c.spec:
+            continue
+        intents = c.spec.get("intents")
+        if not isinstance(intents, list):
+            continue
+        tokens: set[str] = set()
+        for intent in intents:
+            tokens.update(_tokenize_intent(str(intent)))
+        if tokens:
+            items.append((c.name, tokens))
+    for a in discover_agents():
+        if not a.spec:
+            continue
+        intents = a.spec.get("intents")
+        if not isinstance(intents, list):
+            continue
+        tokens = set()
+        for intent in intents:
+            tokens.update(_tokenize_intent(str(intent)))
+        if tokens:
+            items.append((a.name, tokens))
+    return items
+
+
+def _check_duplicate_intents(issues: list[IndexIssue]) -> None:
+    """检测重复能力：(1) Jaccard ≥0.8；(2) 一方 tokens 是另一方的真子集（部分复制）。"""
+    items = _collect_intent_tokens()
+    for i in range(len(items)):
+        for j in range(i + 1, len(items)):
+            name_i, tokens_i = items[i]
+            name_j, tokens_j = items[j]
+            union = tokens_i | tokens_j
+            if not union:
+                continue
+            intersection = tokens_i & tokens_j
+            jaccard = len(intersection) / len(union)
+            # 条件 1：Jaccard ≥0.8（高度相似）
+            high_similarity = jaccard >= 0.8
+            # 条件 2：真子集（一方完全复制了另一方的部分 intents）
+            proper_subset = (tokens_i < tokens_j) or (tokens_j < tokens_i)
+            if high_similarity:
+                issues.append(
+                    IndexIssue(
+                        "warn",
+                        "governance_duplicate_intents",
+                        f"{name_i} 与 {name_j} 的 intents 相似度 {jaccard:.0%}（≥80%），疑似重复能力，考虑合并或区分意图",
+                        f"{name_i}, {name_j}",
+                    )
+                )
+            elif proper_subset and len(intersection) >= 3:
+                subset_name = name_i if tokens_i < tokens_j else name_j
+                superset_name = name_j if tokens_i < tokens_j else name_i
+                issues.append(
+                    IndexIssue(
+                        "warn",
+                        "governance_duplicate_intents",
+                        f"{subset_name} 的 intents 是 {superset_name} 的子集（{len(intersection)} 个公共 token），疑似部分复制，考虑扩展 {superset_name} 的 providers/ 而非新建",
+                        f"{name_i}, {name_j}",
+                    )
+                )
+
+
 def audit_governance() -> list[IndexIssue]:
     issues: list[IndexIssue] = []
     rule_files = _collect_rule_files()
@@ -556,6 +631,8 @@ def audit_governance() -> list[IndexIssue]:
     _check_chinese_names(issues)
     _check_tmp_prefix(issues)
     _check_build_artifacts(issues)
+    # P3-3.2 新增：重复 intents 检测（疑似重复造轮子）
+    _check_duplicate_intents(issues)
     return issues
 
 

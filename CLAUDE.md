@@ -24,7 +24,7 @@
 | **可运行 CLI / 小工具**——"写个脚本""新建 cli""ix-*-cli""provider""拉数""发邮件""capabilities" | cli 命名与骨架、SPEC.yaml 能力声明、零 import 耦合、新建清单、**能力发现（必须先跑 `ix-workspace-index-cli search` 命令）** | `.claude/rules/artifacts.md` |
 | **组合业务 Agent**——"执行 agent""ix-*-agent""manifest""定时""thinking""两阶段""params" | manifest 编排、run --agent 执行、两阶段开发规范、禁止主动归档、**能力发现（必须先跑 `search` 命令）**、新建 agent 清单 | `.claude/rules/ix-agents.md` |
 | **规范 / 模板 / Skill**——"新建 spec""模板""SKILL""两阶段 skill""capability-spec" | specs/templates 目录治理、SPEC.yaml 字段规范、skill 去重、skill 两阶段（fallback）、新建 spec/template 步骤 | `.claude/rules/specs-templates.md` |
-| **HTML / 原型页 / 设计语言**——"写 HTML""设计风格""material-you""bauhaus""选型""导入新语言" | 设计语言库结构、选型流程（禁止自动选用）、导入新语言、preview.html 预览 | `.claude/rules/design-languages.md` |
+| **HTML / 原型页 / 设计语言**——"写 HTML""设计风格""material-you""bauhaus""选型""导入新语言" | ⚠️ **硬约束：禁止自动选用任一 id**。必须先罗列 `_shared/design-languages/` 各 `<id>/meta.md` → 邀请用户打开 `preview.html` → **用户明确确认 id** → 才能 Read `<id>/prompt.md` 写 HTML | `.claude/rules/design-languages.md` |
 | **Git 操作 / 版本号 / commit**——"提交""push""git init""版本号""local/remote""升级基线" | Git 模式（local/remote 标记区）、VERSION 语义化版本、commit 收尾、根目录白名单 | `.claude/rules/git-workflow.md` |
 | **定时 / 计划任务**——"定时跑 agent""schedule""cron""schtasks""launchd""计划任务" | 跨平台定时注册（register/unregister/list）、job 登记册、daily/weekly 调度、系统调度器触发 ix-agent | `artifacts/ix-schedule-cli/` |
 | **回复风格 / 图示 / 任务规划**——"怎么回复""画图""ASCII""规划任务""coding conventions" | 简体中文回复（不随用户语言切换）、ASCII 线框图、禁止「图」列表格、任务规划与编码风格 | `.claude/rules/dialogue-style.md` |
@@ -44,11 +44,9 @@
 | **英文 kebab-case** | 目录与文件名默认英文；中文仅出现在 Markdown 正文标题或交付物内容 |
 | **引用本规范** | 新建周期/专题前，对照第 3、4 节清单 |
 | **仓库最小占用** | clone/fetch 浅克隆；禁止构建；禁止产生编译/打包产物（见 §5.4；硬约束已写入 `.claude/settings.json`） |
-| **Skill 优先** | 同名 skill + command 只执行 skill 定义（见 `.claude/rules/specs-templates.md` §skill 去重） |
-| **Skill 两阶段** | slash 仅阶段 A（模板 + 已 clone 仓库列表）→ 用户填好再阶段 B；**禁止**单独建 command（见 `.claude/rules/specs-templates.md` §两阶段） |
 | **简体中文回复** | 始终用简体中文回复用户，不随用户输入语言切换（见 `.claude/rules/dialogue-style.md`「简体中文回复」） |
 
-> **平台底座**：本工作区以 **Claude Code** 为唯一底座（`CLAUDE.md` + `.claude/`）。`.claude/skills/` 待后续迁移；当前各工作流的两阶段流程以本文件 §4、§5 为准。
+> **平台底座**：本工作区以 **Claude Code** 为唯一底座（`CLAUDE.md` + `.claude/`）。各工作流的两阶段流程以本文件 §4、§5 为准。
 
 ---
 
@@ -60,8 +58,7 @@ indexed/
 ├── .gitignore
 ├── .claude/              # Claude Code 配置
 │   ├── rules/            # 各领域细化规则（import 进 CLAUDE.md 记忆）
-│   ├── settings.json     # 机器可执行硬约束（禁止构建）
-│   └── skills/           # skills（待迁移；当前流程见本文件 §4/§5）
+│   └── settings.json     # 机器可执行硬约束（禁止构建）
 │
 ├── _shared/
 │   ├── repos/            # 唯一允许的 Git clone 根
@@ -320,7 +317,10 @@ indexed/
 
 ## 5. Agent 工作流（必须按序执行）
 
-> 以下工作流的 skill 当前**尚未迁移为 `.claude/skills/`**；两阶段流程（阶段 A 模板 → 阶段 B 执行）以本节文字描述为准，待后续单独迁移 skill。
+> **前置检查（硬约束，不得跳过）**：
+> - **涉及可执行能力**（拉数/发信/导出/审计/定时等）或**新建 ix-*-cli/ix-*-agent** → 先跑 `python artifacts/ix-workspace-index-cli/main.py search "<意图>"`，确认无重复能力，再决定扩展 providers/ 还是新建
+> - **涉及 HTML/原型页** → 先罗列 `_shared/design-languages/` 各 `<id>/meta.md`，邀请用户打开 `preview.html` 预览，**用户明确确认 id 后**再 Read `<id>/prompt.md` 写 HTML（禁止自动选用）
+> - **涉及执行 ix-*-agent** → 先跑 `python artifacts/ix-agent-run-cli/main.py params --agent <name>` 展示输入清单，用户确认/补充后再 `run`
 
 ### 5.1 新建 `research/<topic>` 专题
 
@@ -332,7 +332,7 @@ indexed/
 
 ### 5.2 新建 `artifacts/ix-<domain>-cli`
 
-**触发**：用户要从 `_shared/repos` / `research` 落地可运行 CLI，或明确要求新建 artifact。
+**触发**：用户说「新建 cli」「建工具」「落地 artifact」等明确意图词时（详见 `.claude/rules/artifacts.md` §能力发现，**必须先跑 `ix-workspace-index-cli search`**）。
 
 **Agent 默认按 [`.claude/rules/artifacts.md`](.claude/rules/artifacts.md) 执行，无需用户重复解释架构。**
 
@@ -463,7 +463,8 @@ git checkout <branch>
 | 场景 | Agent 行为 |
 |------|------------|
 | 路径明确符合本规范 | 直接创建目录与文件，无需反复确认 |
-| 用户说「执行 ix-*-agent」 | **Shell** `ix-agent-run-cli/main.py run --agent ...`；收集缺失 params；监督 `runs/<run-id>/` |
+| 用户说「执行 ix-*-agent」 | 按 §5.3 两阶段流程：先 `params --agent <name>` 展示输入清单 → **等用户确认/补充** → 再 `run --agent <name>`；监督 `runs/<run-id>/` |
+| 用户说「归档」「存到 reports」「生成报告交付物」 | manifest 可加归档 step（写入 `reports/<type>/<周期>/`）；**其它情况默认留在 `runs/<run-id>/output/`，禁止主动归档**（详见 `.claude/rules/ix-agents.md` §禁止与允许） |
 | 需要新 `ix-agents/ix-<business>-agent` | ix-agent 流程或模板复制；更新 `registry.md` |
 | 仅需原子拉数/发信 | **Read** `artifacts/capabilities.md`，subprocess 串联 `ix-*-cli` |
 | 需要新 `artifacts/ix-<domain>-cli` | 按 `.claude/rules/artifacts.md` 创建；更新 `artifacts/OVERVIEW.md` 与 `capabilities.md` |
@@ -476,7 +477,7 @@ git checkout <branch>
 
 ## 7. 相关文件索引
 
-> 本表仅列出**实际存在**的文件。skill 待迁移，故不列入。
+> 本表仅列出**实际存在**的文件。
 
 ### 根与配置
 

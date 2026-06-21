@@ -35,6 +35,7 @@ pub fn run() {
             workspace::list_runs,
             workspace::read_run,
             workspace::read_workspace_tree,
+            workspace::get_workspace_root,
             // CliRunner（M3）
             cli::run_agent,
             cli::audit,

@@ -414,3 +414,12 @@ fn is_top_level_bucket(parent_rel: &str, name: &str) -> bool {
 // 让 unused imports 不告警（RunStatus/RunTrigger 用于 models，这里只做 serde 标记）
 #[allow(dead_code)]
 fn _types_marker(_: RunStatus, _: RunTrigger) {}
+
+// ─────────────────────────────────────────────────────
+// 杂项：暴露 workspace_root 给前端（PTY spawn 需要 cwd）
+// ─────────────────────────────────────────────────────
+
+#[tauri::command]
+pub async fn get_workspace_root(state: State<'_, AppState>) -> Result<String> {
+    Ok(state.workspace_root.to_string_lossy().to_string())
+}

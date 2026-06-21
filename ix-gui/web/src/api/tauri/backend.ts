@@ -9,9 +9,9 @@
  *   - M5：backend.ts 改 export tauriBackend（删 mockBackend 引用）
  */
 import { Channel, invoke } from "@tauri-apps/api/core";
-import type { Backend, CliApi, PtyApi, RunAgentRequest, WorkspaceApi } from "@/api/contract";
+import { spawn } from "tauri-pty";
+import type { Backend, CliApi, PtyApi, PtySpawnRequest, RunAgentRequest, WorkspaceApi } from "@/api/contract";
 import type { CliEvent } from "@/types/indexed";
-import { mockBackend } from "@/api/mock/backend";
 
 // ─────────────────────────────────────────────────────
 // WorkspaceIo（M2 已实现）
@@ -30,10 +30,6 @@ const workspace: WorkspaceApi = {
 
 // ─────────────────────────────────────────────────────
 // CliRunner（M3 已实现）
-//
-// run_agent 用 Tauri v2 Channel 流式：每次 invoke 携带一个 Channel<CliEvent>
-// 作为 onEvent 参数；Rust 端 on_event.send(CliEvent) 推送，前端 onmessage 接收。
-// 这里把 Channel 适配为 TS AsyncIterable<CliEvent>，业务代码用 for-await 消费。
 // ─────────────────────────────────────────────────────
 
 const cli: CliApi = {
@@ -53,7 +49,6 @@ const cli: CliApi = {
       }
     };
 
-    // invoke 返回 Promise（Rust 端 return Ok(()) 时 resolve）
     const invokePromise = invoke("run_agent", { req, onEvent: channel })
       .then(() => {
         finished = true;
@@ -64,7 +59,6 @@ const cli: CliApi = {
         }
       })
       .catch((e: unknown) => {
-        // invoke 失败（Rust 端返回 Err）：作为 error event 推送
         const errMsg = e instanceof Error ? e.message : String(e);
         queue.push({ kind: "error", message: errMsg });
         finished = true;
@@ -95,11 +89,54 @@ const cli: CliApi = {
 };
 
 // ─────────────────────────────────────────────────────
-// PtyBridge（M4 用 tauri-plugin-pty）
+// PtyBridge（M4 已实现 — 封装 tauri-plugin-pty）
 //
-// M3 阶段暂用 mock；M4 替换为 spawn/onData 封装。
+// 用 tauri-plugin-pty 插件（Rust 端 portable-pty）。前端 spawn 拿到 pty
+// 句柄；onData 订阅输出；write/resize/kill 控制。
 // ─────────────────────────────────────────────────────
 
-const pty: PtyApi = mockBackend.pty;
+type PtyHandle = ReturnType<typeof spawn>;
+
+class TauriPty implements PtyApi {
+  private sessions = new Map<string, PtyHandle>();
+
+  async spawn(req: PtySpawnRequest) {
+    const sessionId = `pty-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const pty = spawn(req.command ?? "claude", [], {
+      cwd: req.cwd,
+      cols: req.cols ?? 80,
+      rows: req.rows ?? 24,
+    });
+    this.sessions.set(sessionId, pty);
+    return { sessionId };
+  }
+
+  async input(sessionId: string, data: string) {
+    this.sessions.get(sessionId)?.write(data);
+  }
+
+  async resize(sessionId: string, cols: number, rows: number) {
+    this.sessions.get(sessionId)?.resize(cols, rows);
+  }
+
+  async kill(sessionId: string) {
+    const pty = this.sessions.get(sessionId);
+    if (pty) {
+      pty.kill();
+      this.sessions.delete(sessionId);
+    }
+  }
+
+  onData(sessionId: string, cb: (data: string) => void): () => void {
+    const pty = this.sessions.get(sessionId);
+    if (!pty) return () => {};
+    // tauri-pty 的 onData 接收 Uint8Array，返回 IDisposable
+    const decoder = new TextDecoder();
+    const disposable = pty.onData((e: Uint8Array) => cb(decoder.decode(e)));
+    return () => disposable.dispose();
+  }
+}
+
+const pty: PtyApi = new TauriPty();
 
 export const tauriBackend: Backend = { workspace, cli, pty };

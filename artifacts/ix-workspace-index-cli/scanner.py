@@ -6,6 +6,7 @@
 
 from __future__ import annotations
 
+import os
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -367,6 +368,181 @@ def _check_shared_paths(issues: list[IndexIssue]) -> None:
             )
 
 
+# ---------------------------------------------------------------------------
+# P2-2 新增治理检查（5 项）
+# ---------------------------------------------------------------------------
+
+# 根目录白名单（CLAUDE.md §6 + §2.ix-gui）
+_ROOT_WHITELIST_DIRS = {"_shared", "reports", "research", "artifacts", "ix-agents", "ix-gui", ".claude", ".git"}
+_ROOT_WHITELIST_FILES = {"CLAUDE.md", "VERSION", ".gitignore", ".gitkeep", "_findings.md", ".DS_Store"}
+
+# kebab-case：[a-z0-9]+(-[a-z0-9]+)*
+_KEBAB_RE = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
+
+# CJK 统一表意文字 + 扩展（覆盖常见中文/日文/韩文）
+_CJK_RE = re.compile(r"[一-鿿㐀-䶿぀-ヿ가-힯]")
+
+# 构建产物目录/文件名（_shared/repos 内不得出现）
+_BUILD_ARTIFACT_NAMES = {
+    "target", "build", "dist", "out", "node_modules", ".gradle",
+    ".next", ".nuxt", ".cache", ".parcel-cache", "venv", ".venv",
+    "__pycache__", ".pytest_cache", ".mypy_cache", "coverage",
+}
+_BUILD_ARTIFACT_EXTS = {".jar", ".war", ".class", ".pyc", ".pyo"}
+
+
+def _check_root_whitelist(issues: list[IndexIssue]) -> None:
+    """根目录仅允许 5 桶 + ix-gui + .claude + .git + 元文件 + 临时 _findings.md。"""
+    if not WORKSPACE_ROOT.is_dir():
+        return
+    for entry in sorted(WORKSPACE_ROOT.iterdir()):
+        name = entry.name
+        if entry.is_dir():
+            if name not in _ROOT_WHITELIST_DIRS:
+                issues.append(
+                    IndexIssue(
+                        "error",
+                        "governance_root_illegal_dir",
+                        f"根目录出现非白名单目录: {name}/（仅允许 5 桶 + ix-gui + .claude + .git）",
+                        name,
+                    )
+                )
+        else:
+            if name not in _ROOT_WHITELIST_FILES:
+                issues.append(
+                    IndexIssue(
+                        "error",
+                        "governance_root_illegal_file",
+                        f"根目录出现非白名单文件: {name}（仅允许 CLAUDE.md/VERSION/.gitignore/_findings.md）",
+                        name,
+                    )
+                )
+
+
+def _check_kebab_case(issues: list[IndexIssue]) -> None:
+    """5 个桶的一级子目录名必须 kebab-case。"""
+    buckets = [
+        WORKSPACE_ROOT / "reports",
+        WORKSPACE_ROOT / "research",
+        WORKSPACE_ROOT / "artifacts",
+        WORKSPACE_ROOT / "ix-agents",
+        WORKSPACE_ROOT / "_shared" / "repos",
+        WORKSPACE_ROOT / "_shared" / "specs",
+        WORKSPACE_ROOT / "_shared" / "templates",
+        WORKSPACE_ROOT / "_shared" / "design-languages",
+    ]
+    for bucket in buckets:
+        if not bucket.is_dir():
+            continue
+        for child in sorted(bucket.iterdir()):
+            if not child.is_dir():
+                continue
+            name = child.name
+            if name.startswith(".") or name.startswith("_"):
+                continue
+            if not _KEBAB_RE.match(name):
+                rel = child.relative_to(WORKSPACE_ROOT)
+                issues.append(
+                    IndexIssue(
+                        "warn",
+                        "governance_non_kebab_name",
+                        f"目录名非 kebab-case: {rel}（应为 [a-z0-9]+(-[a-z0-9]+)*）",
+                        str(rel),
+                    )
+                )
+
+
+def _check_chinese_names(issues: list[IndexIssue]) -> None:
+    """目录/文件名不得含 CJK 字符（CLAUDE.md §3.1）。扫描 5 桶 + ix-gui，跳过 .git/.claude/_shared/repos。"""
+    scan_roots = [
+        WORKSPACE_ROOT / "reports",
+        WORKSPACE_ROOT / "research",
+        WORKSPACE_ROOT / "artifacts",
+        WORKSPACE_ROOT / "ix-agents",
+        WORKSPACE_ROOT / "ix-gui",
+    ]
+    skip_dirs = {".git", ".claude", "node_modules", "target", "build", "dist", "__pycache__", ".venv", "venv"}
+    for root in scan_roots:
+        if not root.is_dir():
+            continue
+        for dirpath, dirnames, filenames in os.walk(root):
+            # 原地改 dirnames 跳过特定目录
+            dirnames[:] = [d for d in dirnames if d not in skip_dirs]
+            for name in dirnames + filenames:
+                if _CJK_RE.search(name):
+                    rel = Path(dirpath, name).relative_to(WORKSPACE_ROOT)
+                    issues.append(
+                        IndexIssue(
+                            "error",
+                            "governance_chinese_name",
+                            f"路径含 CJK 字符: {rel}（CLAUDE.md §3.1 仅允许英文 kebab-case）",
+                            str(rel),
+                        )
+                    )
+
+
+def _check_tmp_prefix(issues: list[IndexIssue]) -> None:
+    """reports/<type>/<周期>/drafts/ 下不得有 tmp-* 文件（统一 draft-）。"""
+    reports_dir = WORKSPACE_ROOT / "reports"
+    if not reports_dir.is_dir():
+        return
+    for type_dir in sorted(reports_dir.iterdir()):
+        if not type_dir.is_dir():
+            continue
+        for period_dir in sorted(type_dir.iterdir()):
+            if not period_dir.is_dir():
+                continue
+            drafts = period_dir / "drafts"
+            if not drafts.is_dir():
+                continue
+            for f in sorted(drafts.iterdir()):
+                if f.name.startswith("tmp-"):
+                    rel = f.relative_to(WORKSPACE_ROOT)
+                    issues.append(
+                        IndexIssue(
+                            "warn",
+                            "governance_tmp_prefix",
+                            f"发现 tmp- 前缀文件: {rel}（应统一用 draft-）",
+                            str(rel),
+                        )
+                    )
+
+
+def _check_build_artifacts(issues: list[IndexIssue]) -> None:
+    """_shared/repos/ 下不得有构建产物（target/build/dist/node_modules 等）。"""
+    repos_dir = WORKSPACE_ROOT / "_shared" / "repos"
+    if not repos_dir.is_dir():
+        return
+    for repo in sorted(repos_dir.iterdir()):
+        if not repo.is_dir():
+            continue
+        for entry in repo.rglob("*"):
+            # 跳过 .git
+            if ".git" in entry.parts:
+                continue
+            name = entry.name
+            if entry.is_dir() and name in _BUILD_ARTIFACT_NAMES:
+                rel = entry.relative_to(WORKSPACE_ROOT)
+                issues.append(
+                    IndexIssue(
+                        "error",
+                        "governance_build_artifact",
+                        f"_shared/repos 下出现构建产物: {rel}/（违反最小存储原则）",
+                        str(rel),
+                    )
+                )
+            elif entry.is_file() and entry.suffix in _BUILD_ARTIFACT_EXTS:
+                rel = entry.relative_to(WORKSPACE_ROOT)
+                issues.append(
+                    IndexIssue(
+                        "error",
+                        "governance_build_artifact",
+                        f"_shared/repos 下出现构建产物: {rel}（违反最小存储原则）",
+                        str(rel),
+                    )
+                )
+
+
 def audit_governance() -> list[IndexIssue]:
     issues: list[IndexIssue] = []
     rule_files = _collect_rule_files()
@@ -374,6 +550,12 @@ def audit_governance() -> list[IndexIssue]:
     _check_claude_md_length(issues)
     _check_cross_refs(rule_files, issues)
     _check_shared_paths(issues)
+    # P2-2 新增 5 项治理检查
+    _check_root_whitelist(issues)
+    _check_kebab_case(issues)
+    _check_chinese_names(issues)
+    _check_tmp_prefix(issues)
+    _check_build_artifacts(issues)
     return issues
 
 

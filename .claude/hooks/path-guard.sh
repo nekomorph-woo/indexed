@@ -11,6 +11,13 @@ FILE_PATH="$(printf '%s' "$INPUT" | jq -r '.tool_input.file_path // empty')"
 # 无 file_path（理论上不会发生，但兜底）
 [ -z "$FILE_PATH" ] && exit 0
 
+# 系统配置路径豁免（Claude Code 内置：plans/projects/rules/memory/teams/tasks/plugins 等）
+# 这些路径不属于 indexed 工作区，path-guard 不约束
+case "$FILE_PATH" in
+  "$HOME/.claude/"*) exit 0 ;;
+  /tmp/*) exit 0 ;;
+esac
+
 CWD="$(printf '%s' "$INPUT" | jq -r '.cwd // empty')"
 
 # 找到含 CLAUDE.md 的项目根（cwd 上溯）

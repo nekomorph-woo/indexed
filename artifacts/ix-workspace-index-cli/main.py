@@ -24,7 +24,9 @@ def cmd_audit(args: argparse.Namespace) -> int:
     issues.extend(gov_issues)
     errors = [i for i in issues if i.level == "error"]
     warns = [i for i in issues if i.level == "warn"]
-    ok = not errors
+    # --strict：warn 也计入 failure（CI 强制）
+    fail_count = len(errors) + (len(warns) if args.strict else 0)
+    ok = fail_count == 0
 
     payload = {
         "ok": ok,
@@ -142,6 +144,7 @@ def main() -> int:
     pa = sub.add_parser("audit", help="校验 SPEC.yaml 与薄索引页一致性")
     pa.add_argument("--json", action="store_true", help="输出 JSON（供 Agent 消费）")
     pa.add_argument("--check", action="store_true", help="存在 error 时退出码 1")
+    pa.add_argument("--strict", action="store_true", help="warn 升级为 failure（CI 强制，配合 --check 使用）")
     pa.set_defaults(func=cmd_audit)
 
     pl = sub.add_parser("list", help="列出已发现的 cli/agent")

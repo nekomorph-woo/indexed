@@ -4,6 +4,7 @@ one_liner: 按 manifest 顺序执行 tool + thinking（claude -p）流水线
 status: implemented
 intents:
   - "执行 ix-*-agent、manifest 编排、tool+thinking 流水线"
+  - "查询 agent 执行历史、成功率、最近 run 状态"
 commands:
   - name: run
     inputs:
@@ -12,10 +13,23 @@ commands:
       - "--params-json '{...}'"
       - "--resume --run-id <id>"
       - "--trigger manual|scheduled"
-    outputs: "ix-agents/<agent>/runs/<run-id>/（work/raw、work/thinking、output）"
+    outputs: "ix-agents/<agent>/runs/<run-id>/（work/raw、work/thinking、output）+ last-run.json（最近状态）+ failures.log（失败累积）"
     example: "python main.py run --agent ix-foo-agent"
+  - name: params
+    inputs:
+      - "--agent ix-<business>-agent"
+      - "--json"
+    outputs: "stdout 表格或 JSON：每个参数的必填/默认/当前值"
+    example: "python main.py params --agent ix-foo-agent"
+  - name: stats
+    inputs:
+      - "--agent <name>（可选，限定单 agent）"
+      - "--last N（默认 10）"
+    outputs: "stdout：最近 N 次 run 的 agent/run_id/status/started/steps/failed_step + 成功率"
+    example: "python main.py stats --last 20"
 credentials: []
 depends_on: []
 notes: |
   thinking step 调用 Claude Code CLI（claude -p --dangerously-skip-permissions）。
   定时功能已移至 ix-schedule-cli（artifacts/ix-schedule-cli/）。
+  P2-3 反哺：run 完成时写 last-run.json（tracked，最近状态）；失败时追加 failures.log（tracked，跨 run 累积）。runs/ 本身仍 untracked。

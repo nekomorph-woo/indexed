@@ -19,10 +19,10 @@
 | P1-2 | 🟡 medium | 术语漂移：桶/工作桶/业务桶/框架设施 | ✅ |
 | P1-3 | 🟡 medium | §3 章节编号断裂（3.2/3.3/3.9/3.10 缺） | ✅ |
 | P1-4 | 🟡 medium | §5 章节编号断裂（5.1/5.7/5.8 缺） | ✅ |
-| P2-1 | 🔴 high | 零 PreToolUse/PostToolUse hooks | ⬜ |
-| P2-2 | 🟡 medium | audit 只查 4 项静态治理 | ⬜ |
-| P2-3 | 🟡 medium | runs 产出零反哺、零可观测性 | ⬜ |
-| P2-4 | 🟡 medium | sync/audit/VERSION 全是被动 invoked | ⬜ |
+| P2-1 | 🔴 high | 零 PreToolUse/PostToolUse hooks | ✅ |
+| P2-2 | 🟡 medium | audit 只查 4 项静态治理 | ✅ |
+| P2-3 | 🟡 medium | runs 产出零反哺、零可观测性 | ✅ |
+| P2-4 | 🟡 medium | sync/audit/VERSION 全是被动 invoked | ✅ |
 | P3-1 | 🟠 high | 两阶段流程的「停止」无机器兜底 | ⬜ |
 | P3-2 | 🟠 high | §6 vs §5.4 协作边界自相矛盾 | ⬜ |
 | P3-3 | 🟠 high | search 必须先跑——反 LLM 默认 | ⬜ |
@@ -92,20 +92,20 @@ LLM 在分类判断时无依据，是 P1-1 的根因
 
 ## P2 · harness 三层全部缺失（纸面治理）
 
-### ☐ P2-1 零 PreToolUse/PostToolUse hooks（最致命裸奔点）
+### ✅ P2-1 零 PreToolUse/PostToolUse hooks（最致命裸奔点）
 - `.claude/settings.json` **无 hooks 段**，无 `.claude/hooks/`、无 `.github/`、无 pre-commit
 - 所有"违规检测→反馈→修复"闭环都是软约束文字
 
-### ☐ P2-2 audit 只查 4 项静态治理
+### ✅ P2-2 audit 只查 4 项静态治理
 **命中 2 次**。当前 `audit_governance` 检查：关键词重复、CLAUDE.md 行数、§交叉引用、桶级 README 存在性
 
 **检测不到**：中文目录名、根目录白名单违规、SPEC.yaml 字段类型错误、命名违规、`tmp-` 前缀、产物生成
 
-### ☐ P2-3 runs/<run-id>/ 产出零反哺、零可观测性
+### ✅ P2-3 runs/<run-id>/ 产出零反哺、零可观测性
 - runs 在 `.gitignore`，run.yaml 只被 --resume 读，无聚合统计
 - agent 反复失败无人知晓；capabilities 是否真被复用无从度量；"search 跳过直接造轮子"完全不可检测
 
-### ☐ P2-4 sync/audit/VERSION 全是被动 invoked
+### ✅ P2-4 sync/audit/VERSION 全是被动 invoked
 - 无 commit hook、无定时任务、规则未硬性要求落盘后必跑
 - SPEC.yaml 改了不跑 sync → 薄索引长期漂移
 

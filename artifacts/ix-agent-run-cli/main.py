@@ -9,6 +9,9 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from pathlib import Path
+
+import yaml
 
 from config import IX_AGENTS_ROOT
 from runner import execute, load_manifest, load_defaults
@@ -109,6 +112,89 @@ def cmd_params(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_stats(args: argparse.Namespace) -> int:
+    """聚合 runs/ 历史，输出最近 N 次执行状态（P2-3 反哺）。"""
+    if not IX_AGENTS_ROOT.is_dir():
+        print("[stats] 未发现 ix-agents/ 目录")
+        return 0
+
+    records: list[dict] = []
+    for agent_dir in sorted(IX_AGENTS_ROOT.iterdir()):
+        if not agent_dir.is_dir() or not agent_dir.name.startswith("ix-"):
+            continue
+        if args.agent and agent_dir.name != args.agent:
+            continue
+        # 优先读 last-run.json（快），没有则扫 runs/（慢）
+        last_run_file = agent_dir / "last-run.json"
+        if last_run_file.is_file() and not args.agent:
+            try:
+                data = json.loads(last_run_file.read_text(encoding="utf-8"))
+                records.append({
+                    "agent": agent_dir.name,
+                    "run_id": data.get("run_id", "?"),
+                    "status": data.get("status", "?"),
+                    "started_at": data.get("started_at", "?"),
+                    "ended_at": data.get("ended_at", "?"),
+                    "duration_seconds": data.get("duration_seconds"),
+                    "steps_completed": data.get("steps_completed", 0),
+                    "steps_total": data.get("steps_total", 0),
+                    "failed_at_step": data.get("failed_at_step"),
+                })
+                continue
+            except (json.JSONDecodeError, OSError):
+                pass
+        # 扫描 runs/*/run.yaml（全量历史）
+        runs_dir = agent_dir / "runs"
+        if not runs_dir.is_dir():
+            continue
+        for run_dir in sorted(runs_dir.iterdir()):
+            run_yaml = run_dir / "run.yaml"
+            if not run_yaml.is_file():
+                continue
+            try:
+                data = yaml.safe_load(run_yaml.read_text(encoding="utf-8")) or {}
+            except yaml.YAMLError:
+                continue
+            records.append({
+                "agent": agent_dir.name,
+                "run_id": data.get("run_id", run_dir.name),
+                "status": data.get("status", "?"),
+                "started_at": data.get("started_at", "?"),
+                "ended_at": data.get("completed_at", "?"),
+                "duration_seconds": None,
+                "steps_completed": len(data.get("steps_completed") or []),
+                "steps_total": 0,
+                "failed_at_step": data.get("next_step"),
+            })
+
+    if not records:
+        print(f"[stats] 无执行历史（{args.agent or '所有 agent'} 的 runs/ 为空）")
+        return 0
+
+    # 按开始时间倒序
+    records.sort(key=lambda r: r["started_at"] or "", reverse=True)
+    n = args.last if args.last > 0 else 10
+    records = records[:n]
+
+    print(f"最近 {len(records)} 次执行：\n")
+    print(f"{'Agent':<25} {'Run ID':<22} {'Status':<11} {'Started':<20} {'Steps':<10} {'Failed':<15}")
+    print("-" * 110)
+    for r in records:
+        started = (r["started_at"] or "?")[:19]
+        steps = f"{r['steps_completed']}/{r['steps_total']}" if r["steps_total"] else str(r["steps_completed"])
+        failed = r["failed_at_step"] or "-"
+        print(
+            f"{r['agent']:<25} {r['run_id']:<22} {r['status']:<11} "
+            f"{started:<20} {steps:<10} {failed:<15}"
+        )
+
+    success = sum(1 for r in records if r["status"] == "completed")
+    failed = sum(1 for r in records if r["status"] == "failed")
+    rate = (success / len(records)) * 100 if records else 0
+    print(f"\n成功率: {success}/{len(records)}（{rate:.0f}%）；失败: {failed}")
+    return 0
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(
         description="按 ix-*-agent/manifest.yaml 执行 steps（tool 子进程；thinking 调 claude -p）",
@@ -144,10 +230,18 @@ def main() -> int:
     pp.add_argument("--json", action="store_true", help="输出 JSON（供 AI 消费）")
     pp.set_defaults(func="params")
 
+    pstats = sub.add_parser("stats", help="聚合 runs/ 历史，输出最近 N 次执行状态（P2-3 反哺）")
+    pstats.add_argument("--agent", help="限定某个 agent（默认全部）")
+    pstats.add_argument("--last", type=int, default=10, help="显示最近 N 次（默认 10；--agent 指定时扫描全量）")
+    pstats.set_defaults(func="stats")
+
     args = parser.parse_args()
 
     if args.func == "params":
         return cmd_params(args)
+
+    if args.func == "stats":
+        return cmd_stats(args)
 
     # run 命令
     agent = args.agent

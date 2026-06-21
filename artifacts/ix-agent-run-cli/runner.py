@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import os
 import shutil
 import subprocess
@@ -17,6 +18,43 @@ from placeholders import build_context, resolve_run_path, substitute
 from thinking import render_thinking_prompt, run_agent_print
 
 _TZ = ZoneInfo("Asia/Shanghai")
+
+
+def _write_last_run(agent_root: Path, state: dict[str, Any], total_steps: int) -> None:
+    """完成/失败时写 last-run.json 到 agent 根目录（tracked，供快速查询最近状态）。"""
+    started = state.get("started_at", "")
+    ended = state.get("completed_at") or datetime.now(_TZ).isoformat()
+    duration = None
+    if started:
+        try:
+            duration = int((datetime.fromisoformat(ended) - datetime.fromisoformat(started)).total_seconds())
+        except (ValueError, TypeError):
+            duration = None
+    payload = {
+        "run_id": state.get("run_id"),
+        "status": state.get("status"),
+        "started_at": started,
+        "ended_at": ended,
+        "duration_seconds": duration,
+        "steps_completed": len(state.get("steps_completed") or []),
+        "steps_total": total_steps,
+        "failed_at_step": state.get("next_step") if state.get("status") == "failed" else None,
+    }
+    (agent_root / "last-run.json").write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
+
+
+def _append_failure(agent_root: Path, state: dict[str, Any], reason: str) -> None:
+    """失败时追加一行到 failures.log（tracked，跨 run 累积失败历史）。"""
+    ts = datetime.now(_TZ).isoformat()
+    line = (
+        f"{ts} run_id={state.get('run_id', '?')} "
+        f"step={state.get('next_step', '?')} reason={reason}\n"
+    )
+    with (agent_root / "failures.log").open("a", encoding="utf-8") as f:
+        f.write(line)
 
 
 def new_run_id(runs_dir: Path) -> str:
@@ -289,10 +327,14 @@ def execute(
                 )
             else:
                 raise ValueError(f"未知 step type: {stype}")
-        except Exception:
+        except Exception as e:
             state["status"] = "failed"
             if not dry_run:
                 save_yaml(run_dir / "run.yaml", state)
+                # P2-3 反哺：追加 failures.log + 写 last-run.json
+                reason = f"{type(e).__name__}: {str(e)[:200]}"
+                _append_failure(agent_root, state, reason)
+                _write_last_run(agent_root, state, len(steps))
             raise
 
         completed.add(sid)
@@ -302,6 +344,9 @@ def execute(
             save_yaml(run_dir / "run.yaml", state)
 
     state["status"] = "completed"
+    state["completed_at"] = datetime.now(_TZ).isoformat()
     if not dry_run:
         save_yaml(run_dir / "run.yaml", state)
+        # P2-3 反哺：写 last-run.json（成功状态）
+        _write_last_run(agent_root, state, len(steps))
     return run_dir

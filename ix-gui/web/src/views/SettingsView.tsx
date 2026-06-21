@@ -1,5 +1,5 @@
 /**
- * 设置页 —— 工作区切换（M7.4）+ 主题切换（M2）+ 零侵入铁律说明。
+ * 设置页 —— 工作区切换（M7.4）+ 检查更新（M11.3）+ 主题切换（M2）+ 零侵入铁律说明。
  */
 import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
@@ -7,6 +7,7 @@ import { open } from "@tauri-apps/plugin-dialog";
 import { Badge, Button, Card, EmptyState, Spinner } from "@/components/ui";
 import { designLanguageList } from "@/theme/designLanguages";
 import { useThemeStore } from "@/theme/themeStore";
+import { UpdateAvailableDialog } from "@/components/UpdateAvailableDialog";
 
 interface WorkspaceEntry {
   path: string;
@@ -15,12 +16,44 @@ interface WorkspaceEntry {
   exists: boolean;
 }
 
+interface UpdateInfo {
+  current_version: string;
+  latest_version: string;
+  has_update: boolean;
+  changelog: string;
+  release_url: string;
+}
+
 export function SettingsView() {
   const { current, setTheme } = useThemeStore();
   const [workspaces, setWorkspaces] = useState<WorkspaceEntry[] | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [checking, setChecking] = useState(false);
+  const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null);
+  const [updateMsg, setUpdateMsg] = useState<string | null>(null);
+
+  const checkUpdates = async () => {
+    setChecking(true);
+    setError(null);
+    setUpdateMsg(null);
+    try {
+      const info = await invoke<UpdateInfo>("check_for_updates", { force: true });
+      if (info.has_update) {
+        setUpdateInfo(info);
+      } else {
+        setUpdateMsg(`已是最新版本（v${info.latest_version || "未知"}）`);
+      }
+    } catch (e: unknown) {
+      const msg = typeof e === "object" && e && "message" in e
+        ? String((e as { message: unknown }).message)
+        : String(e);
+      setError(msg);
+    } finally {
+      setChecking(false);
+    }
+  };
 
   useEffect(() => {
     invoke<WorkspaceEntry[]>("list_workspaces")
@@ -164,6 +197,33 @@ export function SettingsView() {
         )}
       </Card>
 
+      {/* 检查更新段（M11.3） */}
+      <Card style={{ padding: 18 }}>
+        <div style={{ display: "flex", alignItems: "center", marginBottom: 8 }}>
+          <h3 style={{ margin: 0, fontSize: 16 }}>🆕 检查更新</h3>
+          <div style={{ flex: 1 }} />
+          <Button size="sm" variant="primary" onClick={checkUpdates} disabled={checking}>
+            {checking ? "检查中…" : "检查更新"}
+          </Button>
+        </div>
+        <p style={{ margin: "0 0 8px", fontSize: 13, color: "var(--ix-text-muted)" }}>
+          从 GitHub Release 查询最新版本（强制刷新缓存）。
+        </p>
+        {updateMsg && (
+          <div
+            style={{
+              padding: "8px 10px",
+              fontSize: 13,
+              color: "var(--ix-success)",
+              background: "color-mix(in srgb, var(--ix-success) 8%, transparent)",
+              borderRadius: "var(--ix-radius-sm)",
+            }}
+          >
+            ✓ {updateMsg}
+          </div>
+        )}
+      </Card>
+
       {/* 主题皮肤段 */}
       <Card style={{ padding: 18 }}>
         <h3 style={{ margin: "0 0 4px", fontSize: 16 }}>🎨 主题皮肤</h3>
@@ -236,10 +296,23 @@ export function SettingsView() {
         <p style={{ margin: "0 0 8px", fontSize: 13, color: "var(--ix-text-muted)" }}>
           阶段 2 ✅：Tauri+Rust（PtyBridge + CliRunner + WorkspaceIo）+ macOS 打包
         </p>
-        <p style={{ margin: 0, fontSize: 13, color: "var(--ix-text-muted)" }}>
+        <p style={{ margin: "0 0 8px", fontSize: 13, color: "var(--ix-text-muted)" }}>
           阶段 3 ✅：工作区 wizard + 多工作区切换 + 基线升级引导
         </p>
+        <p style={{ margin: 0, fontSize: 13, color: "var(--ix-text-muted)" }}>
+          阶段 4 ✅：双层版本模型 + migration 框架 + 主动检查更新
+        </p>
       </Card>
+
+      {updateInfo && (
+        <UpdateAvailableDialog
+          currentVersion={updateInfo.current_version}
+          latestVersion={updateInfo.latest_version}
+          changelog={updateInfo.changelog}
+          releaseUrl={updateInfo.release_url}
+          onClose={() => setUpdateInfo(null)}
+        />
+      )}
     </div>
   );
 }

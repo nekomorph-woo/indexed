@@ -6,6 +6,7 @@
  * 主区按视图切换。会话/Agents/Runs/索引/设置 五个视图。
  */
 import { useEffect, useState } from "react";
+import { invoke } from "@tauri-apps/api/core";
 import { AssetTree } from "./AssetTree";
 import { AgentsView } from "@/views/AgentsView";
 import { RunsView } from "@/views/RunsView";
@@ -16,8 +17,17 @@ import { useThemeStore, applyTheme } from "@/theme/themeStore";
 import { backend } from "@/api/backend";
 import type { InitStatus } from "@/api/contract";
 import { Badge } from "./ui";
+import { UpdateAvailableDialog } from "./UpdateAvailableDialog";
 
 type ViewId = "terminal" | "agents" | "runs" | "index" | "settings";
+
+interface UpdateInfo {
+  current_version: string;
+  latest_version: string;
+  has_update: boolean;
+  changelog: string;
+  release_url: string;
+}
 
 const NAV: { id: ViewId; label: string; icon: string }[] = [
   { id: "terminal", label: "会话", icon: "💬" },
@@ -31,6 +41,8 @@ export function AppShell() {
   const [view, setView] = useState<ViewId>("terminal");
   const [selectedAsset, setSelectedAsset] = useState<string | null>(null);
   const [init, setInit] = useState<InitStatus | null>(null);
+  const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null);
+  const [showUpdateDialog, setShowUpdateDialog] = useState(false);
   const current = useThemeStore((s) => s.current);
 
   // 应用主题（设计语言 token → CSS 变量）
@@ -41,6 +53,15 @@ export function AppShell() {
   // 加载工作区状态（顶部状态条）
   useEffect(() => {
     backend.cli.initStatus().then(setInit).catch(() => {});
+  }, []);
+
+  // 启动异步检查 GitHub Release（force=false 用 24h 缓存）
+  useEffect(() => {
+    invoke<UpdateInfo>("check_for_updates", { force: false })
+      .then((info) => {
+        if (info.has_update) setUpdateInfo(info);
+      })
+      .catch(() => {});  // 静默失败（网络问题不阻塞主界面）
   }, []);
 
   return (
@@ -133,6 +154,27 @@ export function AppShell() {
             </button>
           ))}
           <div style={{ flex: 1 }} />
+          {updateInfo && (
+            <button
+              onClick={() => setShowUpdateDialog(true)}
+              title={`新版 v${updateInfo.latest_version} 可用（点击查看）`}
+              style={{
+                background: "var(--ix-primary)",
+                color: "#fff",
+                border: "none",
+                borderRadius: "var(--ix-radius-pill)",
+                padding: "4px 10px",
+                fontSize: 12,
+                fontWeight: 600,
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                gap: 4,
+              }}
+            >
+              🆕 v{updateInfo.latest_version}
+            </button>
+          )}
           {init && (
             <>
               <Badge tone={init.gitMode === "remote" ? "success" : "neutral"}>{init.gitMode}</Badge>
@@ -152,6 +194,16 @@ export function AppShell() {
           {view === "settings" && <SettingsView />}
         </div>
       </main>
+
+      {showUpdateDialog && updateInfo && (
+        <UpdateAvailableDialog
+          currentVersion={updateInfo.current_version}
+          latestVersion={updateInfo.latest_version}
+          changelog={updateInfo.changelog}
+          releaseUrl={updateInfo.release_url}
+          onClose={() => setShowUpdateDialog(false)}
+        />
+      )}
     </div>
   );
 }

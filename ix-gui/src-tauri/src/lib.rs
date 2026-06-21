@@ -19,6 +19,7 @@ mod cli;
 mod error;
 mod models;
 mod state;
+mod updates;
 mod workspaces;
 mod workspace;
 
@@ -108,6 +109,8 @@ pub fn run() {
             workspace::release_baseline,
             workspace::init_workspace,
             workspace::upgrade_baseline,
+            // 检查更新（M11.1）
+            updates::check_for_updates,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

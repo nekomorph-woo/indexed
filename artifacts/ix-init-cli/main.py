@@ -547,6 +547,140 @@ def cmd_status(_: argparse.Namespace) -> int:
     return 0
 
 
+# ---------------------------------------------------------------------------
+# check-update（M10.1）：GitHub Release 检查 + 24h 缓存
+# ---------------------------------------------------------------------------
+
+_GITHUB_RELEASE_URL = "https://api.github.com/repos/nekomorph-woo/indexed/releases/latest"
+
+
+def _read_update_cache() -> dict | None:
+    """读 .indexed-update-check.json 缓存。失败返回 None。"""
+    from config import UPDATE_CHECK_CACHE
+    if not UPDATE_CHECK_CACHE.is_file():
+        return None
+    try:
+        return json.loads(UPDATE_CHECK_CACHE.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError):
+        return None
+
+
+def _write_update_cache(data: dict) -> None:
+    """写 .indexed-update-check.json 缓存。失败静默。"""
+    from config import UPDATE_CHECK_CACHE
+    try:
+        UPDATE_CHECK_CACHE.write_text(
+            json.dumps(data, ensure_ascii=False, indent=2),
+            encoding="utf-8",
+        )
+    except OSError:
+        pass
+
+
+def _is_cache_fresh(cache: dict | None) -> bool:
+    """缓存是否在 24h 内。"""
+    if not cache:
+        return False
+    last_str = cache.get("last_check", "")
+    if not last_str:
+        return False
+    try:
+        from datetime import datetime, timedelta, timezone
+        last = datetime.fromisoformat(last_str)
+        now = datetime.now(timezone.utc)
+        return (now - last) < timedelta(hours=24)
+    except ValueError:
+        return False
+
+
+def _fetch_github_release() -> dict | None:
+    """调 GitHub API 拿最新 release。失败返回 None（静默）。"""
+    import urllib.request
+    import urllib.error
+    try:
+        req = urllib.request.Request(
+            _GITHUB_RELEASE_URL,
+            headers={
+                "User-Agent": "ix-init-cli",
+                "Accept": "application/vnd.github+json",
+            },
+        )
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            body = resp.read().decode("utf-8")
+        release = json.loads(body)
+        return {
+            "latest_version": release.get("tag_name", "").lstrip("v"),
+            "changelog": release.get("body", ""),
+            "release_url": release.get("html_url", ""),
+        }
+    except (urllib.error.URLError, OSError, json.JSONDecodeError, TimeoutError):
+        return None
+
+
+def cmd_check_update(args: argparse.Namespace) -> int:
+    """检查 GitHub Release 是否有新版基线（24h 缓存）。"""
+    from datetime import datetime, timezone
+
+    cur_ver = (
+        VERSION_FILE.read_text(encoding="utf-8").strip().split("\n")[0]
+        if VERSION_FILE.is_file() else "?"
+    )
+
+    cache = _read_update_cache()
+
+    # 缓存过期或 --force → 调 GitHub
+    if args.force or not _is_cache_fresh(cache):
+        fresh = _fetch_github_release()
+        if fresh:
+            fresh["last_check"] = datetime.now(timezone.utc).isoformat()
+            _write_update_cache(fresh)
+            cache = fresh
+        # 网络失败：用旧缓存（cache 可能仍含 latest_version）；无旧缓存则静默失败
+
+    latest = cache.get("latest_version", "?") if cache else "?"
+    changelog = cache.get("changelog", "") if cache else ""
+    html_url = cache.get("release_url", "") if cache else ""
+
+    has_update = (
+        latest not in ("?", "")
+        and cur_ver not in ("?", "")
+        and _is_newer(latest, cur_ver)
+    )
+
+    # JSON 输出
+    if args.json:
+        print(json.dumps({
+            "current_version": cur_ver,
+            "latest_version": latest,
+            "has_update": has_update,
+            "changelog": changelog,
+            "release_url": html_url,
+        }, ensure_ascii=False, indent=2))
+        return 0
+
+    # 无新版：静默 exit 0
+    if not has_update:
+        return 0
+
+    # 有新版：stdout 提示（给 Claude Code SessionStart hook 显示）
+    print(f"⚠ indexed 新版可用：v{latest}（当前 v{cur_ver}）")
+    print()
+    if changelog:
+        print("Changelog:")
+        for line in changelog.split("\n")[:30]:
+            print(f"  {line}")
+        if len(changelog.split("\n")) > 30:
+            print(f"  ...（完整 changelog: {html_url}）")
+        print()
+    print("CLI 升级：")
+    print(f"  1. 下载 https://github.com/nekomorph-woo/indexed/releases/v{latest}/indexed-cli-{latest}.tar.gz")
+    print(f"  2. 解压到 /tmp/indexed-{latest}")
+    print(f"  3. python artifacts/ix-init-cli/main.py update /tmp/indexed-{latest}")
+    print()
+    print("（24h 内不再重复提示；手动检查请跑 ix-init-cli check-update --force）")
+    return 0
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="indexed 工作区初始化与基线更新")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -565,6 +699,11 @@ def main() -> int:
 
     ps = sub.add_parser("status", help="查看当前状态")
     ps.set_defaults(func=cmd_status)
+
+    pc = sub.add_parser("check-update", help="检查 GitHub Release 是否有新版基线（24h 缓存）")
+    pc.add_argument("--force", action="store_true", help="跳过缓存，强制查 GitHub")
+    pc.add_argument("--json", action="store_true", help="输出 JSON（供 GUI / 脚本消费）")
+    pc.set_defaults(func=cmd_check_update)
 
     args = parser.parse_args()
     return args.func(args)

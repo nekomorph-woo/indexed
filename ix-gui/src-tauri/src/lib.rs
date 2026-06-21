@@ -12,6 +12,7 @@
 //! - M4：pty 用插件实现
 //! - M5：删 mockBackend 引用，全切换 tauriBackend
 
+mod cli;
 mod error;
 mod models;
 mod state;
@@ -34,7 +35,11 @@ pub fn run() {
             workspace::list_runs,
             workspace::read_run,
             workspace::read_workspace_tree,
-            // CliRunner（M3 加）
+            // CliRunner（M3）
+            cli::run_agent,
+            cli::audit,
+            cli::sync,
+            cli::init_status,
             // PtyBridge（M4 用插件，无需 command）
         ])
         .run(tauri::generate_context!())

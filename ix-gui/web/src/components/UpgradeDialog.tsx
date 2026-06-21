@@ -18,13 +18,17 @@ interface Props {
 export function UpgradeDialog({ from, to, onClose, onUpgraded }: Props) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [log, setLog] = useState<string | null>(null);
 
   const upgrade = async () => {
     setBusy(true);
     setError(null);
+    setLog(null);
     try {
-      await invoke("upgrade_baseline");
-      onUpgraded();
+      const stdout = await invoke<string>("upgrade_baseline");
+      setLog(stdout);
+      // 显示日志 1.5 秒后触发 onUpgraded（让用户看到「升级完成」）
+      setTimeout(() => onUpgraded(), 1500);
     } catch (e: unknown) {
       const msg = typeof e === "object" && e && "message" in e
         ? String((e as { message: unknown }).message)
@@ -52,9 +56,12 @@ export function UpgradeDialog({ from, to, onClose, onUpgraded }: Props) {
           background: "var(--ix-surface)",
           borderRadius: "var(--ix-radius)",
           padding: 24,
-          maxWidth: 480,
+          maxWidth: 560,
+          maxHeight: "85vh",
           boxShadow: "var(--ix-shadow-hover)",
           border: "1px solid var(--ix-border)",
+          display: "flex",
+          flexDirection: "column",
         }}
       >
         <h3 style={{ margin: "0 0 8px", fontSize: 16, fontWeight: 600 }}>
@@ -80,7 +87,7 @@ export function UpgradeDialog({ from, to, onClose, onUpgraded }: Props) {
             lineHeight: 1.6,
           }}
         >
-          升级会保护用户内容（reports/research/repos/自建 cli/agent），
+          升级会跑 migration 链（保护用户内容：reports/research/repos/自建 cli/agent），
           仅覆盖框架文件（CLAUDE.md/.claude/_shared/基线 cli）。
           升级后自动跑 sync 同步索引。
         </div>
@@ -101,12 +108,33 @@ export function UpgradeDialog({ from, to, onClose, onUpgraded }: Props) {
           </div>
         )}
 
-        <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
+        {log && (
+          <div
+            className="ix-mono"
+            style={{
+              marginBottom: 12,
+              padding: 10,
+              fontSize: 12,
+              background: "var(--ix-bg)",
+              color: "var(--ix-text)",
+              borderRadius: "var(--ix-radius-sm)",
+              border: "1px solid var(--ix-border)",
+              whiteSpace: "pre-wrap",
+              maxHeight: 220,
+              overflowY: "auto",
+              lineHeight: 1.5,
+            }}
+          >
+            {log}
+          </div>
+        )}
+
+        <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: "auto" }}>
           <Button variant="ghost" onClick={onClose} disabled={busy}>
             稍后
           </Button>
           <Button variant="primary" onClick={upgrade} disabled={busy}>
-            {busy ? "升级中…" : "升级基线"}
+            {busy ? "升级中…" : log ? "✓ 已完成" : "升级基线"}
           </Button>
         </div>
       </div>

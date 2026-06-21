@@ -544,7 +544,7 @@ pub async fn init_workspace(
 pub async fn upgrade_baseline(
     app: tauri::AppHandle,
     state: State<'_, AppState>,
-) -> Result<()> {
+) -> Result<String> {
     let baseline = app
         .path()
         .resource_dir()
@@ -566,10 +566,12 @@ pub async fn upgrade_baseline(
         )));
     }
 
+    // --yes 跳过交互式确认（GUI 已经显示过 changelog 让用户确认）
     let output = tokio::process::Command::new("python3")
         .arg(&init_cli)
         .arg("update")
         .arg(&baseline)
+        .arg("--yes")
         .current_dir(&workspace_root)
         .output()
         .await?;
@@ -582,6 +584,8 @@ pub async fn upgrade_baseline(
         )));
     }
 
+    let stdout = String::from_utf8_lossy(&output.stdout).to_string();
+
     // 自动跑 sync（ix-init-cli update 不自动 sync）
     let sync_cli = workspace_root.join("artifacts/ix-workspace-index-cli/main.py");
     if sync_cli.is_file() {
@@ -593,7 +597,7 @@ pub async fn upgrade_baseline(
             .await;
     }
 
-    Ok(())
+    Ok(stdout)
 }
 
 /// 递归复制目录（Rust 标准库无现成 API）

@@ -701,7 +701,8 @@ VERSION_TO = "{vt}"
 
 
 def describe() -> str:
-    """返回 changelog 说明（用户看到的破坏性变更）。"""
+    """返回 changelog 说明（用户看到的破坏性变更）。{diff_hint}
+    """
     return """{vf} → {vt}：TODO 描述变更（维护者填）
 
 - TODO: 具体变更点 1
@@ -750,6 +751,8 @@ def cmd_new_migration(args: argparse.Namespace) -> int:
     - --from 必须是已有 migration 链的末端 VERSION_TO（或当前 VERSION）
     - --to 必须严格新于 --from（semver）
     - 目标文件不能已存在（防覆盖）
+
+    --diff-hint：附 git log/diff v<from>..HEAD 摘要到 describe() 注释，辅助判断 breaking changes。
     """
     vf = args.version_from.strip()
     vt = args.version_to.strip()
@@ -799,12 +802,15 @@ def cmd_new_migration(args: argparse.Namespace) -> int:
         print("       （如需重写请先手动删除）", file=sys.stderr)
         return 1
 
-    # 5. 生成模板
+    # 5. 生成模板（--diff-hint 时附 git log/diff 摘要）
+    diff_hint = _gather_diff_hint(vf) if args.diff_hint else ""
     mig_dir.mkdir(parents=True, exist_ok=True)
-    content = _MIGRATION_TEMPLATE.format(vf=vf, vt=vt)
+    content = _MIGRATION_TEMPLATE.format(vf=vf, vt=vt, diff_hint=diff_hint)
     target.write_text(content, encoding="utf-8")
 
     print(f"✓ 已生成 {target.relative_to(INDEXED_ROOT)}")
+    if diff_hint:
+        print(f"  （含 git diff 摘要，见 describe() docstring）")
     print()
     print("下一步：")
     print(f"  1. 编辑 {target.name}：填 describe/check/migrate/verify")
@@ -812,6 +818,50 @@ def cmd_new_migration(args: argparse.Namespace) -> int:
     print(f"  3. 跑 ix-bundle-cli cli-bundle / app-bundle 打包含新 migration 的包")
     print(f"  4. 发布 GitHub Release v{vt}（含 tar.gz + .dmg）")
     return 0
+
+
+def _gather_diff_hint(vf: str) -> str:
+    """跑 git log/diff v<from>..HEAD，返回摘要字符串。
+
+    失败（无 tag / 无 git / 无变化）返回空字符串。
+    先尝试 `v<from>` tag，失败 fallback 到 bare `<from>`。
+    """
+    tag = f"v{vf}"
+    log_out = ""
+    diff_out = ""
+
+    for ref in (tag, vf):
+        result = subprocess.run(
+            ["git", "log", f"{ref}..HEAD", "--oneline", "--no-decorate"],
+            capture_output=True, text=True, cwd=INDEXED_ROOT,
+        )
+        if result.returncode == 0 and result.stdout.strip():
+            log_out = result.stdout.rstrip()
+            break
+
+    for ref in (tag, vf):
+        result = subprocess.run(
+            ["git", "diff", f"{ref}..HEAD", "--stat", "--",
+             "artifacts/", "CLAUDE.md", ".claude/", "_shared/"],
+            capture_output=True, text=True, cwd=INDEXED_ROOT,
+        )
+        if result.returncode == 0 and result.stdout.strip():
+            diff_out = result.stdout.rstrip()
+            break
+
+    if not log_out and not diff_out:
+        return ""
+
+    return f"""
+
+维护者参考（git diff v{vf}..HEAD 自动生成；判断 breaking changes 用）：
+
+commits 自 v{vf}:
+{log_out or '(无)'}
+
+关键文件变化（artifacts/CLAUDE.md/.claude/_shared/）:
+{diff_out or '(无)'}
+"""
 
 
 def main() -> int:
@@ -844,6 +894,7 @@ def main() -> int:
     )
     pn.add_argument("--from", dest="version_from", required=True, help="源版本（如 0.2.0）")
     pn.add_argument("--to", dest="version_to", required=True, help="目标版本（如 0.3.0，必须新于 --from）")
+    pn.add_argument("--diff-hint", action="store_true", help="附 git log/diff 摘要到 describe() 注释")
     pn.set_defaults(func=cmd_new_migration)
 
     args = parser.parse_args()

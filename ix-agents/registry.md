@@ -18,7 +18,9 @@
 ## 按意图速查 — 用户自建
 
 <!-- IX_USER_AGENT_INDEX_BEGIN -->
-<!-- 用户自建 agent 由 sync 自动维护 -->
+| 用户意图或关键词 | 应用 | 一句话 | 详情 |
+|------------------|------|--------|------|
+| 发版、release、打包发布、bump version、新版本 | `ix-release-agent` | indexed 基线发版全流程编排（migration + bump + bundle + build + commit/tag + release） | [`SPEC.yaml`](ix-release-agent/SPEC.yaml) |
 <!-- IX_USER_AGENT_INDEX_END -->
 
 ---

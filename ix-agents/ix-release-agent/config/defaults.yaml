@@ -1,0 +1,7 @@
+# ix-release-agent 默认参数
+# previous_version 留空，让 thinking step 从 git tag 自动推断
+previous_version: ""
+migration_notes: ""
+skip_bundle: false
+skip_github_release: false
+skip_migration: false

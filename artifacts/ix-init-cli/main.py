@@ -148,12 +148,21 @@ def _is_newer(a: str, b: str) -> bool:
     return pa > pb
 
 
-def _load_migrations() -> dict[tuple[str, str], object]:
+def _load_migrations(source: Path | None = None) -> dict[tuple[str, str], object]:
     """扫描 migrations/ 目录，加载所有 migration 模块。
+
+    source=None：从当前工作区加载（INDEXED_ROOT）
+    source=Path：从指定目录加载（如新 baseline 解压目录）
+
+    cmd_update 时传 source=src（新 baseline），确保 migration 链从新 baseline 加载
+    （当前工作区的 migrations 可能是旧的，缺新版本的 migration）。
 
     返回 {(VERSION_FROM, VERSION_TO): module}。非法 migration 跳过并 warn。
     """
-    mig_dir = INDEXED_ROOT / "artifacts" / "ix-init-cli" / "migrations"
+    if source is None:
+        mig_dir = INDEXED_ROOT / "artifacts" / "ix-init-cli" / "migrations"
+    else:
+        mig_dir = source / "artifacts" / "ix-init-cli" / "migrations"
     if not mig_dir.is_dir():
         return {}
     result: dict[tuple[str, str], object] = {}
@@ -356,7 +365,8 @@ def cmd_update(args: argparse.Namespace) -> int:
     print(f"update: {cur_ver} → {new_ver}\n")
 
     # migration 链计算 + 显示 changelog + 交互式确认
-    all_migrations = _load_migrations()
+    # 从【新 baseline】加载 migrations（当前工作区的可能是旧的，缺新版本 migration）
+    all_migrations = _load_migrations(src)
     chain = _compute_migration_chain(cur_ver, new_ver, all_migrations)
     if chain is None:
         print(

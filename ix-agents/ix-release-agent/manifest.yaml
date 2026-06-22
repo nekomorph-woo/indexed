@@ -4,54 +4,26 @@ research: null
 params:
   - name: version
     required: true
-    prompt: 要发布的版本号（如 0.2.0；必须严格新于当前 VERSION）
-  - name: previous_version
-    required: false
-    prompt: 上一个版本号（默认从 git tag 推断；用于 migration from）
-    default_from: "config/defaults.yaml#previous_version"
-  - name: migration_notes
-    required: false
-    prompt: 本版本 breaking changes 摘要（供 suggest_migration step 参考，可空）
+    prompt: 要发布的版本号（如 0.2.0）
   - name: skip_bundle
     required: false
     default: false
-    prompt: 是否跳过 cli-bundle / app-bundle / tauri build（仅 dry-run 用）
+    prompt: 是否跳过 cli-bundle / app-bundle / tauri build
   - name: skip_github_release
     required: false
     default: false
-    prompt: 是否跳过 GitHub Release（无 gh CLI / 仅本地打包）
-  - name: skip_migration
-    required: false
-    default: false
-    prompt: 是否跳过 migration 步骤（小版本无 breaking changes 时用）
+    prompt: 是否跳过 GitHub Release
 
 steps:
-  # 1. thinking：claude 分析 git diff + 建议 migration 内容
-  - id: suggest_migration
-    type: thinking
-    description: 读 git log/diff 建议 breaking changes + migration 内容
-    inputs: []
-    prompt: |
-      你是 indexed 基线维护者助手。当前发版 {params.version}（前一版本 {params.previous_version}）。
-
-      用户提供的 breaking changes 摘要：{params.migration_notes}
-
-      任务：
-      1. 跑 git log v{params.previous_version}..HEAD --oneline 看自上次发版以来的 commits
-      2. 跑 git diff v{params.previous_version}..HEAD --stat -- artifacts/ CLAUDE.md .claude/ _shared/ 看文件变化
-      3. 判断本版本是否需要 migration（有无 breaking changes）
-
-      如果 {params.skip_migration}=true 或确实无 breaking changes：
-      → 在输出文件说明「跳过 migration」并简述原因，结束本步骤
-
-      如果需要 migration：
-      1. 跑 python3 artifacts/ix-init-cli/main.py new-migration --from {params.previous_version} --to {params.version} --diff-hint
-      2. 编辑生成的 migration 文件（artifacts/ix-init-cli/migrations/{params.previous_version}_to_{params.version}.py）：
-         基于上述 git diff 结果填 describe/check/migrate/verify 实际逻辑
-      3. 在输出文件总结：本次发版的 migration 内容摘要、影响哪些用户文件
-
-      输出格式：Markdown，含「判断」「操作」「建议」三段。
-    output: work/thinking/suggest_migration.md
+  # 1. tool：检查 MIGRATION_REVIEW.md 是否存在（提示审核状态，不强制）
+  - id: check_migration_review
+    type: tool
+    description: 检查用户是否已审核 migration（MIGRATION_REVIEW.md 存在性）
+    tool: shell
+    command: >-
+      test -f MIGRATION_REVIEW.md &&
+      echo '[check] ✓ MIGRATION_REVIEW.md 存在（用户已审核 migration）' ||
+      echo '[warn] MIGRATION_REVIEW.md 不存在；如本版本有 breaking changes，请先跑 ix-migration-draft-agent'
 
   # 2. tool：bump VERSION
   - id: bump_version
@@ -60,7 +32,7 @@ steps:
     tool: shell
     command: "echo '{params.version}' > VERSION && cat VERSION"
 
-  # 3. tool：cli-bundle（skip_bundle=true 时跳过；shell 条件实现 skip）
+  # 3. tool：cli-bundle（skip_bundle=true 时跳过）
   - id: cli_bundle
     type: tool
     description: 生成 CLI-only tarball（indexed-cli-<version>.tar.gz）

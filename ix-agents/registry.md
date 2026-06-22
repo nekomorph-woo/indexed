@@ -20,7 +20,8 @@
 <!-- IX_USER_AGENT_INDEX_BEGIN -->
 | 用户意图或关键词 | 应用 | 一句话 | 详情 |
 |------------------|------|--------|------|
-| 发版、release、打包发布、bump version、新版本 | `ix-release-agent` | indexed 基线发版全流程编排（migration + bump + bundle + build + commit/tag + release） | [`SPEC.yaml`](ix-release-agent/SPEC.yaml) |
+| 生成 migration、migration 草稿、breaking changes 分析、版本升级前准备 | `ix-migration-draft-agent` | claude 自动生成 migration Python + 人话审核摘要（用户读 MD 决定是否发版） | [`SPEC.yaml`](ix-migration-draft-agent/SPEC.yaml) |
+| 发版、release、打包发布、bump version、新版本 | `ix-release-agent` | indexed 基线发版（bump + bundle + build + commit/tag + release；migration 由 ix-migration-draft-agent 提前生成） | [`SPEC.yaml`](ix-release-agent/SPEC.yaml) |
 <!-- IX_USER_AGENT_INDEX_END -->
 
 ---

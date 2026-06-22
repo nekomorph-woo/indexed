@@ -1,0 +1,4 @@
+# ix-migration-draft-agent 默认参数
+# migration_notes / regenerate_feedback 默认空（首次生成时）
+migration_notes: ""
+regenerate_feedback: ""

@@ -1,31 +1,32 @@
 name: ix-release-agent
 domain: 发版编排
-one_liner: indexed 基线发版全流程编排（migration + bump + bundle + build + commit/tag + release）
+one_liner: indexed 基线发版（bump + bundle + build + commit/tag + release；migration 由 ix-migration-draft-agent 提前生成）
 status: implemented
 intents:
   - "发版、release、打包发布、bump version、新版本"
 params_required:
   - version
 params_optional:
-  - previous_version
-  - migration_notes
   - skip_bundle
   - skip_github_release
-  - skip_migration
-has_thinking: true
+has_thinking: false
 steps:
-  - suggest_migration
+  - check_migration_review
   - bump_version
   - cli_bundle
   - app_build
   - git_commit_tag
   - github_release
 schedule_safe: false
-schedule_note: 发版必须人工监督（migration 内容需 claude 审核确认）；不允许定时触发
+schedule_note: 发版必须人工监督；不允许定时触发
 research: null
 notes: |
-  开发期 agent，不进分发产物（ix-bundle-cli BASELINE_FILES 不含具体 agent 子目录）。
-  thinking step 跑 claude -p 分析 git diff + 建议 migration 内容（M13.1 的
-  --diff-hint 是其辅助工具）。
-  manifest condition 字段不支持，用 shell `[ "$X" = "true" ] && echo skip || cmd`
-  实现 skip_bundle / skip_github_release / skip_migration。
+  开发期 agent（不进分发产物）。
+  M14.2 改造：移除 suggest_migration step（已由 ix-migration-draft-agent 完成）；
+  移除 previous_version/migration_notes/skip_migration 参数；
+  加 check_migration_review step（提示审核状态，不强制中止）。
+
+  用户工作流：
+    1. ix-migration-draft-agent 生成 migration + MIGRATION_REVIEW.md
+    2. 用户读 MD 审核
+    3. ix-release-agent 发版（本 agent）

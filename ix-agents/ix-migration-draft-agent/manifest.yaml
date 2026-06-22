@@ -1,0 +1,104 @@
+id: ix-migration-draft-agent
+research: null
+
+params:
+  - name: version
+    required: true
+    prompt: 要生成的目标版本号（如 0.2.0）
+  - name: previous_version
+    required: true
+    prompt: 源版本号（如 0.1.0；必须已 tag v<version>）
+  - name: migration_notes
+    required: false
+    prompt: breaking changes 摘要（可选；claude 也会从 git diff 推断）
+  - name: regenerate_feedback
+    required: false
+    prompt: 重新生成的反馈（如「变更 X 不要做 Y」；首次生成留空）
+
+steps:
+  # 1. thinking：claude 自动生成 migration Python + MIGRATION_REVIEW.md 内容
+  - id: draft_migration
+    type: thinking
+    description: 生成 migration Python（完整实现，无 TODO）+ MIGRATION_REVIEW.md
+    inputs: []
+    prompt: |
+      你是 indexed 基线维护者助手。当前为 v{params.previous_version} → v{params.version} 生成 migration。
+
+      用户提供的 breaking changes 摘要：{params.migration_notes}
+      用户反馈（重新生成时填，首次为空）：{params.regenerate_feedback}
+
+      任务（按顺序）：
+
+      1. 跑 git log v{params.previous_version}..HEAD --oneline 看自上次发版以来的 commits
+      2. 跑 git diff v{params.previous_version}..HEAD --stat -- artifacts/ CLAUDE.md .claude/ _shared/ 看关键文件变化
+      3. 基于用户反馈（如有）调整判断；判断本版本需要哪些 breaking changes 迁移
+
+      4. 生成 migration Python 文件（完整实现，不留 TODO）：
+
+         a. 跑 python3 artifacts/ix-init-cli/main.py new-migration --from {params.previous_version} --to {params.version} --diff-hint
+            （如已存在则跳过生成，直接编辑现有文件）
+         b. Read 生成的 artifacts/ix-init-cli/migrations/{params.previous_version}_to_{params.version}.py
+         c. Edit 该文件，填 describe/check/migrate/verify 完整实现：
+            - describe()：返回人类可读的 changelog 说明
+            - check(workspace_root)：扫受影响文件（如 ix-agents/*/manifest.yaml 有 default_from 含 'config/' 前缀的）
+            - migrate(workspace_root)：执行实际转换（用 yaml 库读改写）
+            - verify(workspace_root)：验证迁移结果（确认所有文件已改）
+         d. 代码示例（参考 artifacts/ix-init-cli/migrations/0.1.0_to_0.2.0.py 占位）
+
+         如果判断无 breaking changes：跳过本步骤（不生成 migration 文件）。
+
+      5. 生成 MIGRATION_REVIEW.md（人话审核摘要，写到本 step 的 output 文件）：
+
+         格式（严格按此）：
+
+         # Migration 审核摘要：v{params.previous_version} → v{params.version}
+
+         > 本文档由 ix-migration-draft-agent 自动生成。请审核后跑 ix-release-agent 发布。
+
+         ## 变更概览
+         - 版本范围：v{params.previous_version} → v{params.version}
+         - breaking changes 数：N
+         - 受影响文件：M 个（清单）
+
+         ## 变更 1：<一句话描述>
+         **做什么**：<具体操作>
+         **为什么**：<原因，基于 git diff>
+         **影响**：<受影响的文件清单>
+         **风险**：<低/中/高 + 理由>
+
+         ## 变更 2：...
+
+         ## 审核操作
+         ✅ 审核通过 → 跑：
+            python3 artifacts/ix-agent-run-cli/main.py run --agent ix-release-agent --set version={params.version}
+         ❌ 有问题 → 重新生成：
+            python3 artifacts/ix-agent-run-cli/main.py run --agent ix-migration-draft-agent \
+              --set version={params.version} --set previous_version={params.previous_version} \
+              --set regenerate_feedback="<具体反馈>"
+
+         ## 生成的 migration 文件
+         artifacts/ix-init-cli/migrations/{params.previous_version}_to_{params.version}.py
+         （claude 自动生成的 Python 实现；用户不需要读，看本摘要即可）
+
+         如果判断无 breaking changes：
+         # Migration 审核摘要：v{params.previous_version} → v{params.version}
+
+         > 本文档由 ix-migration-draft-agent 自动生成。
+
+         ## 结论：无 breaking changes
+
+         git diff v{params.previous_version}..HEAD 分析结果显示本版本无 breaking changes，
+         无需生成 migration。
+
+         可以直接发版：
+         python3 artifacts/ix-agent-run-cli/main.py run --agent ix-release-agent --set version={params.version}
+
+      输出：完整 MIGRATION_REVIEW.md 内容（Markdown）到 output 文件。
+    output: work/thinking/draft_migration.md
+
+  # 2. tool：复制 MD 到工作区根
+  - id: publish_review
+    type: tool
+    description: 复制 MIGRATION_REVIEW.md 到工作区根 + 提示用户审核
+    tool: shell
+    command: "cp {work_thinking}/draft_migration.md MIGRATION_REVIEW.md && echo '[done] MIGRATION_REVIEW.md 已生成，请审核' && echo '       审核通过后跑：ix-agent-run-cli run --agent ix-release-agent --set version={params.version}'"
